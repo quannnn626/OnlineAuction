@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>轮播图管理 - 在线拍卖系统</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+        }
+        .page-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .page-title {
+            font-size: 24px;
+            font-weight: 500;
+            color: #303133;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="page-container">
+        <h1 class="page-title">轮播图管理</h1>
+        <el-card shadow="never">
+            <div style="padding: 20px;">
+                <div style="margin-bottom: 20px;">
+                    <el-button type="primary" @click="handleAdd">新增轮播图</el-button>
+                </div>
+                <el-table :data="tableData" border style="width: 100%;">
+                    <el-table-column prop="id" label="ID" width="80"></el-table-column>
+                    <el-table-column label="轮播图" width="200">
+                        <template slot-scope="scope">
+                            <img :src="scope.row.bannerImg" style="width: 150px; height: 80px; object-fit: cover;" />
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="bannerSort" label="排序" width="100"></el-table-column>
+                    <el-table-column prop="bannerStatus" label="状态" width="100">
+                        <template slot-scope="scope">
+                            <el-tag v-if="scope.row.bannerStatus === 1" type="success">已启用</el-tag>
+                            <el-tag v-else type="info">未启用</el-tag>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="createTime" label="创建时间" width="180"></el-table-column>
+                    <el-table-column label="操作" width="200">
+                        <template slot-scope="scope">
+                            <el-button size="mini" @click="handleEdit(scope.row)">编辑</el-button>
+                            <el-button size="mini" type="danger" @click="handleDelete(scope.row)">删除</el-button>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
+        </el-card>
+    </div>
+    <script src="https://unpkg.com/vue@2/dist/vue.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script>
+        new Vue({
+            el: '#app',
+            data() {
+                return {
+                    tableData: [
+                        { id: 1, bannerImg: 'https://via.placeholder.com/150x80', bannerSort: 1, bannerStatus: 1, createTime: '2025-12-31 10:00:00' },
+                        { id: 2, bannerImg: 'https://via.placeholder.com/150x80', bannerSort: 2, bannerStatus: 1, createTime: '2025-12-30 15:00:00' }
+                    ]
+                }
+            },
+            methods: {
+                handleAdd() {
+                    this.$message.info('新增功能待实现');
+                },
+                handleEdit(row) {
+                    this.$message.info('编辑功能待实现：' + row.id);
+                },
+                handleDelete(row) {
+                    this.$confirm('确定要删除这个轮播图吗？', '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }).then(() => {
+                        this.$message.success('删除成功');
+                    }).catch(() => {});
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+

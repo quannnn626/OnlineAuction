@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>在线拍卖系统</title>
+    <!-- Element UI CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css" />
+    <link rel="stylesheet" href="/css/common.css" />
+</head>
+<body>
+    <div id="app">
+        <!-- 顶部导航栏 -->
+        <div class="header-bar">
+            <div class="header-left">
+                <div class="logo">OA</div>
+                <div class="system-title">在线拍卖系统</div>
+            </div>
+            <div class="header-right">
+                <i class="el-icon-message header-icon"></i>
+                <i class="el-icon-download header-icon"></i>
+                <i class="el-icon-house header-icon"></i>
+                <div class="user-info">
+                    <i class="el-icon-user"></i>
+                    <span>管理员</span>
+                </div>
+                <el-dropdown @command="handleCommand">
+                    <span class="user-info" style="cursor: pointer">
+                        <span>admin</span>
+                        <i class="el-icon-arrow-down el-icon--right"></i>
+                    </span>
+                    <el-dropdown-menu slot="dropdown">
+                        <el-dropdown-item command="profile">个人中心</el-dropdown-item>
+                        <el-dropdown-item command="settings">系统设置</el-dropdown-item>
+                        <el-dropdown-item command="logout" divided>退出登录</el-dropdown-item>
+                    </el-dropdown-menu>
+                </el-dropdown>
+                <i class="el-icon-switch-button header-icon" @click="handleLogout"></i>
+            </div>
+        </div>
+
+        <!-- 主容器 -->
+        <div class="main-container">
+            <!-- 左侧菜单栏 -->
+            <div class="sidebar" :class="{ collapse: isCollapse }">
+                <el-menu
+                    :default-active="activeMenu"
+                    class="el-menu-vertical"
+                    :collapse="isCollapse"
+                    background-color="#304156"
+                    text-color="rgba(255,255,255,0.7)"
+                    active-text-color="#409EFF"
+                    @select="handleMenuSelect"
+                >
+                    <!-- 动态渲染菜单 -->
+                    <template v-if="menuTree.length > 0">
+                        <template v-for="menu in menuTree">
+                            <!-- 有子菜单 -->
+                            <el-submenu v-if="menu.children && menu.children.length > 0" :key="menu.id" :index="menu.id.toString()">
+                                <template slot="title">
+                                    <i :class="menu.menuIcon || 'el-icon-menu'"></i>
+                                    <span>{{ menu.menuName }}</span>
+                                </template>
+                                <el-menu-item 
+                                    v-for="child in menu.children" 
+                                    :key="child.id" 
+                                    :index="child.id.toString()"
+                                >
+                                    <i :class="child.menuIcon || 'el-icon-menu'"></i>
+                                    <span slot="title">{{ child.menuName }}</span>
+                                </el-menu-item>
+                            </el-submenu>
+                            <!-- 无子菜单 -->
+                            <el-menu-item v-else :key="menu.id" :index="menu.id.toString()">
+                                <i :class="menu.menuIcon || 'el-icon-menu'"></i>
+                                <span slot="title">{{ menu.menuName }}</span>
+                            </el-menu-item>
+                        </template>
+                    </template>
+                    <!-- 菜单加载中或为空 -->
+                    <div v-else style="padding: 20px; text-align: center; color: rgba(255,255,255,0.7);">
+                        <i class="el-icon-loading" style="font-size: 20px;"></i>
+                        <p style="margin-top: 10px; font-size: 14px;">加载菜单中...</p>
+                    </div>
+                </el-menu>
+            </div>
+
+            <!-- 内容区域 -->
+            <div class="content-area">
+                <!-- 内容工具栏 -->
+                <div class="content-toolbar">
+                    <div class="toolbar-left">
+                        <i class="el-icon-menu toolbar-icon" @click="toggleSidebar"></i>
+                        <i class="el-icon-full-screen toolbar-icon"></i>
+                        <i class="el-icon-refresh toolbar-icon" @click="handleRefresh"></i>
+                        <span class="breadcrumb">≪ {{ currentPageTitle }}</span>
+                    </div>
+                </div>
+
+                <!-- 主内容区域 - 使用iframe加载独立页面 -->
+                <div class="main-content">
+                    <iframe 
+                        v-if="currentPageUrl" 
+                        :src="currentPageUrl" 
+                        frameborder="0" 
+                        style="width: 100%; height: 100%; border: none;"
+                    ></iframe>
+                    <div v-else style="text-align: center; padding: 60px 0; color: #909399;">
+                        <i class="el-icon-document" style="font-size: 80px; margin-bottom: 20px; opacity: 0.3;"></i>
+                        <p style="font-size: 16px;">请选择左侧菜单</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vue.js -->
+    <script src="https://unpkg.com/vue@2/dist/vue.js"></script>
+    <!-- Element UI JS -->
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <!-- 自定义JS -->
+    <script src="/js/common.js"></script>
+    <script src="/js/index.js"></script>
+</body>
+</html>
+

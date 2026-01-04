@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.auction.onlineauction.OnlineAuction.mapper.AuctionOperLogMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.auction.onlineauction.OnlineAuction.entity.AuctionOperLog">
+        <id column="id" property="id" />
+        <result column="oper_user_id" property="operUserId" />
+        <result column="oper_module" property="operModule" />
+        <result column="oper_type" property="operType" />
+        <result column="oper_content" property="operContent" />
+        <result column="oper_ip" property="operIp" />
+        <result column="create_time" property="createTime" />
+    </resultMap>
+
+</mapper>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>保证金管理 - 在线拍卖系统</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+        }
+        .page-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .page-title {
+            font-size: 24px;
+            font-weight: 500;
+            color: #303133;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="page-container">
+        <h1 class="page-title">保证金管理</h1>
+        <el-card shadow="never">
+            <div style="padding: 20px;">
+                <div style="margin-bottom: 30px;">
+                    <el-statistic title="当前保证金余额" :value="balance" suffix="元"></el-statistic>
+                </div>
+                <el-tabs v-model="activeTab">
+                    <el-tab-pane label="充值" name="recharge">
+                        <el-form :model="rechargeForm" label-width="100px" style="max-width: 500px;">
+                            <el-form-item label="充值金额">
+                                <el-input-number v-model="rechargeForm.amount" :min="100" :max="100000" :step="100"></el-input-number>
+                            </el-form-item>
+                            <el-form-item>
+                                <el-button type="primary" @click="handleRecharge">充值</el-button>
+                            </el-form-item>
+                        </el-form>
+                    </el-tab-pane>
+                    <el-tab-pane label="记录" name="records">
+                        <el-table :data="recordList" border style="width: 100%; margin-top: 20px;">
+                            <el-table-column prop="operateTime" label="操作时间" width="180"></el-table-column>
+                            <el-table-column prop="depositType" label="类型" width="120">
+                                <template slot-scope="scope">
+                                    <span v-if="scope.row.depositType === 0">充值</span>
+                                    <span v-else-if="scope.row.depositType === 1">冻结</span>
+                                    <span v-else-if="scope.row.depositType === 2">解冻</span>
+                                    <span v-else-if="scope.row.depositType === 3">抵扣尾款</span>
+                                    <span v-else>扣除</span>
+                                </template>
+                            </el-table-column>
+                            <el-table-column prop="amount" label="金额" width="120"></el-table-column>
+                            <el-table-column prop="balance" label="余额" width="120"></el-table-column>
+                        </el-table>
+                    </el-tab-pane>
+                </el-tabs>
+            </div>
+        </el-card>
+    </div>
+    <script src="https://unpkg.com/vue@2/dist/vue.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script>
+        new Vue({
+            el: '#app',
+            data() {
+                return {
+                    activeTab: 'recharge',
+                    balance: 5000,
+                    rechargeForm: {
+                        amount: 1000
+                    },
+                    recordList: [
+                        { operateTime: '2025-12-31 10:00:00', depositType: 0, amount: 5000, balance: 5000 },
+                        { operateTime: '2025-12-30 15:00:00', depositType: 1, amount: -1000, balance: 4000 }
+                    ]
+                }
+            },
+            methods: {
+                handleRecharge() {
+                    this.$message.success('充值功能待实现');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+

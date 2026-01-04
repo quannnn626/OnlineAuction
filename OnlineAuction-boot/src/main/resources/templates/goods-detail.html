@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商品详情 - 在线拍卖系统</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+            background-color: #f5f7fa;
+        }
+        #app {
+            min-height: 100vh;
+        }
+        .page-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* 商品基本信息区域 */
+        .goods-info-section {
+            background: #fff;
+            padding: 30px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+        }
+        .goods-info-wrapper {
+            display: flex;
+            gap: 30px;
+        }
+        
+        /* 左侧图片区域 */
+        .goods-images {
+            flex: 0 0 500px;
+        }
+        .main-image {
+            width: 100%;
+            height: 500px;
+            border: 1px solid #ebeef5;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            background: #f5f7fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .main-image img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        .thumbnail-list {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .thumbnail-item {
+            width: 80px;
+            height: 80px;
+            border: 2px solid #ebeef5;
+            border-radius: 6px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f5f7fa;
+        }
+        .thumbnail-item:hover {
+            border-color: #409eff;
+        }
+        .thumbnail-item.active {
+            border-color: #409eff;
+        }
+        .thumbnail-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        /* 右侧信息区域 */
+        .goods-details {
+            flex: 1;
+        }
+        .goods-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #303133;
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+        .goods-meta {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #ebeef5;
+            font-size: 14px;
+            color: #909399;
+        }
+        .goods-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .goods-meta-item i {
+            font-size: 16px;
+        }
+        
+        /* 价格信息区域 */
+        .price-section {
+            background: #f5f7fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .price-row:last-child {
+            margin-bottom: 0;
+        }
+        .price-label {
+            font-size: 14px;
+            color: #606266;
+        }
+        .price-value {
+            font-size: 20px;
+            font-weight: 600;
+            color: #f56c6c;
+        }
+        .price-value.highlight {
+            font-size: 28px;
+        }
+        .price-hint {
+            font-size: 12px;
+            color: #909399;
+            margin-top: 5px;
+        }
+        
+        /* 拍卖时间信息 */
+        .auction-time {
+            background: #ecf5ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .time-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        .time-item:last-child {
+            margin-bottom: 0;
+        }
+        .time-label {
+            color: #606266;
+        }
+        .time-value {
+            color: #303133;
+            font-weight: 500;
+        }
+        .countdown {
+            color: #f56c6c;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        
+        /* 商品状态标签 */
+        .goods-status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 20px;
+        }
+        .status-auctioning {
+            background: #f0f9ff;
+            color: #409eff;
+        }
+        .status-upcoming {
+            background: #fef0f0;
+            color: #f56c6c;
+        }
+        .status-ended {
+            background: #f5f7fa;
+            color: #909399;
+        }
+        .status-sold {
+            background: #f0f9ff;
+            color: #67c23a;
+        }
+        
+        /* 竞拍操作区域 */
+        .bid-section {
+            background: #fff;
+            border: 2px solid #409eff;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+        .bid-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #303133;
+            margin-bottom: 20px;
+        }
+        .bid-input-wrapper {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .bid-input {
+            flex: 1;
+        }
+        .bid-hint {
+            font-size: 12px;
+            color: #909399;
+            margin-bottom: 15px;
+        }
+        .bid-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        .bid-button {
+            flex: 1;
+            height: 50px;
+            font-size: 16px;
+        }
+        
+        /* 商品详情描述区域 */
+        .goods-desc-section {
+            background: #fff;
+            padding: 30px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+        }
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #303133;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #409eff;
+        }
+        .goods-desc-content {
+            font-size: 14px;
+            line-height: 1.8;
+            color: #606266;
+            white-space: pre-wrap;
+        }
+        
+        /* 竞拍记录区域 */
+        .bid-records-section {
+            background: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+        }
+        .bid-record-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #ebeef5;
+        }
+        .bid-record-item:last-child {
+            border-bottom: none;
+        }
+        .bid-record-info {
+            flex: 1;
+        }
+        .bid-record-user {
+            font-size: 14px;
+            color: #303133;
+            margin-bottom: 5px;
+        }
+        .bid-record-time {
+            font-size: 12px;
+            color: #909399;
+        }
+        .bid-record-price {
+            font-size: 18px;
+            font-weight: 600;
+            color: #f56c6c;
+        }
+        .bid-record-type {
+            font-size: 12px;
+            color: #909399;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="page-container">
+        <!-- 商品基本信息区域 -->
+        <div class="goods-info-section">
+            <div class="goods-info-wrapper">
+                <!-- 左侧图片区域 -->
+                <div class="goods-images">
+                    <div class="main-image">
+                        <img 
+                            :src="currentImage" 
+                            :alt="goodsInfo.goodsName"
+                            @error="handleImageError">
+                    </div>
+                    <div class="thumbnail-list">
+                        <div 
+                            v-for="(img, index) in goodsImages"
+                            :key="index"
+                            class="thumbnail-item"
+                            :class="{ active: currentImageIndex === index }"
+                            @click="switchImage(index)">
+                            <img 
+                                :src="img" 
+                                :alt="'商品图片' + (index + 1)"
+                                @error="handleImageError">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 右侧信息区域 -->
+                <div class="goods-details">
+                    <h1 class="goods-title">{{ goodsInfo.goodsName }}</h1>
+                    
+                    <div class="goods-meta">
+                        <div class="goods-meta-item">
+                            <i class="el-icon-folder"></i>
+                            <span>类别：{{ categoryName }}</span>
+                        </div>
+                        <div class="goods-meta-item">
+                            <i class="el-icon-user"></i>
+                            <span>卖家：{{ sellerName }}</span>
+                        </div>
+                        <div class="goods-meta-item">
+                            <i class="el-icon-time"></i>
+                            <span>发布时间：{{ formatDateTime(goodsInfo.createTime) }}</span>
+                        </div>
+                    </div>
+                    
+                    <span class="goods-status-badge" :class="getStatusClass(goodsInfo.goodsStatus)">
+                        {{ getStatusText(goodsInfo.goodsStatus) }}
+                    </span>
+                    
+                    <!-- 价格信息 -->
+                    <div class="price-section">
+                        <div class="price-row">
+                            <span class="price-label">起拍价</span>
+                            <span class="price-value">¥{{ formatPrice(goodsInfo.basePrice) }}</span>
+                        </div>
+                        <div class="price-row">
+                            <span class="price-label">最小加价幅度</span>
+                            <span class="price-value">¥{{ formatPrice(goodsInfo.addPrice) }}</span>
+                        </div>
+                        <div class="price-row">
+                            <span class="price-label">当前最高报价</span>
+                            <span class="price-value highlight">¥{{ formatPrice(currentHighestBid) }}</span>
+                        </div>
+                        <div class="price-hint" v-if="currentHighestBid > 0">
+                            <i class="el-icon-info"></i> 已有 {{ bidCount }} 人出价
+                        </div>
+                        <div class="price-hint" v-else>
+                            <i class="el-icon-info"></i> 暂无出价，成为第一个出价者
+                        </div>
+                    </div>
+                    
+                    <!-- 拍卖时间信息 -->
+                    <div class="auction-time">
+                        <div class="time-item">
+                            <span class="time-label">拍卖开始时间</span>
+                            <span class="time-value">{{ formatDateTime(goodsInfo.startTime) }}</span>
+                        </div>
+                        <div class="time-item">
+                            <span class="time-label">拍卖结束时间</span>
+                            <span class="time-value">{{ formatDateTime(goodsInfo.endTime) }}</span>
+                        </div>
+                        <div class="time-item" v-if="goodsInfo.goodsStatus === 1">
+                            <span class="time-label">剩余时间</span>
+                            <span class="countdown">{{ countdownText }}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- 竞拍操作区域 -->
+                    <div class="bid-section" v-if="goodsInfo.goodsStatus === 1">
+                        <div class="bid-title">
+                            <i class="el-icon-edit"></i> 参与竞拍
+                        </div>
+                        <div class="bid-input-wrapper">
+                            <el-input-number
+                                v-model="bidPrice"
+                                :min="minBidPrice"
+                                :step="goodsInfo.addPrice"
+                                :precision="2"
+                                class="bid-input"
+                                placeholder="请输入报价"
+                                :controls="false">
+                            </el-input-number>
+                            <el-button 
+                                type="primary" 
+                                size="large"
+                                class="bid-button"
+                                @click="handleQuickBid('min')">
+                                最低出价
+                            </el-button>
+                        </div>
+                        <div class="bid-hint">
+                            <i class="el-icon-info"></i> 
+                            最低出价：¥{{ formatPrice(minBidPrice) }}（当前最高价 + 最小加价幅度）
+                        </div>
+                        <div class="bid-buttons">
+                            <el-button 
+                                type="primary" 
+                                size="large"
+                                class="bid-button"
+                                icon="el-icon-coin"
+                                @click="handleBid">
+                                立即出价
+                            </el-button>
+                            <el-button 
+                                type="success" 
+                                size="large"
+                                class="bid-button"
+                                icon="el-icon-magic-stick"
+                                @click="handleAgentBid">
+                                代理出价
+                            </el-button>
+                        </div>
+                    </div>
+                    <div class="bid-section" v-else>
+                        <div style="text-align: center; padding: 20px; color: #909399;">
+                            <i class="el-icon-warning" style="font-size: 24px; margin-bottom: 10px;"></i>
+                            <p>{{ getBidDisabledReason() }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 商品详情描述区域 -->
+        <div class="goods-desc-section">
+            <div class="section-title">
+                <i class="el-icon-document"></i> 商品详情
+            </div>
+            <div class="goods-desc-content">{{ goodsInfo.goodsDesc || '暂无商品描述' }}</div>
+        </div>
+        
+        <!-- 竞拍记录区域 -->
+        <div class="bid-records-section">
+            <div class="section-title">
+                <i class="el-icon-list"></i> 竞拍记录
+            </div>
+            <div v-if="bidRecords.length > 0">
+                <div 
+                    v-for="(record, index) in bidRecords"
+                    :key="record.id"
+                    class="bid-record-item">
+                    <div class="bid-record-info">
+                        <div class="bid-record-user">
+                            {{ record.buyerName || '用户' + record.buyerId }}
+                            <span v-if="index === 0" style="color: #f56c6c; margin-left: 10px;">（当前最高价）</span>
+                        </div>
+                        <div class="bid-record-time">
+                            {{ formatDateTime(record.bidTime) }}
+                            <span class="bid-record-type" v-if="record.isAgent">代理出价</span>
+                            <span class="bid-record-type" v-else>手动出价</span>
+                        </div>
+                    </div>
+                    <div class="bid-record-price">
+                        ¥{{ formatPrice(record.bidPrice) }}
+                    </div>
+                </div>
+            </div>
+            <el-empty v-else description="暂无竞拍记录"></el-empty>
+        </div>
+    </div>
+    
+    <script src="https://unpkg.com/vue@2/dist/vue.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script>
+        new Vue({
+            el: '#app',
+            data() {
+                return {
+                    goodsId: null,
+                    goodsInfo: {
+                        id: 1,
+                        goodsName: '清代青花瓷花瓶',
+                        categoryId: 3,
+                        sellerId: 1,
+                        goodsDesc: '清代乾隆年间青花瓷花瓶，保存完好，具有很高的收藏价值。\n\n瓶身绘有精美的花鸟图案，工艺精湛，釉色均匀，是清代青花瓷的典型代表作品。\n\n尺寸：高约35cm，口径约12cm，底径约10cm。\n\n瑕疵说明：瓶口边缘有轻微磨损，不影响整体美观和收藏价值。\n\n附有专业鉴定证书，保证真品。',
+                        goodsImg: 'https://via.placeholder.com/500x500?text=商品主图1,https://via.placeholder.com/500x500?text=商品主图2,https://via.placeholder.com/500x500?text=商品主图3',
+                        basePrice: 50000.00,
+                        addPrice: 1000.00,
+                        reservePrice: 60000.00,
+                        startTime: '2025-01-01 10:00:00',
+                        endTime: '2025-01-05 18:00:00',
+                        goodsStatus: 1,
+                        createTime: '2024-12-25 10:00:00'
+                    },
+                    categoryName: '艺术品',
+                    sellerName: '古董收藏家',
+                    currentImageIndex: 0,
+                    bidPrice: 0,
+                    currentHighestBid: 52000.00,
+                    bidCount: 2,
+                    bidRecords: [
+                        {
+                            id: 1,
+                            buyerId: 2,
+                            buyerName: '买家001',
+                            bidPrice: 52000.00,
+                            bidTime: '2025-01-02 14:30:00',
+                            isAgent: false
+                        },
+                        {
+                            id: 2,
+                            buyerId: 3,
+                            buyerName: '买家002',
+                            bidPrice: 51000.00,
+                            bidTime: '2025-01-02 10:20:00',
+                            isAgent: true
+                        }
+                    ],
+                    countdownTimer: null,
+                    countdownText: '计算中...'
+                }
+            },
+            computed: {
+                goodsImages() {
+                    if (!this.goodsInfo.goodsImg) {
+                        return ['https://via.placeholder.com/500x500?text=No+Image'];
+                    }
+                    const images = this.goodsInfo.goodsImg.split(',');
+                    return images.map(img => img.trim()).filter(img => img);
+                },
+                currentImage() {
+                    return this.goodsImages[this.currentImageIndex] || 'https://via.placeholder.com/500x500?text=No+Image';
+                },
+                minBidPrice() {
+                    if (this.currentHighestBid > 0) {
+                        return parseFloat((this.currentHighestBid + this.goodsInfo.addPrice).toFixed(2));
+                    }
+                    return parseFloat(this.goodsInfo.basePrice);
+                }
+            },
+            mounted() {
+                // 从URL获取商品ID
+                const urlParams = new URLSearchParams(window.location.search);
+                this.goodsId = urlParams.get('id') || 1;
+                
+                // 加载商品详情
+                this.loadGoodsDetail();
+                
+                // 如果商品正在竞拍中，启动倒计时
+                if (this.goodsInfo.goodsStatus === 1) {
+                    this.startCountdown();
+                }
+            },
+            beforeDestroy() {
+                if (this.countdownTimer) {
+                    clearInterval(this.countdownTimer);
+                }
+            },
+            methods: {
+                // 加载商品详情
+                loadGoodsDetail() {
+                    // TODO: 调用后端API获取商品详情
+                    // 这里使用模拟数据
+                    this.$message.info('加载商品详情功能开发中...');
+                },
+                // 切换图片
+                switchImage(index) {
+                    this.currentImageIndex = index;
+                },
+                // 图片加载错误处理
+                handleImageError(event) {
+                    event.target.src = 'https://via.placeholder.com/500x500?text=Image+Error';
+                },
+                // 快速出价（最低价）
+                handleQuickBid() {
+                    this.bidPrice = this.minBidPrice;
+                },
+                // 立即出价
+                handleBid() {
+                    if (!this.bidPrice || this.bidPrice < this.minBidPrice) {
+                        this.$message.warning('出价不能低于最低出价 ¥' + this.formatPrice(this.minBidPrice));
+                        return;
+                    }
+                    
+                    this.$confirm('确认出价 ¥' + this.formatPrice(this.bidPrice) + ' 吗？', '确认出价', {
+                        confirmButtonText: '确认',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }).then(() => {
+                        // TODO: 调用后端API提交出价
+                        this.$message.success('出价功能开发中...');
+                    }).catch(() => {
+                        // 取消
+                    });
+                },
+                // 代理出价
+                handleAgentBid() {
+                    this.$prompt('请输入您的最高心理价位', '代理出价', {
+                        confirmButtonText: '确认',
+                        cancelButtonText: '取消',
+                        inputPattern: /^\d+(\.\d{1,2})?$/,
+                        inputErrorMessage: '请输入有效的金额',
+                        inputPlaceholder: '请输入最高心理价位'
+                    }).then(({ value }) => {
+                        const maxPrice = parseFloat(value);
+                        if (maxPrice < this.minBidPrice) {
+                            this.$message.warning('最高心理价位不能低于最低出价');
+                            return;
+                        }
+                        // TODO: 调用后端API提交代理出价
+                        this.$message.success('代理出价功能开发中...');
+                    }).catch(() => {
+                        // 取消
+                    });
+                },
+                // 获取商品状态文本
+                getStatusText(status) {
+                    const statusMap = {
+                        0: '未开始',
+                        1: '竞拍中',
+                        2: '已成交',
+                        3: '已流拍'
+                    };
+                    return statusMap[status] || '未知';
+                },
+                // 获取商品状态样式类
+                getStatusClass(status) {
+                    const classMap = {
+                        0: 'status-upcoming',
+                        1: 'status-auctioning',
+                        2: 'status-sold',
+                        3: 'status-ended'
+                    };
+                    return classMap[status] || '';
+                },
+                // 获取竞拍禁用原因
+                getBidDisabledReason() {
+                    if (this.goodsInfo.goodsStatus === 0) {
+                        return '拍卖尚未开始';
+                    } else if (this.goodsInfo.goodsStatus === 2) {
+                        return '拍卖已成交';
+                    } else if (this.goodsInfo.goodsStatus === 3) {
+                        return '拍卖已流拍';
+                    }
+                    return '暂不可竞拍';
+                },
+                // 启动倒计时
+                startCountdown() {
+                    this.updateCountdown();
+                    this.countdownTimer = setInterval(() => {
+                        this.updateCountdown();
+                    }, 1000);
+                },
+                // 更新倒计时
+                updateCountdown() {
+                    const endTime = new Date(this.goodsInfo.endTime).getTime();
+                    const now = new Date().getTime();
+                    const diff = endTime - now;
+                    
+                    if (diff <= 0) {
+                        this.countdownText = '已结束';
+                        if (this.countdownTimer) {
+                            clearInterval(this.countdownTimer);
+                        }
+                        return;
+                    }
+                    
+                    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                    
+                    if (days > 0) {
+                        this.countdownText = days + "天 " + hours + "小时 " + minutes + "分钟 " + seconds + "秒";
+                    } else if (hours > 0) {
+                        this.countdownText = hours + "小时 " + minutes + "分钟 " + seconds + "秒";
+                    } else {
+                        this.countdownText = minutes + "分钟 " + seconds + "秒";
+                    }
+                },
+                // 格式化价格
+                formatPrice(price) {
+                    if (!price) return '0.00';
+                    return parseFloat(price).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                },
+                // 格式化日期时间
+                formatDateTime(dateTime) {
+                    if (!dateTime) return '';
+                    const date = new Date(dateTime);
+                    const year = date.getFullYear();
+                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                    const day = date.getDate().toString().padStart(2, '0');
+                    const hours = date.getHours().toString().padStart(2, '0');
+                    const minutes = date.getMinutes().toString().padStart(2, '0');
+                    return year + "-" + month + "-" + day + " " + hours + ":" + minutes;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+

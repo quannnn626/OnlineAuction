@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.auction.onlineauction.OnlineAuction.mapper.AuctionOrderMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.auction.onlineauction.OnlineAuction.entity.AuctionOrder">
+        <id column="id" property="id" />
+        <result column="order_no" property="orderNo" />
+        <result column="goods_id" property="goodsId" />
+        <result column="buyer_id" property="buyerId" />
+        <result column="seller_id" property="sellerId" />
+        <result column="record_id" property="recordId" />
+        <result column="deal_price" property="dealPrice" />
+        <result column="deposit_amount" property="depositAmount" />
+        <result column="remain_amount" property="remainAmount" />
+        <result column="pay_deadline" property="payDeadline" />
+        <result column="order_status" property="orderStatus" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <result column="del_flag" property="delFlag" />
+    </resultMap>
+
+</mapper>

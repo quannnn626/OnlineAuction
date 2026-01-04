@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>竞拍公告 - 在线拍卖系统</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+        }
+        .page-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .page-title {
+            font-size: 24px;
+            font-weight: 500;
+            color: #303133;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="page-container">
+        <h1 class="page-title">竞拍公告</h1>
+        <el-card shadow="never">
+            <div style="padding: 20px;">
+                <el-timeline>
+                    <el-timeline-item 
+                        v-for="(notice, index) in noticeList" 
+                        :key="index"
+                        :timestamp="notice.publishTime"
+                        placement="top"
+                    >
+                        <el-card>
+                            <h4>{{ notice.title }}</h4>
+                            <p>{{ notice.content }}</p>
+                        </el-card>
+                    </el-timeline-item>
+                </el-timeline>
+            </div>
+        </el-card>
+    </div>
+    <script src="https://unpkg.com/vue@2/dist/vue.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script>
+        new Vue({
+            el: '#app',
+            data() {
+                return {
+                    noticeList: [
+                        { title: '系统维护通知', content: '系统将于今晚进行维护，预计维护时间2小时', publishTime: '2025-12-31 10:00:00' },
+                        { title: '拍卖规则更新', content: '拍卖规则已更新，请用户仔细阅读', publishTime: '2025-12-30 15:00:00' }
+                    ]
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+

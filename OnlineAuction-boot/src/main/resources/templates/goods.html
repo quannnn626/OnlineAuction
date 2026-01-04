@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>拍卖商品 - 在线拍卖系统</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+        }
+        .page-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .page-title {
+            font-size: 24px;
+            font-weight: 500;
+            color: #303133;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="page-container">
+        <h1 class="page-title">拍卖商品</h1>
+        <el-card shadow="never">
+            <div style="padding: 20px;">
+                <el-form :inline="true" class="demo-form-inline">
+                    <el-form-item label="商品名称">
+                        <el-input v-model="searchForm.goodsName" placeholder="请输入商品名称" clearable></el-input>
+                    </el-form-item>
+                    <el-form-item label="类目">
+                        <el-select v-model="searchForm.categoryId" placeholder="请选择类目" clearable>
+                            <el-option label="全部" value=""></el-option>
+                        </el-select>
+                    </el-form-item>
+                    <el-form-item>
+                        <el-button type="primary" @click="handleSearch">查询</el-button>
+                        <el-button @click="handleReset">重置</el-button>
+                    </el-form-item>
+                </el-form>
+                
+                <el-table :data="tableData" border style="width: 100%; margin-top: 20px;">
+                    <el-table-column prop="id" label="商品ID" width="100"></el-table-column>
+                    <el-table-column prop="goodsName" label="商品名称" width="200"></el-table-column>
+                    <el-table-column prop="categoryName" label="类目" width="150"></el-table-column>
+                    <el-table-column prop="basePrice" label="起拍价" width="120"></el-table-column>
+                    <el-table-column prop="goodsStatus" label="状态" width="120">
+                        <template slot-scope="scope">
+                            <el-tag v-if="scope.row.goodsStatus === 0" type="info">未开始</el-tag>
+                            <el-tag v-else-if="scope.row.goodsStatus === 1" type="success">竞拍中</el-tag>
+                            <el-tag v-else-if="scope.row.goodsStatus === 2" type="warning">已成交</el-tag>
+                            <el-tag v-else type="danger">已流拍</el-tag>
+                        </template>
+                    </el-table-column>
+                    <el-table-column label="操作" width="150">
+                        <template slot-scope="scope">
+                            <el-button size="mini" @click="handleView(scope.row)">查看</el-button>
+                            <el-button size="mini" type="primary" @click="handleBid(scope.row)">竞拍</el-button>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
+        </el-card>
+    </div>
+    <script src="https://unpkg.com/vue@2/dist/vue.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script>
+        new Vue({
+            el: '#app',
+            data() {
+                return {
+                    searchForm: {
+                        goodsName: '',
+                        categoryId: ''
+                    },
+                    tableData: []
+                }
+            },
+            mounted() {
+                this.loadData();
+            },
+            methods: {
+                loadData() {
+                    // 这里应该调用后端API获取数据
+                    this.tableData = [
+                        { id: 1, goodsName: '古董花瓶', categoryName: '艺术品', basePrice: 1000, goodsStatus: 1 },
+                        { id: 2, goodsName: '名画', categoryName: '艺术品', basePrice: 5000, goodsStatus: 1 }
+                    ];
+                },
+                handleSearch() {
+                    this.$message.info('查询功能待实现');
+                },
+                handleReset() {
+                    this.searchForm = {
+                        goodsName: '',
+                        categoryId: ''
+                    };
+                },
+                handleView(row) {
+                    this.$message.info('查看功能待实现：' + row.goodsName);
+                },
+                handleBid(row) {
+                    this.$message.info('竞拍功能待实现：' + row.goodsName);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+

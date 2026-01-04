@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>订单管理 - 在线拍卖系统</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+        }
+        .page-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .page-title {
+            font-size: 24px;
+            font-weight: 500;
+            color: #303133;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="page-container">
+        <h1 class="page-title">订单管理</h1>
+        <el-card shadow="never">
+            <div style="padding: 20px;">
+                <el-tabs v-model="activeTab" @tab-click="handleTabClick">
+                    <el-tab-pane label="待付款" name="unpaid">
+                        <el-table :data="unpaidData" border style="width: 100%; margin-top: 20px;">
+                            <el-table-column prop="orderNo" label="订单号" width="180"></el-table-column>
+                            <el-table-column prop="goodsName" label="商品名称" width="200"></el-table-column>
+                            <el-table-column prop="dealPrice" label="成交价" width="120"></el-table-column>
+                            <el-table-column prop="payDeadline" label="付款截止时间" width="180"></el-table-column>
+                            <el-table-column label="操作" width="150">
+                                <template slot-scope="scope">
+                                    <el-button size="mini" type="primary" @click="handlePay(scope.row)">支付尾款</el-button>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                    </el-tab-pane>
+                    <el-tab-pane label="待收货" name="unreceived">
+                        <el-table :data="unreceivedData" border style="width: 100%; margin-top: 20px;">
+                            <el-table-column prop="orderNo" label="订单号" width="180"></el-table-column>
+                            <el-table-column prop="goodsName" label="商品名称" width="200"></el-table-column>
+                            <el-table-column prop="dealPrice" label="成交价" width="120"></el-table-column>
+                            <el-table-column label="操作" width="150">
+                                <template slot-scope="scope">
+                                    <el-button size="mini" type="success" @click="handleConfirm(scope.row)">确认收货</el-button>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                    </el-tab-pane>
+                    <el-tab-pane label="已完成" name="completed">
+                        <el-table :data="completedData" border style="width: 100%; margin-top: 20px;">
+                            <el-table-column prop="orderNo" label="订单号" width="180"></el-table-column>
+                            <el-table-column prop="goodsName" label="商品名称" width="200"></el-table-column>
+                            <el-table-column prop="dealPrice" label="成交价" width="120"></el-table-column>
+                            <el-table-column prop="createTime" label="完成时间" width="180"></el-table-column>
+                        </el-table>
+                    </el-tab-pane>
+                </el-tabs>
+            </div>
+        </el-card>
+    </div>
+    <script src="https://unpkg.com/vue@2/dist/vue.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script>
+        new Vue({
+            el: '#app',
+            data() {
+                return {
+                    activeTab: 'unpaid',
+                    unpaidData: [
+                        { orderNo: '20251231001', goodsName: '古董花瓶', dealPrice: 1500, payDeadline: '2026-01-01 10:00:00' }
+                    ],
+                    unreceivedData: [],
+                    completedData: []
+                }
+            },
+            methods: {
+                handleTabClick(tab) {
+                    this.$message.info('切换到：' + tab.label);
+                },
+                handlePay(row) {
+                    this.$message.info('支付功能待实现：' + row.orderNo);
+                },
+                handleConfirm(row) {
+                    this.$message.info('确认收货功能待实现：' + row.orderNo);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+
