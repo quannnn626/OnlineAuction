@@ -42,7 +42,7 @@
       <div class="category-title">
         <i class="el-icon-menu"></i> 商品分类
       </div>
-      <div class="category-list">
+      <div class="category-list" v-loading="categoryLoading">
         <div 
           class="category-item"
           :class="{ active: selectedCategoryId === 0 }"
@@ -56,6 +56,9 @@
           :class="{ active: selectedCategoryId === category.id }"
           @click="handleCategoryClick(category.id)">
           {{ category.categoryName }}
+        </div>
+        <div v-if="!categoryLoading && categoryList.length === 0" class="category-empty">
+          暂无分类数据
         </div>
       </div>
     </div>
@@ -104,6 +107,8 @@
 </template>
 
 <script>
+import { getCategoryListForHome } from "@/api/category";
+
 export default {
   name: 'Home',
   data() {
@@ -114,15 +119,9 @@ export default {
         { id: 2, bannerImg: '/images/banner-placeholder.svg', goodsId: 2, goodsName: '限量版名表' },
         { id: 3, bannerImg: '/images/banner-placeholder.svg', goodsId: 3, goodsName: '名家字画' }
       ],
-      categoryList: [
-        { id: 1, categoryName: '奢侈品' },
-        { id: 2, categoryName: '房产' },
-        { id: 3, categoryName: '艺术品' },
-        { id: 4, categoryName: '珠宝首饰' },
-        { id: 5, categoryName: '汽车' },
-        { id: 6, categoryName: '其他' }
-      ],
+      categoryList: [],
       selectedCategoryId: 0,
+      categoryLoading: false,
       goodsList: [
         {
           id: 1,
@@ -137,7 +136,24 @@ export default {
       ]
     }
   },
+  mounted() {
+    this.loadCategories();
+  },
   methods: {
+    // 加载商品分类列表
+    async loadCategories() {
+      this.categoryLoading = true;
+      try {
+        const data = await getCategoryListForHome();
+        this.categoryList = data || [];
+      } catch (error) {
+        console.error("加载商品分类失败:", error);
+        // 如果加载失败，使用空数组，不显示错误提示（避免影响用户体验）
+        this.categoryList = [];
+      } finally {
+        this.categoryLoading = false;
+      }
+    },
     handleSearch() {
       if (!this.searchKeyword.trim()) {
         this.$message.warning('请输入搜索关键词')
@@ -283,6 +299,14 @@ export default {
 .category-item.active {
   background: #409eff;
   color: #fff;
+}
+
+.category-empty {
+  width: 100%;
+  text-align: center;
+  color: #909399;
+  font-size: 14px;
+  padding: 20px 0;
 }
 
 .goods-section {

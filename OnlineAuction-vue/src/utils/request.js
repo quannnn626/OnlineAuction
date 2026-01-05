@@ -3,6 +3,7 @@ import { Message } from "element-ui";
 
 // 创建 axios 实例
 const service = axios.create({
+  // 设置 axios 实例的基础 URL，所有相对请求会被拼接到该前缀，请求超时为10秒
   baseURL: process.env.NODE_ENV === "production" ? "/api" : "/api",
   timeout: 10000,
 });
@@ -54,5 +55,5 @@ service.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
+//导出配置好拦截器的 axios 实例，项目中所有 API 请求通过这个实例发出，会自动走上面逻辑
 export default service;

@@ -16,6 +16,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
+        // 统一配置：所有 /api/** 路径都允许跨域
         registry.addMapping("/api/**")
                 .allowedOriginPatterns("*")  // 允许所有来源（生产环境应指定具体域名）
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")

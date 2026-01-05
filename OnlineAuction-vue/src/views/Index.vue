@@ -219,6 +219,8 @@ export default {
   overflow-y: auto;
   overflow-x: hidden;
   z-index: 1000;
+  display: flex;
+  flex-direction: column;
 }
 
 .logo {
@@ -227,8 +229,7 @@ export default {
   text-align: center;
   color: #fff;
   background-color: #2b3a4a;
-  position: sticky;
-  top: 0;
+  flex-shrink: 0;
   z-index: 10;
 }
 
@@ -241,6 +242,9 @@ export default {
 .sidebar-menu {
   border: none;
   background-color: #304156;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .sidebar-menu .el-menu-item,
@@ -310,5 +314,7 @@ export default {
   flex: 1;
   height: 0;
   min-height: 0;
+  /* 确保内容区域可以独立滚动 */
+  -webkit-overflow-scrolling: touch;
 }
 </style>
