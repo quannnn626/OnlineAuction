@@ -7,30 +7,54 @@
           v-model="searchKeyword"
           placeholder="请输入商品名称、关键词搜索"
           size="large"
-          @keyup.enter.native="handleSearch">
-          <el-button slot="append" icon="el-icon-search" @click="handleSearch"></el-button>
+          @keyup.enter.native="handleSearch"
+        >
+          <el-button
+            slot="append"
+            icon="el-icon-search"
+            @click="handleSearch"
+          ></el-button>
         </el-input>
       </div>
     </div>
 
     <!-- 轮播图区域 -->
     <div class="banner-section">
-      <el-carousel 
-        :interval="4000" 
-        type="card" 
+      <el-carousel
+        :interval="4000"
+        type="card"
         height="400px"
         class="banner-carousel"
-        indicator-position="outside">
-        <el-carousel-item 
-          v-for="(banner, index) in bannerList" 
+        indicator-position="outside"
+      >
+        <el-carousel-item
+          v-for="(banner, index) in bannerList"
           :key="index"
-          @click.native="handleBannerClick(banner)">
-          <div 
+          @click.native="handleBannerClick(banner)"
+        >
+          <div
             class="banner-item"
-            :style="{ backgroundImage: 'url(' + (banner.bannerImg || '/images/banner-placeholder.svg') + ')' }">
-            <div style="text-align: center; background: rgba(0,0,0,0.3); padding: 20px; border-radius: 8px;">
-              <h2 style="margin: 0 0 10px 0; color: #fff;">{{ banner.goodsName || '轮播图 ' + (index + 1) }}</h2>
-              <p style="margin: 0; font-size: 16px; color: #fff;">点击查看详情</p>
+            :style="{
+              backgroundImage:
+                'url(' +
+                (banner.bannerImg || '/images/banner-placeholder.svg') +
+                ')',
+            }"
+          >
+            <div
+              style="
+                text-align: center;
+                background: rgba(0, 0, 0, 0.3);
+                padding: 20px;
+                border-radius: 8px;
+              "
+            >
+              <h2 style="margin: 0 0 10px 0; color: #fff">
+                {{ banner.goodsName || "轮播图 " + (index + 1) }}
+              </h2>
+              <p style="margin: 0; font-size: 16px; color: #fff">
+                点击查看详情
+              </p>
             </div>
           </div>
         </el-carousel-item>
@@ -39,25 +63,28 @@
 
     <!-- 商品类别区域 -->
     <div class="category-section">
-      <div class="category-title">
-        <i class="el-icon-menu"></i> 商品分类
-      </div>
+      <div class="category-title"><i class="el-icon-menu"></i> 商品分类</div>
       <div class="category-list" v-loading="categoryLoading">
-        <div 
+        <div
           class="category-item"
           :class="{ active: selectedCategoryId === 0 }"
-          @click="handleCategoryClick(0)">
+          @click="handleCategoryClick(0)"
+        >
           全部
         </div>
-        <div 
+        <div
           v-for="category in categoryList"
           :key="category.id"
           class="category-item"
           :class="{ active: selectedCategoryId === category.id }"
-          @click="handleCategoryClick(category.id)">
+          @click="handleCategoryClick(category.id)"
+        >
           {{ category.categoryName }}
         </div>
-        <div v-if="!categoryLoading && categoryList.length === 0" class="category-empty">
+        <div
+          v-if="!categoryLoading && categoryList.length === 0"
+          class="category-empty"
+        >
           暂无分类数据
         </div>
       </div>
@@ -65,37 +92,43 @@
 
     <!-- 热门商品列表区域 -->
     <div class="goods-section">
-      <div class="goods-title">
-        <i class="el-icon-star-on"></i> 热门商品
-      </div>
+      <div class="goods-title"><i class="el-icon-star-on"></i> 热门商品</div>
       <div class="goods-list" v-if="goodsList.length > 0">
-        <div 
+        <div
           v-for="goods in goodsList"
           :key="goods.id"
           class="goods-item"
-          @click="handleGoodsClick(goods)">
+          @click="handleGoodsClick(goods)"
+        >
           <div class="goods-item-content">
             <div class="goods-item-info">
               <div class="goods-item-title">{{ goods.goodsName }}</div>
-              <div class="goods-item-desc">{{ goods.goodsDesc || '暂无描述' }}</div>
+              <div class="goods-item-desc">
+                {{ goods.goodsDesc || "暂无描述" }}
+              </div>
               <div class="goods-item-price">
                 <span class="goods-item-price-label">起拍价：</span>
                 ¥{{ goods.basePrice }}
               </div>
             </div>
             <div class="goods-item-image">
-              <img 
-                :src="getGoodsImage(goods.goodsImg)" 
+              <img
+                :src="getGoodsImage(goods.goodsImg)"
                 :alt="goods.goodsName"
-                @error="handleImageError">
+                @error="handleImageError"
+              />
             </div>
           </div>
           <div class="goods-item-footer">
             <span>
               <i class="el-icon-time"></i>
-              {{ formatTime(goods.startTime) }} - {{ formatTime(goods.endTime) }}
+              {{ formatTime(goods.startTime) }} -
+              {{ formatTime(goods.endTime) }}
             </span>
-            <span class="goods-status" :class="getGoodsStatusClass(goods.goodsStatus)">
+            <span
+              class="goods-status"
+              :class="getGoodsStatusClass(goods.goodsStatus)"
+            >
               {{ getGoodsStatusText(goods.goodsStatus) }}
             </span>
           </div>
@@ -110,14 +143,29 @@
 import { getCategoryListForHome } from "@/api/category";
 
 export default {
-  name: 'Home',
+  name: "Home",
   data() {
     return {
-      searchKeyword: '',
+      searchKeyword: "",
       bannerList: [
-        { id: 1, bannerImg: '/images/banner-placeholder.svg', goodsId: 1, goodsName: '精品古董花瓶' },
-        { id: 2, bannerImg: '/images/banner-placeholder.svg', goodsId: 2, goodsName: '限量版名表' },
-        { id: 3, bannerImg: '/images/banner-placeholder.svg', goodsId: 3, goodsName: '名家字画' }
+        {
+          id: 1,
+          bannerImg: "/images/banner-placeholder.svg",
+          goodsId: 1,
+          goodsName: "精品古董花瓶",
+        },
+        {
+          id: 2,
+          bannerImg: "/images/banner-placeholder.svg",
+          goodsId: 2,
+          goodsName: "限量版名表",
+        },
+        {
+          id: 3,
+          bannerImg: "/images/banner-placeholder.svg",
+          goodsId: 3,
+          goodsName: "名家字画",
+        },
       ],
       categoryList: [],
       selectedCategoryId: 0,
@@ -125,16 +173,17 @@ export default {
       goodsList: [
         {
           id: 1,
-          goodsName: '清代青花瓷花瓶',
-          goodsDesc: '清代乾隆年间青花瓷花瓶，保存完好，具有很高的收藏价值。瓶身绘有精美的花鸟图案，工艺精湛。',
-          goodsImg: '/images/goods-placeholder.svg',
-          basePrice: 50000.00,
-          startTime: '2025-01-01 10:00:00',
-          endTime: '2025-01-05 18:00:00',
-          goodsStatus: 1
-        }
-      ]
-    }
+          goodsName: "清代青花瓷花瓶",
+          goodsDesc:
+            "清代乾隆年间青花瓷花瓶，保存完好，具有很高的收藏价值。瓶身绘有精美的花鸟图案，工艺精湛。",
+          goodsImg: "/images/goods-placeholder.svg",
+          basePrice: 50000.0,
+          startTime: "2025-01-01 10:00:00",
+          endTime: "2025-01-05 18:00:00",
+          goodsStatus: 1,
+        },
+      ],
+    };
   },
   mounted() {
     this.loadCategories();
@@ -156,62 +205,68 @@ export default {
     },
     handleSearch() {
       if (!this.searchKeyword.trim()) {
-        this.$message.warning('请输入搜索关键词')
-        return
+        this.$message.warning("请输入搜索关键词");
+        return;
       }
-      this.$message.info('搜索功能开发中...')
+      this.$router.push({
+        path: "/search-results",
+        query: { keyword: this.searchKeyword.trim() },
+      });
     },
     handleBannerClick(banner) {
       if (banner.goodsId) {
-        this.$router.push({ path: '/goods-detail', query: { id: banner.goodsId } })
+        this.$router.push({
+          path: "/goods-detail",
+          query: { id: banner.goodsId },
+        });
       }
     },
     handleCategoryClick(categoryId) {
-      this.selectedCategoryId = categoryId
-      this.$message.info('筛选类别功能开发中...')
+      this.selectedCategoryId = categoryId;
+      this.$message.info("筛选类别功能开发中...");
     },
     handleGoodsClick(goods) {
-      this.$router.push({ path: '/goods-detail', query: { id: goods.id } })
+      this.$router.push({ path: "/goods-detail", query: { id: goods.id } });
     },
     getGoodsImage(goodsImg) {
       if (!goodsImg) {
-        return '/images/no-image.svg'
+        return "/images/no-image.svg";
       }
-      const images = goodsImg.split(',')
-      return images[0].trim()
+      const images = goodsImg.split(",");
+      return images[0].trim();
     },
     handleImageError(event) {
-      event.target.src = '/images/no-image.svg'
+      event.target.src = "/images/no-image.svg";
     },
     formatTime(timeStr) {
-      if (!timeStr) return ''
-      const date = new Date(timeStr)
-      const month = (date.getMonth() + 1).toString().padStart(2, '0')
-      const day = date.getDate().toString().padStart(2, '0')
-      const hours = date.getHours().toString().padStart(2, '0')
-      const minutes = date.getMinutes().toString().padStart(2, '0')
-      return month + '-' + day + ' ' + hours + ':' + minutes
+      if (!timeStr) return "";
+      const date = new Date(timeStr);
+      const month = (date.getMonth() + 1).toString().padStart(2, "0");
+      const day = date.getDate().toString().padStart(2, "0");
+      const hours = date.getHours().toString().padStart(2, "0");
+      const minutes = date.getMinutes().toString().padStart(2, "0");
+      return month + "-" + day + " " + hours + ":" + minutes;
     },
     getGoodsStatusText(status) {
       const statusMap = {
-        0: '未开始',
-        1: '竞拍中',
-        2: '已成交',
-        3: '已流拍'
-      }
-      return statusMap[status] || '未知'
+        0: "未开始",
+        1: "竞拍中",
+        2: "已成交",
+        3: "已流拍",
+      };
+      return statusMap[status] || "未知";
     },
     getGoodsStatusClass(status) {
       const classMap = {
-        0: 'goods-status-upcoming',
-        1: 'goods-status-auctioning',
-        2: 'goods-status-ended',
-        3: 'goods-status-ended'
-      }
-      return classMap[status] || ''
-    }
-  }
-}
+        0: "goods-status-upcoming",
+        1: "goods-status-auctioning",
+        2: "goods-status-ended",
+        3: "goods-status-ended",
+      };
+      return classMap[status] || "";
+    },
+  },
+};
 </script>
 
 <style scoped>
@@ -435,4 +490,3 @@ export default {
   color: #909399;
 }
 </style>
-

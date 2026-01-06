@@ -11,7 +11,7 @@
  Target Server Version : 80019
  File Encoding         : 65001
 
- Date: 31/12/2025 14:16:45
+ Date: 06/01/2026 10:35:18
 */
 
 SET NAMES utf8mb4;
@@ -51,11 +51,23 @@ CREATE TABLE `auction_category`  (
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `del_flag` tinyint NOT NULL DEFAULT 0 COMMENT '逻辑删除：0=未删除 1=已删除',
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '拍卖商品类目表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 13 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '拍卖商品类目表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of auction_category
 -- ----------------------------
+INSERT INTO `auction_category` VALUES (1, '古玩', 1, '2026-01-04 17:01:42', '2026-01-04 17:01:42', 0);
+INSERT INTO `auction_category` VALUES (2, '青眼白龙', 2, '2026-01-04 17:02:08', '2026-01-04 17:02:08', 0);
+INSERT INTO `auction_category` VALUES (3, '3', 3, '2026-01-04 17:02:40', '2026-01-04 17:02:40', 0);
+INSERT INTO `auction_category` VALUES (4, '4', 4, '2026-01-04 17:02:43', '2026-01-04 17:02:43', 0);
+INSERT INTO `auction_category` VALUES (5, '5', 5, '2026-01-04 17:02:47', '2026-01-04 17:02:47', 0);
+INSERT INTO `auction_category` VALUES (6, '6', 6, '2026-01-04 17:02:50', '2026-01-04 17:02:50', 0);
+INSERT INTO `auction_category` VALUES (7, '7', 7, '2026-01-04 17:02:53', '2026-01-04 17:02:53', 0);
+INSERT INTO `auction_category` VALUES (8, '8', 8, '2026-01-04 17:02:58', '2026-01-04 17:02:58', 0);
+INSERT INTO `auction_category` VALUES (9, '9', 9, '2026-01-04 17:03:04', '2026-01-04 17:03:04', 0);
+INSERT INTO `auction_category` VALUES (10, '10', 10, '2026-01-04 17:03:11', '2026-01-04 17:03:11', 0);
+INSERT INTO `auction_category` VALUES (11, '11', 11, '2026-01-04 17:03:14', '2026-01-04 17:03:14', 0);
+INSERT INTO `auction_category` VALUES (12, '12', 12, '2026-01-04 17:03:21', '2026-01-04 17:03:21', 0);
 
 -- ----------------------------
 -- Table structure for auction_deposit
@@ -113,6 +125,51 @@ CREATE TABLE `auction_goods`  (
 -- ----------------------------
 -- Records of auction_goods
 -- ----------------------------
+
+-- ----------------------------
+-- Table structure for auction_menu
+-- ----------------------------
+DROP TABLE IF EXISTS `auction_menu`;
+CREATE TABLE `auction_menu`  (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '菜单ID，自增',
+  `menu_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '菜单名称',
+  `parent_id` bigint NOT NULL DEFAULT 0 COMMENT '父菜单ID（0表示顶级菜单）',
+  `menu_path` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '菜单路径/路由（如：/goods/list）',
+  `menu_icon` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '菜单图标（Element UI图标类名，如：el-icon-goods）',
+  `menu_type` tinyint NOT NULL DEFAULT 1 COMMENT '菜单类型：1=菜单 2=按钮',
+  `permission_code` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '权限标识（如：goods:list，用于权限控制）',
+  `menu_sort` int NOT NULL DEFAULT 0 COMMENT '排序值（数字越小越靠前）',
+  `menu_status` tinyint NOT NULL DEFAULT 1 COMMENT '状态：0=禁用 1=启用',
+  `remark` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '备注说明',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `del_flag` tinyint NOT NULL DEFAULT 0 COMMENT '逻辑删除：0=未删除 1=已删除',
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `idx_parent_id`(`parent_id` ASC) USING BTREE,
+  INDEX `idx_menu_status`(`menu_status` ASC) USING BTREE,
+  INDEX `idx_menu_sort`(`menu_sort` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 20 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '系统菜单表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of auction_menu
+-- ----------------------------
+INSERT INTO `auction_menu` VALUES (1, '首页', 0, '/home', 'el-icon-s-home', 1, 'home:view', 1, 1, '用户端首页', '2025-12-31 14:40:18', '2025-12-31 14:40:18', 0);
+INSERT INTO `auction_menu` VALUES (2, '拍卖商品', 0, '/goods', 'el-icon-goods', 1, 'goods:view', 2, 1, '拍卖商品列表', '2025-12-31 14:40:18', '2025-12-31 14:40:18', 0);
+INSERT INTO `auction_menu` VALUES (3, '竞拍公告', 0, '/notice', 'el-icon-bell', 1, 'notice:view', 3, 1, '竞拍公告列表', '2025-12-31 14:40:18', '2025-12-31 14:40:18', 0);
+INSERT INTO `auction_menu` VALUES (4, '个人中心', 0, '/profile', 'el-icon-user', 1, 'profile:view', 4, 1, '个人中心', '2025-12-31 14:40:18', '2025-12-31 14:40:18', 0);
+INSERT INTO `auction_menu` VALUES (5, '订单管理', 4, '/profile/order', NULL, 1, 'order:view', 1, 1, '订单管理', '2025-12-31 14:40:18', '2025-12-31 14:40:18', 0);
+INSERT INTO `auction_menu` VALUES (6, '保证金管理', 4, '/profile/deposit', NULL, 1, 'deposit:view', 2, 1, '保证金管理', '2025-12-31 14:40:18', '2025-12-31 14:40:18', 0);
+INSERT INTO `auction_menu` VALUES (7, '消息中心', 4, '/profile/message', NULL, 1, 'message:view', 3, 1, '消息中心', '2025-12-31 14:40:18', '2025-12-31 14:40:18', 0);
+INSERT INTO `auction_menu` VALUES (10, '个人管理中心', 0, '/admin/profile', 'el-icon-user', 1, 'admin:profile:view', 1, 1, '管理员个人中心', '2025-12-31 14:40:18', '2025-12-31 14:40:18', 0);
+INSERT INTO `auction_menu` VALUES (11, '用户账号管理', 0, '/admin/user', 'el-icon-user-solid', 1, 'admin:user:view', 2, 1, '用户账号管理', '2025-12-31 14:40:18', '2025-12-31 14:40:18', 0);
+INSERT INTO `auction_menu` VALUES (12, '拍卖商品类目管理', 0, '/admin/category', 'el-icon-folder', 1, 'admin:category:view', 3, 1, '商品类目管理', '2025-12-31 14:40:18', '2025-12-31 14:40:18', 0);
+INSERT INTO `auction_menu` VALUES (13, '拍卖商品管理', 0, '/admin/goods', 'el-icon-goods', 1, 'admin:goods:view', 4, 1, '拍卖商品管理', '2025-12-31 14:40:18', '2025-12-31 14:40:18', 0);
+INSERT INTO `auction_menu` VALUES (14, '历史竞拍管理', 0, '/admin/history', 'el-icon-time', 1, 'admin:history:view', 5, 1, '历史竞拍管理', '2025-12-31 14:40:18', '2025-12-31 14:40:18', 0);
+INSERT INTO `auction_menu` VALUES (15, '竞拍订单管理', 0, '/admin/order', 'el-icon-s-order', 1, 'admin:order:view', 6, 1, '竞拍订单管理', '2025-12-31 14:40:18', '2025-12-31 14:40:18', 0);
+INSERT INTO `auction_menu` VALUES (16, '留言板管理', 0, '/admin/message', 'el-icon-chat-line-square', 1, 'admin:message:view', 7, 1, '留言板管理', '2025-12-31 14:40:18', '2025-12-31 14:40:18', 0);
+INSERT INTO `auction_menu` VALUES (17, '系统设置', 0, '/admin/settings', 'el-icon-setting', 1, 'admin:settings:view', 8, 1, '系统设置', '2025-12-31 14:40:18', '2025-12-31 14:40:18', 0);
+INSERT INTO `auction_menu` VALUES (18, '轮播图管理', 17, '/admin/settings/banner', NULL, 1, 'admin:banner:view', 1, 1, '首页轮播图管理', '2025-12-31 14:40:18', '2025-12-31 14:40:18', 0);
+INSERT INTO `auction_menu` VALUES (19, '竞拍公告管理', 17, '/admin/settings/notice', NULL, 1, 'admin:notice:view', 2, 1, '竞拍公告管理', '2025-12-31 14:40:18', '2025-12-31 14:40:18', 0);
 
 -- ----------------------------
 -- Table structure for auction_message
@@ -212,6 +269,76 @@ CREATE TABLE `auction_order`  (
 -- ----------------------------
 
 -- ----------------------------
+-- Table structure for auction_permission
+-- ----------------------------
+DROP TABLE IF EXISTS `auction_permission`;
+CREATE TABLE `auction_permission`  (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '权限ID，自增',
+  `permission_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '权限名称',
+  `permission_code` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '权限标识（唯一，如：goods:list, goods:add）',
+  `permission_type` tinyint NOT NULL DEFAULT 1 COMMENT '权限类型：1=菜单权限 2=按钮权限 3=数据权限',
+  `permission_desc` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '权限描述',
+  `permission_status` tinyint NOT NULL DEFAULT 1 COMMENT '状态：0=禁用 1=启用',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `del_flag` tinyint NOT NULL DEFAULT 0 COMMENT '逻辑删除：0=未删除 1=已删除',
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `idx_permission_code`(`permission_code` ASC) USING BTREE,
+  INDEX `idx_permission_status`(`permission_status` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 94 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '系统权限表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of auction_permission
+-- ----------------------------
+INSERT INTO `auction_permission` VALUES (1, '首页查看', 'home:view', 1, '查看首页', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (2, '商品查看', 'goods:view', 1, '查看商品列表', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (3, '商品详情', 'goods:detail', 1, '查看商品详情', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (4, '参与竞拍', 'goods:bid', 2, '参与商品竞拍', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (5, '代理出价', 'goods:agent', 2, '设置代理出价', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (6, '商品上架', 'goods:add', 2, '上架商品', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (7, '商品编辑', 'goods:edit', 2, '编辑自己的商品', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (8, '商品下架', 'goods:delete', 2, '下架自己的商品', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (9, '公告查看', 'notice:view', 1, '查看竞拍公告', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (10, '订单查看', 'order:view', 1, '查看订单列表', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (11, '订单支付', 'order:pay', 2, '支付订单尾款', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (12, '保证金查看', 'deposit:view', 1, '查看保证金', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (13, '保证金充值', 'deposit:add', 2, '充值保证金', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (14, '保证金解冻', 'deposit:edit', 2, '申请保证金解冻', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (15, '消息查看', 'message:view', 1, '查看消息', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (16, '消息发送', 'message:add', 2, '发送消息', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (20, '用户查看', 'admin:user:view', 1, '查看用户列表', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (21, '用户新增', 'admin:user:add', 2, '新增用户', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (22, '用户编辑', 'admin:user:edit', 2, '编辑用户信息', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (23, '用户删除', 'admin:user:delete', 2, '删除用户（禁用）', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (24, '用户状态管理', 'admin:user:status', 2, '启用/禁用用户', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (25, '卖方资质审核', 'admin:user:audit', 2, '审核卖方用户资质', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (30, '类目查看', 'admin:category:view', 1, '查看类目列表', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (31, '类目新增', 'admin:category:add', 2, '新增商品类目', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (32, '类目编辑', 'admin:category:edit', 2, '编辑商品类目', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (33, '类目删除', 'admin:category:delete', 2, '删除商品类目', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (40, '商品查看', 'admin:goods:view', 1, '查看商品列表', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (41, '商品审核', 'admin:goods:audit', 2, '审核商品', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (42, '商品编辑', 'admin:goods:edit', 2, '编辑商品信息', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (43, '商品删除', 'admin:goods:delete', 2, '删除/下架商品', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (50, '历史竞拍查看', 'admin:history:view', 1, '查看历史竞拍', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (51, '历史订单审核', 'admin:history:audit', 2, '审核历史订单', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (52, '历史订单导出', 'admin:history:export', 2, '导出历史订单报表', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (60, '订单查看', 'admin:order:view', 1, '查看订单列表', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (61, '订单编辑', 'admin:order:edit', 2, '编辑订单信息', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (62, '订单状态管理', 'admin:order:status', 2, '管理订单状态', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (70, '留言查看', 'admin:message:view', 1, '查看留言列表', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (71, '留言回复', 'admin:message:edit', 2, '回复留言', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (72, '留言删除', 'admin:message:delete', 2, '删除留言', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (80, '轮播图查看', 'admin:banner:view', 1, '查看轮播图列表', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (81, '轮播图新增', 'admin:banner:add', 2, '新增轮播图', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (82, '轮播图编辑', 'admin:banner:edit', 2, '编辑轮播图', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (83, '轮播图删除', 'admin:banner:delete', 2, '删除轮播图', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (90, '公告查看', 'admin:notice:view', 1, '查看公告列表', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (91, '公告新增', 'admin:notice:add', 2, '发布公告', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (92, '公告编辑', 'admin:notice:edit', 2, '编辑公告', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (93, '公告删除', 'admin:notice:delete', 2, '删除/下架公告', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+
+-- ----------------------------
 -- Table structure for auction_record
 -- ----------------------------
 DROP TABLE IF EXISTS `auction_record`;
@@ -234,6 +361,83 @@ CREATE TABLE `auction_record`  (
 -- ----------------------------
 -- Records of auction_record
 -- ----------------------------
+
+-- ----------------------------
+-- Table structure for auction_role_permission
+-- ----------------------------
+DROP TABLE IF EXISTS `auction_role_permission`;
+CREATE TABLE `auction_role_permission`  (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID，自增',
+  `role_type` tinyint NOT NULL COMMENT '角色类型：1=买方用户 2=卖方用户 3=后台管理员',
+  `permission_id` bigint NOT NULL COMMENT '权限ID（关联auction_permission.id）',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `idx_role_permission`(`role_type` ASC, `permission_id` ASC) USING BTREE,
+  INDEX `idx_role_type`(`role_type` ASC) USING BTREE,
+  INDEX `idx_permission_id`(`permission_id` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 129 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '角色权限关联表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of auction_role_permission
+-- ----------------------------
+INSERT INTO `auction_role_permission` VALUES (71, 1, 1, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (72, 1, 2, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (73, 1, 3, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (74, 1, 4, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (75, 1, 5, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (76, 1, 9, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (77, 1, 10, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (78, 1, 11, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (79, 1, 12, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (80, 1, 13, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (81, 1, 14, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (82, 1, 15, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (83, 1, 16, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (84, 2, 1, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (85, 2, 2, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (86, 2, 3, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (87, 2, 9, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (88, 2, 10, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (89, 2, 11, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (90, 2, 12, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (91, 2, 13, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (92, 2, 14, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (93, 2, 15, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (94, 2, 16, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (95, 2, 6, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (96, 2, 7, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (97, 2, 8, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (98, 3, 20, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (99, 3, 21, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (100, 3, 22, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (101, 3, 23, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (102, 3, 24, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (103, 3, 25, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (104, 3, 30, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (105, 3, 31, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (106, 3, 32, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (107, 3, 33, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (108, 3, 40, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (109, 3, 41, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (110, 3, 42, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (111, 3, 43, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (112, 3, 50, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (113, 3, 51, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (114, 3, 52, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (115, 3, 60, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (116, 3, 61, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (117, 3, 62, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (118, 3, 70, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (119, 3, 71, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (120, 3, 72, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (121, 3, 80, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (122, 3, 81, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (123, 3, 82, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (124, 3, 83, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (125, 3, 90, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (126, 3, 91, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (127, 3, 92, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (128, 3, 93, '2025-12-31 14:40:32');
 
 -- ----------------------------
 -- Table structure for auction_user
@@ -263,211 +467,10 @@ CREATE TABLE `auction_user`  (
   UNIQUE INDEX `idx_user_name`(`user_name` ASC) USING BTREE,
   INDEX `idx_user_role`(`user_role` ASC) USING BTREE,
   INDEX `idx_user_status`(`user_status` ASC) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '系统用户表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '系统用户表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of auction_user
 -- ----------------------------
-
--- ----------------------------
--- Table structure for auction_menu
--- ----------------------------
-DROP TABLE IF EXISTS `auction_menu`;
-CREATE TABLE `auction_menu`  (
-  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '菜单ID，自增',
-  `menu_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '菜单名称',
-  `parent_id` bigint NOT NULL DEFAULT 0 COMMENT '父菜单ID（0表示顶级菜单）',
-  `menu_path` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '菜单路径/路由（如：/goods/list）',
-  `menu_icon` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '菜单图标（Element UI图标类名，如：el-icon-goods）',
-  `menu_type` tinyint NOT NULL DEFAULT 1 COMMENT '菜单类型：1=菜单 2=按钮',
-  `permission_code` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '权限标识（如：goods:list，用于权限控制）',
-  `menu_sort` int NOT NULL DEFAULT 0 COMMENT '排序值（数字越小越靠前）',
-  `menu_status` tinyint NOT NULL DEFAULT 1 COMMENT '状态：0=禁用 1=启用',
-  `remark` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '备注说明',
-  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-  `del_flag` tinyint NOT NULL DEFAULT 0 COMMENT '逻辑删除：0=未删除 1=已删除',
-  PRIMARY KEY (`id`) USING BTREE,
-  INDEX `idx_parent_id`(`parent_id` ASC) USING BTREE,
-  INDEX `idx_menu_status`(`menu_status` ASC) USING BTREE,
-  INDEX `idx_menu_sort`(`menu_sort` ASC) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '系统菜单表' ROW_FORMAT = DYNAMIC;
-
--- ----------------------------
--- Records of auction_menu
--- ----------------------------
--- 用户端菜单
-INSERT INTO `auction_menu` VALUES (1, '首页', 0, '/home', 'el-icon-s-home', 1, 'home:view', 1, 1, '用户端首页', NOW(), NOW(), 0);
-INSERT INTO `auction_menu` VALUES (2, '拍卖商品', 0, '/goods', 'el-icon-goods', 1, 'goods:view', 2, 1, '拍卖商品列表', NOW(), NOW(), 0);
-INSERT INTO `auction_menu` VALUES (3, '竞拍公告', 0, '/notice', 'el-icon-bell', 1, 'notice:view', 3, 1, '竞拍公告列表', NOW(), NOW(), 0);
-INSERT INTO `auction_menu` VALUES (4, '个人中心', 0, '/profile', 'el-icon-user', 1, 'profile:view', 4, 1, '个人中心', NOW(), NOW(), 0);
-INSERT INTO `auction_menu` VALUES (5, '订单管理', 4, '/profile/order', NULL, 1, 'order:view', 1, 1, '订单管理', NOW(), NOW(), 0);
-INSERT INTO `auction_menu` VALUES (6, '保证金管理', 4, '/profile/deposit', NULL, 1, 'deposit:view', 2, 1, '保证金管理', NOW(), NOW(), 0);
-INSERT INTO `auction_menu` VALUES (7, '消息中心', 4, '/profile/message', NULL, 1, 'message:view', 3, 1, '消息中心', NOW(), NOW(), 0);
--- 管理员端菜单
-INSERT INTO `auction_menu` VALUES (10, '个人管理中心', 0, '/admin/profile', 'el-icon-user', 1, 'admin:profile:view', 1, 1, '管理员个人中心', NOW(), NOW(), 0);
-INSERT INTO `auction_menu` VALUES (11, '用户账号管理', 0, '/admin/user', 'el-icon-user-solid', 1, 'admin:user:view', 2, 1, '用户账号管理', NOW(), NOW(), 0);
-INSERT INTO `auction_menu` VALUES (12, '拍卖商品类目管理', 0, '/admin/category', 'el-icon-folder', 1, 'admin:category:view', 3, 1, '商品类目管理', NOW(), NOW(), 0);
-INSERT INTO `auction_menu` VALUES (13, '拍卖商品管理', 0, '/admin/goods', 'el-icon-goods', 1, 'admin:goods:view', 4, 1, '拍卖商品管理', NOW(), NOW(), 0);
-INSERT INTO `auction_menu` VALUES (14, '历史竞拍管理', 0, '/admin/history', 'el-icon-time', 1, 'admin:history:view', 5, 1, '历史竞拍管理', NOW(), NOW(), 0);
-INSERT INTO `auction_menu` VALUES (15, '竞拍订单管理', 0, '/admin/order', 'el-icon-s-order', 1, 'admin:order:view', 6, 1, '竞拍订单管理', NOW(), NOW(), 0);
-INSERT INTO `auction_menu` VALUES (16, '留言板管理', 0, '/admin/message', 'el-icon-chat-line-square', 1, 'admin:message:view', 7, 1, '留言板管理', NOW(), NOW(), 0);
-INSERT INTO `auction_menu` VALUES (17, '系统设置', 0, '/admin/settings', 'el-icon-setting', 1, 'admin:settings:view', 8, 1, '系统设置', NOW(), NOW(), 0);
-INSERT INTO `auction_menu` VALUES (18, '轮播图管理', 17, '/admin/settings/banner', NULL, 1, 'admin:banner:view', 1, 1, '首页轮播图管理', NOW(), NOW(), 0);
-INSERT INTO `auction_menu` VALUES (19, '竞拍公告管理', 17, '/admin/settings/notice', NULL, 1, 'admin:notice:view', 2, 1, '竞拍公告管理', NOW(), NOW(), 0);
-
--- ----------------------------
--- Table structure for auction_permission
--- ----------------------------
-DROP TABLE IF EXISTS `auction_permission`;
-CREATE TABLE `auction_permission`  (
-  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '权限ID，自增',
-  `permission_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '权限名称',
-  `permission_code` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '权限标识（唯一，如：goods:list, goods:add）',
-  `permission_type` tinyint NOT NULL DEFAULT 1 COMMENT '权限类型：1=菜单权限 2=按钮权限 3=数据权限',
-  `permission_desc` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '权限描述',
-  `permission_status` tinyint NOT NULL DEFAULT 1 COMMENT '状态：0=禁用 1=启用',
-  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-  `del_flag` tinyint NOT NULL DEFAULT 0 COMMENT '逻辑删除：0=未删除 1=已删除',
-  PRIMARY KEY (`id`) USING BTREE,
-  UNIQUE INDEX `idx_permission_code`(`permission_code` ASC) USING BTREE,
-  INDEX `idx_permission_status`(`permission_status` ASC) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '系统权限表' ROW_FORMAT = DYNAMIC;
-
--- ----------------------------
--- Records of auction_permission
--- ----------------------------
--- 用户端权限
-INSERT INTO `auction_permission` VALUES (1, '首页查看', 'home:view', 1, '查看首页', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (2, '商品查看', 'goods:view', 1, '查看商品列表', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (3, '商品详情', 'goods:detail', 1, '查看商品详情', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (4, '参与竞拍', 'goods:bid', 2, '参与商品竞拍', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (5, '代理出价', 'goods:agent', 2, '设置代理出价', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (6, '商品上架', 'goods:add', 2, '上架商品', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (7, '商品编辑', 'goods:edit', 2, '编辑自己的商品', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (8, '商品下架', 'goods:delete', 2, '下架自己的商品', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (9, '公告查看', 'notice:view', 1, '查看竞拍公告', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (10, '订单查看', 'order:view', 1, '查看订单列表', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (11, '订单支付', 'order:pay', 2, '支付订单尾款', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (12, '保证金查看', 'deposit:view', 1, '查看保证金', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (13, '保证金充值', 'deposit:add', 2, '充值保证金', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (14, '保证金解冻', 'deposit:edit', 2, '申请保证金解冻', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (15, '消息查看', 'message:view', 1, '查看消息', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (16, '消息发送', 'message:add', 2, '发送消息', 1, NOW(), NOW(), 0);
--- 管理员端权限 - 标准增删改查
-INSERT INTO `auction_permission` VALUES (20, '用户查看', 'admin:user:view', 1, '查看用户列表', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (21, '用户新增', 'admin:user:add', 2, '新增用户', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (22, '用户编辑', 'admin:user:edit', 2, '编辑用户信息', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (23, '用户删除', 'admin:user:delete', 2, '删除用户（禁用）', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (24, '用户状态管理', 'admin:user:status', 2, '启用/禁用用户', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (25, '卖方资质审核', 'admin:user:audit', 2, '审核卖方用户资质', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (30, '类目查看', 'admin:category:view', 1, '查看类目列表', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (31, '类目新增', 'admin:category:add', 2, '新增商品类目', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (32, '类目编辑', 'admin:category:edit', 2, '编辑商品类目', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (33, '类目删除', 'admin:category:delete', 2, '删除商品类目', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (40, '商品查看', 'admin:goods:view', 1, '查看商品列表', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (41, '商品审核', 'admin:goods:audit', 2, '审核商品', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (42, '商品编辑', 'admin:goods:edit', 2, '编辑商品信息', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (43, '商品删除', 'admin:goods:delete', 2, '删除/下架商品', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (50, '历史竞拍查看', 'admin:history:view', 1, '查看历史竞拍', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (51, '历史订单审核', 'admin:history:audit', 2, '审核历史订单', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (52, '历史订单导出', 'admin:history:export', 2, '导出历史订单报表', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (60, '订单查看', 'admin:order:view', 1, '查看订单列表', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (61, '订单编辑', 'admin:order:edit', 2, '编辑订单信息', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (62, '订单状态管理', 'admin:order:status', 2, '管理订单状态', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (70, '留言查看', 'admin:message:view', 1, '查看留言列表', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (71, '留言回复', 'admin:message:edit', 2, '回复留言', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (72, '留言删除', 'admin:message:delete', 2, '删除留言', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (80, '轮播图查看', 'admin:banner:view', 1, '查看轮播图列表', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (81, '轮播图新增', 'admin:banner:add', 2, '新增轮播图', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (82, '轮播图编辑', 'admin:banner:edit', 2, '编辑轮播图', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (83, '轮播图删除', 'admin:banner:delete', 2, '删除轮播图', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (90, '公告查看', 'admin:notice:view', 1, '查看公告列表', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (91, '公告新增', 'admin:notice:add', 2, '发布公告', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (92, '公告编辑', 'admin:notice:edit', 2, '编辑公告', 1, NOW(), NOW(), 0);
-INSERT INTO `auction_permission` VALUES (93, '公告删除', 'admin:notice:delete', 2, '删除/下架公告', 1, NOW(), NOW(), 0);
-
--- ----------------------------
--- Table structure for auction_role_permission
--- ----------------------------
-DROP TABLE IF EXISTS `auction_role_permission`;
-CREATE TABLE `auction_role_permission`  (
-  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID，自增',
-  `role_type` tinyint NOT NULL COMMENT '角色类型：1=买方用户 2=卖方用户 3=后台管理员',
-  `permission_id` bigint NOT NULL COMMENT '权限ID（关联auction_permission.id）',
-  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  PRIMARY KEY (`id`) USING BTREE,
-  UNIQUE INDEX `idx_role_permission`(`role_type`, `permission_id`) USING BTREE,
-  INDEX `idx_role_type`(`role_type` ASC) USING BTREE,
-  INDEX `idx_permission_id`(`permission_id` ASC) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '角色权限关联表' ROW_FORMAT = DYNAMIC;
-
--- ----------------------------
--- Records of auction_role_permission
--- ----------------------------
--- 买方用户权限（角色1）- 只有查看和基本操作权限
-INSERT INTO `auction_role_permission` VALUES (1, 1, 1, NOW()); -- 首页查看
-INSERT INTO `auction_role_permission` VALUES (2, 1, 2, NOW()); -- 商品查看
-INSERT INTO `auction_role_permission` VALUES (3, 1, 3, NOW()); -- 商品详情
-INSERT INTO `auction_role_permission` VALUES (4, 1, 4, NOW()); -- 参与竞拍
-INSERT INTO `auction_role_permission` VALUES (5, 1, 5, NOW()); -- 代理出价
-INSERT INTO `auction_role_permission` VALUES (6, 1, 9, NOW()); -- 公告查看
-INSERT INTO `auction_role_permission` VALUES (7, 1, 10, NOW()); -- 订单查看
-INSERT INTO `auction_role_permission` VALUES (8, 1, 11, NOW()); -- 订单支付
-INSERT INTO `auction_role_permission` VALUES (9, 1, 12, NOW()); -- 保证金查看
-INSERT INTO `auction_role_permission` VALUES (10, 1, 13, NOW()); -- 保证金充值
-INSERT INTO `auction_role_permission` VALUES (11, 1, 14, NOW()); -- 保证金解冻
-INSERT INTO `auction_role_permission` VALUES (12, 1, 15, NOW()); -- 消息查看
-INSERT INTO `auction_role_permission` VALUES (13, 1, 16, NOW()); -- 消息发送
-
--- 卖方用户权限（角色2）- 包含买方权限 + 商品管理权限
-INSERT INTO `auction_role_permission` VALUES (20, 2, 1, NOW()); -- 首页查看
-INSERT INTO `auction_role_permission` VALUES (21, 2, 2, NOW()); -- 商品查看
-INSERT INTO `auction_role_permission` VALUES (22, 2, 3, NOW()); -- 商品详情
-INSERT INTO `auction_role_permission` VALUES (23, 2, 6, NOW()); -- 商品上架
-INSERT INTO `auction_role_permission` VALUES (24, 2, 7, NOW()); -- 商品编辑
-INSERT INTO `auction_role_permission` VALUES (25, 2, 8, NOW()); -- 商品下架
-INSERT INTO `auction_role_permission` VALUES (26, 2, 9, NOW()); -- 公告查看
-INSERT INTO `auction_role_permission` VALUES (27, 2, 10, NOW()); -- 订单查看
-INSERT INTO `auction_role_permission` VALUES (28, 2, 11, NOW()); -- 订单支付
-INSERT INTO `auction_role_permission` VALUES (29, 2, 12, NOW()); -- 保证金查看
-INSERT INTO `auction_role_permission` VALUES (30, 2, 13, NOW()); -- 保证金充值
-INSERT INTO `auction_role_permission` VALUES (31, 2, 14, NOW()); -- 保证金解冻
-INSERT INTO `auction_role_permission` VALUES (32, 2, 15, NOW()); -- 消息查看
-INSERT INTO `auction_role_permission` VALUES (33, 2, 16, NOW()); -- 消息发送
-
--- 后台管理员权限（角色3）- 所有管理权限（增删改查）
-INSERT INTO `auction_role_permission` VALUES (40, 3, 20, NOW()); -- 用户查看
-INSERT INTO `auction_role_permission` VALUES (41, 3, 21, NOW()); -- 用户新增
-INSERT INTO `auction_role_permission` VALUES (42, 3, 22, NOW()); -- 用户编辑
-INSERT INTO `auction_role_permission` VALUES (43, 3, 23, NOW()); -- 用户删除
-INSERT INTO `auction_role_permission` VALUES (44, 3, 24, NOW()); -- 用户状态管理
-INSERT INTO `auction_role_permission` VALUES (45, 3, 25, NOW()); -- 卖方资质审核
-INSERT INTO `auction_role_permission` VALUES (46, 3, 30, NOW()); -- 类目查看
-INSERT INTO `auction_role_permission` VALUES (47, 3, 31, NOW()); -- 类目新增
-INSERT INTO `auction_role_permission` VALUES (48, 3, 32, NOW()); -- 类目编辑
-INSERT INTO `auction_role_permission` VALUES (49, 3, 33, NOW()); -- 类目删除
-INSERT INTO `auction_role_permission` VALUES (50, 3, 40, NOW()); -- 商品查看
-INSERT INTO `auction_role_permission` VALUES (51, 3, 41, NOW()); -- 商品审核
-INSERT INTO `auction_role_permission` VALUES (52, 3, 42, NOW()); -- 商品编辑
-INSERT INTO `auction_role_permission` VALUES (53, 3, 43, NOW()); -- 商品删除
-INSERT INTO `auction_role_permission` VALUES (54, 3, 50, NOW()); -- 历史竞拍查看
-INSERT INTO `auction_role_permission` VALUES (55, 3, 51, NOW()); -- 历史订单审核
-INSERT INTO `auction_role_permission` VALUES (56, 3, 52, NOW()); -- 历史订单导出
-INSERT INTO `auction_role_permission` VALUES (57, 3, 60, NOW()); -- 订单查看
-INSERT INTO `auction_role_permission` VALUES (58, 3, 61, NOW()); -- 订单编辑
-INSERT INTO `auction_role_permission` VALUES (59, 3, 62, NOW()); -- 订单状态管理
-INSERT INTO `auction_role_permission` VALUES (60, 3, 70, NOW()); -- 留言查看
-INSERT INTO `auction_role_permission` VALUES (61, 3, 71, NOW()); -- 留言回复
-INSERT INTO `auction_role_permission` VALUES (62, 3, 72, NOW()); -- 留言删除
-INSERT INTO `auction_role_permission` VALUES (63, 3, 80, NOW()); -- 轮播图查看
-INSERT INTO `auction_role_permission` VALUES (64, 3, 81, NOW()); -- 轮播图新增
-INSERT INTO `auction_role_permission` VALUES (65, 3, 82, NOW()); -- 轮播图编辑
-INSERT INTO `auction_role_permission` VALUES (66, 3, 83, NOW()); -- 轮播图删除
-INSERT INTO `auction_role_permission` VALUES (67, 3, 90, NOW()); -- 公告查看
-INSERT INTO `auction_role_permission` VALUES (68, 3, 91, NOW()); -- 公告新增
-INSERT INTO `auction_role_permission` VALUES (69, 3, 92, NOW()); -- 公告编辑
-INSERT INTO `auction_role_permission` VALUES (70, 3, 93, NOW()); -- 公告删除
 
 SET FOREIGN_KEY_CHECKS = 1;
