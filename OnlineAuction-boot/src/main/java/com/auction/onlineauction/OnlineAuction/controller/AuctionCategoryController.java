@@ -4,7 +4,8 @@ import com.auction.onlineauction.OnlineAuction.common.Result;
 import com.auction.onlineauction.OnlineAuction.entity.AuctionCategory;
 import com.auction.onlineauction.OnlineAuction.service.IAuctionCategoryService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,32 +31,28 @@ public class AuctionCategoryController {
      * 分页查询商品分类列表
      */
     @GetMapping("/page")
-    public Result<Page<AuctionCategory>> getCategoryPage(
+    public Result<PageInfo<AuctionCategory>> getCategoryPage(
             @RequestParam(defaultValue = "1") Integer current,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(required = false) String categoryName) {
         try {
-            // 创建分页对象，确保统计总数
-            Page<AuctionCategory> page = new Page<>(current, size);
-            page.setSearchCount(true); // 确保统计总数
-            
+            // 使用 PageHelper 开始分页
+            PageHelper.startPage(current, size);
+
             QueryWrapper<AuctionCategory> wrapper = new QueryWrapper<>();
             wrapper.eq("del_flag", 0);
             if (categoryName != null && !categoryName.trim().isEmpty()) {
                 wrapper.like("category_name", categoryName);
             }
             wrapper.orderByAsc("category_sort", "id");
-            
-            Page<AuctionCategory> result = categoryService.page(page, wrapper);
-            
-            // 确保total值正确（如果为0但有数据，可能是统计问题）
-            if (result.getTotal() == 0 && result.getRecords() != null && !result.getRecords().isEmpty()) {
-                // 如果total为0但有数据，重新统计
-                long count = categoryService.count(wrapper);
-                result.setTotal(count);
-            }
-            
-            return Result.success("查询成功", result);
+
+            // 查询数据（此时会自动分页）
+            List<AuctionCategory> list = categoryService.list(wrapper);
+
+            // 使用 PageInfo 包装结果
+            PageInfo<AuctionCategory> pageInfo = new PageInfo<>(list);
+
+            return Result.success("查询成功", pageInfo);
         } catch (Exception e) {
             return Result.error("查询失败：" + e.getMessage());
         }

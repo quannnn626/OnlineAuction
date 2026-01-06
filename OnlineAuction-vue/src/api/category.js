@@ -79,7 +79,7 @@ export function batchDeleteCategory(ids) {
  */
 export function getCategoryListForHome() {
   return request({
-    url: "/api/category/list",
+    url: "/category/list",
     method: "get",
   });
 }

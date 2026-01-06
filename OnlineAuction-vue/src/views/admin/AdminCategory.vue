@@ -2,9 +2,19 @@
   <div class="admin-category-page">
     <div class="page-header">
       <h2>拍卖商品类目管理</h2>
-      <el-button type="primary" icon="el-icon-plus" @click="handleAdd"
-        >新增分类</el-button
-      >
+      <div class="header-actions">
+        <el-button
+          v-if="selectedRows.length > 0"
+          type="danger"
+          icon="el-icon-delete"
+          @click="handleBatchDelete"
+        >
+          批量删除 ({{ selectedRows.length }})
+        </el-button>
+        <el-button type="primary" icon="el-icon-plus" @click="handleAdd">
+          新增分类
+        </el-button>
+      </div>
     </div>
 
     <!-- 搜索区域 -->
@@ -102,16 +112,6 @@
           </template>
         </el-table-column>
       </el-table>
-
-      <!-- 批量操作 -->
-      <div class="batch-actions" v-if="selectedRows.length > 0">
-        <el-button
-          type="danger"
-          icon="el-icon-delete"
-          @click="handleBatchDelete"
-          >批量删除 ({{ selectedRows.length }})</el-button
-        >
-      </div>
 
       <!-- 分页 -->
       <div class="pagination-section">
@@ -256,9 +256,9 @@ export default {
           if (result.current !== undefined) {
             this.pagination.current = result.current;
           }
-          // if (result.size !== undefined) {
-          //   this.pagination.size = result.size;
-          // }
+          if (result.size !== undefined) {
+            this.pagination.size = result.size;
+          }
         } else {
           // 如果返回的不是Page对象，可能是数组或其他格式
           console.warn("返回数据格式异常:", result);
@@ -425,6 +425,11 @@ export default {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px; /* 按钮间距 */
 }
 
 .page-header h2 {
