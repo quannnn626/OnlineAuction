@@ -29,8 +29,8 @@ public class AuctionCategory implements Serializable {
     /**
      * 类目ID，自增
      */
-    @TableId(value = "id", type = IdType.AUTO)
-    private Long id;
+    @TableId(value = "id", type = IdType.INPUT)
+    private String id;
 
     /**
      * 类目名称（如：奢侈品、房产、艺术品）

@@ -54,10 +54,11 @@
           align="center"
         ></el-table-column>
         <el-table-column
-          prop="id"
-          label="ID"
+          type="index"
+          label="序号"
           width="80"
           align="center"
+          :index-method="indexMethod"
         ></el-table-column>
         <el-table-column
           prop="categoryName"
@@ -223,6 +224,10 @@ export default {
     this.loadData();
   },
   methods: {
+    // 自定义序号生成方法
+    indexMethod(index) {
+      return (this.pagination.current - 1) * this.pagination.size + index + 1;
+    },
     // 加载数据
     async loadData() {
       this.loading = true;
@@ -252,12 +257,9 @@ export default {
             records.length
           );
 
-          // 同步当前页和每页大小（防止后端返回的数据与前端不一致）
+          // 同步当前页（防止后端返回的数据与前端不一致）
           if (result.current !== undefined) {
             this.pagination.current = result.current;
-          }
-          if (result.size !== undefined) {
-            this.pagination.size = result.size;
           }
         } else {
           // 如果返回的不是Page对象，可能是数组或其他格式

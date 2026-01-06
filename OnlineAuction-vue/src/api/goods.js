@@ -22,7 +22,37 @@ export function deleteGoods(id) {
     method: "delete",
   });
 }
+export function getGoodsPage(params) {
+  return request({
+    url: "/goods/page",
+    method: "get",
+    params,
+  });
+}
 
+export function addGoods(data) {
+  return request({
+    url: "/goods",
+    method: "post",
+    data,
+  });
+}
+
+export function updateGoods(data) {
+  return request({
+    url: "/goods",
+    method: "put",
+    data,
+  });
+}
+
+export function auditGoods(data) {
+  return request({
+    url: "/goods/audit",
+    method: "post",
+    data,
+  });
+}
 export function getMyGoodsList(params) {
   return request({
     url: "/goods/my",
