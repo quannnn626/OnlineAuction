@@ -240,7 +240,7 @@
           >
           </el-input>
         </el-form-item>
-        <el-form-item label="商品图片" prop="goodsImg">
+        <el-form-item label="商品图片/视频" prop="fileIds">
           <el-upload
             ref="upload"
             :action="uploadAction"
@@ -248,12 +248,14 @@
             :on-remove="handleUploadRemove"
             :file-list="fileList"
             list-type="picture-card"
-            :limit="10"
+            :limit="20"
             multiple
+            accept="image/*,video/*"
+            name="files"
           >
             <i class="el-icon-plus"></i>
             <div slot="tip" class="el-upload__tip">
-              最多上传10张图片，单张最大5MB
+              支持上传图片和视频，最多20个文件，单文件最大10MB
             </div>
           </el-upload>
         </el-form-item>
@@ -382,7 +384,7 @@ export default {
         goodsName: "",
         categoryIds: [],
         goodsDesc: "",
-        goodsImg: "",
+        fileIds: [],
         basePrice: 0,
         addPrice: 0,
         reservePrice: 0,
@@ -390,7 +392,7 @@ export default {
         endTime: null,
       },
       fileList: [],
-      uploadAction: "/api/upload/image", // 上传接口
+      uploadAction: "/api/OnlineAuction/auctionFile/upload", // 文件上传接口
       formRules: {
         goodsName: [
           { required: true, message: "请输入商品名称", trigger: "blur" },
@@ -526,8 +528,9 @@ export default {
       this.formData = {
         ...goods,
         categoryIds: goods.categoryId ? goods.categoryId.split(",") : [],
+        fileIds: goods.files ? goods.files.map((f) => f.id) : [],
       };
-      this.fileList = this.getFileListFromImages(goods.goodsImg);
+      this.fileList = this.getFileListFromImages(goods.files);
       this.dialogVisible = true;
     },
     // 查看
@@ -616,7 +619,6 @@ export default {
           };
           if (this.formData.id) {
             await updateGoods(data);
-            this.$message.success("编辑成功");
           } else {
             await addGoods(data);
             this.$message.success("添加成功");
@@ -633,26 +635,34 @@ export default {
     },
     // 上传成功
     handleUploadSuccess(response, file, fileList) {
-      if (response.code === 200) {
+      if (response.code === 200 && response.data) {
         this.fileList = fileList;
-        this.formData.goodsImg = fileList.map((f) => f.response.data).join(",");
+        // 确保正确提取filePath
+        this.formData.goodsImg = fileList
+          .map((f) => f.response.data.filePath)
+          .join(",");
       } else {
-        this.$message.error("上传失败");
+        this.$message.error(`上传失败: ${response.msg || "未知错误"}`);
       }
     },
     // 上传移除
     handleUploadRemove(file, fileList) {
       this.fileList = fileList;
+      // 修复：更新goodsImg字段，而不是操作不存在的fileIds
       this.formData.goodsImg = fileList
-        .map((f) => (f.response ? f.response.data : f.url))
+        .map((f) =>
+          f.response && f.response.data ? f.response.data.filePath : ""
+        )
+        .filter(Boolean)
         .join(",");
     },
     // 获取文件列表
-    getFileListFromImages(images) {
-      if (!images) return [];
-      return images.split(",").map((url, index) => ({
-        name: `image${index + 1}`,
-        url: url,
+    getFileListFromImages(files) {
+      if (!files || !Array.isArray(files)) return [];
+      return files.map((file) => ({
+        name: file.fileName,
+        url: file.filePath,
+        response: { data: file },
       }));
     },
     // 获取商品图片

@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -58,10 +59,10 @@ public class AuctionGoods implements Serializable {
     private String goodsDesc;
 
     /**
-     * 商品主图（本地路径，多个用逗号分隔，如D:/auction/upload/goods/202512/xxx.jpg）
+     * 文件列表（非数据库字段）
      */
-    @TableField("goods_img")
-    private String goodsImg;
+    @TableField(exist = false)
+    private List<AuctionFile> files;
 
     /**
      * 起拍价

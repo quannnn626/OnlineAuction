@@ -9,6 +9,13 @@ spring:
     url: jdbc:mysql://localhost:3307/onlineauction?characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&rewriteBatchedStatements=true
     username: root
     password: root
+  # 文件上传配置
+  servlet:
+    multipart:
+      # 单个文件最大限制（与前端一致，10MB）
+      max-file-size: 10MB
+      # 总请求大小限制
+      max-request-size: 100MB
 
 # MyBatis Plus 配置
 mybatis-plus:

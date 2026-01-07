@@ -11,7 +11,7 @@
  Target Server Version : 80019
  File Encoding         : 65001
 
- Date: 07/01/2026 15:48:40
+ Date: 07/01/2026 17:54:21
 */
 
 SET NAMES utf8mb4;
@@ -106,6 +106,12 @@ CREATE TABLE `auction_file`  (
 -- ----------------------------
 INSERT INTO `auction_file` VALUES (1, 'QQ图片20230426170644.jpg', 'D:/auction/upload/goods/20261/35e88165a70643a899b720b354ed33ea.jpg', 'image', NULL, '2026-01-07 14:57:05', '2026-01-07 14:57:05', 0);
 INSERT INTO `auction_file` VALUES (2, '微信图片_20250329220729.png', 'D:/auction/upload/goods/20261/fbad0c49f41d4b0198032fc30dd3148a.png', 'image', NULL, '2026-01-07 14:57:19', '2026-01-07 14:57:19', 0);
+INSERT INTO `auction_file` VALUES (3, 'QQ图片20230426170644.jpg', 'D:/auction/upload/goods/202601/a7f1ea4e75764fac9867108c1a363fc0.jpg', 'image', NULL, '2026-01-07 17:14:46', '2026-01-07 17:14:45', 0);
+INSERT INTO `auction_file` VALUES (4, 'QQ图片20230426170644.jpg', '/upload/goods/202601/a1c24be60eb5471b80a446dba4ee374e.jpg', 'image', NULL, '2026-01-07 17:38:15', '2026-01-07 17:38:15', 0);
+INSERT INTO `auction_file` VALUES (5, '微信图片_20250329220729.png', '/upload/goods/202601/aa592a1385ec47288f092916a4b365d3.png', 'image', NULL, '2026-01-07 17:38:25', '2026-01-07 17:38:25', 0);
+INSERT INTO `auction_file` VALUES (6, '46颜炳权《鸡汤来喽》.MP4', '/upload/goods/202601/09b8f2f8766e43ebb86cc4c76e5f3103.MP4', 'video', NULL, '2026-01-07 17:43:10', '2026-01-07 17:43:09', 0);
+INSERT INTO `auction_file` VALUES (7, '[tools.miku.ac][图片转像素画]-1764923622832.png', '/upload/goods/202601/4c6b461f93a54812b4428ca6e1615dd4.png', 'image', NULL, '2026-01-07 17:47:53', '2026-01-07 17:47:52', 0);
+INSERT INTO `auction_file` VALUES (8, '3149315cea3d09be2a697f074dcbf9fd.jpeg', '/upload/goods/202601/fc5cbf27abb242ecaa6567869a2178cb.jpeg', 'image', NULL, '2026-01-07 17:50:18', '2026-01-07 17:50:18', 0);
 
 -- ----------------------------
 -- Table structure for auction_goods
@@ -117,7 +123,6 @@ CREATE TABLE `auction_goods`  (
   `category_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '商品类目ID（关联auction_category.id，多个用逗号分隔）',
   `seller_id` bigint NOT NULL COMMENT '卖方用户ID（关联auction_user.id）',
   `goods_desc` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '商品详情（含瑕疵说明）',
-  `goods_img` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '商品主图（本地路径，多个用逗号分隔，如D:/auction/upload/goods/202512/xxx.jpg）',
   `base_price` decimal(10, 2) NOT NULL COMMENT '起拍价',
   `add_price` decimal(10, 2) NOT NULL COMMENT '最小加价幅度',
   `reserve_price` decimal(10, 2) NULL DEFAULT NULL COMMENT '保留价（仅卖方可见）',
@@ -139,7 +144,17 @@ CREATE TABLE `auction_goods`  (
 -- ----------------------------
 -- Records of auction_goods
 -- ----------------------------
-INSERT INTO `auction_goods` VALUES (1, '青眼白龙', '1,2', 1, '游戏王', '', 100.00, 20.00, 2000.00, '2025-12-31 16:00:00', '2026-01-30 16:00:00', 1, '', 0, '2026-01-07 15:48:22', '2026-01-07 15:48:24', 0);
+INSERT INTO `auction_goods` VALUES (1, '青眼白龙', '1,2', 1, '青眼白龙', 200.00, 20.00, 1000.00, '2025-12-31 16:00:00', '2026-01-30 16:00:00', 1, '', 0, '2026-01-07 16:42:23', '2026-01-07 17:07:35', 0);
+INSERT INTO `auction_goods` VALUES (2, '夜明珠', '1,2', 1, '古玩类', 200.00, 20.00, 600.00, '2025-12-31 16:00:00', '2026-01-30 16:00:00', 1, '', 0, '2026-01-07 17:03:21', '2026-01-07 17:07:34', 0);
+INSERT INTO `auction_goods` VALUES (3, '测试图片', '1,2', 1, '111', 100.00, 20.00, 500.00, '2025-12-31 16:00:00', '2026-01-30 16:00:00', 1, '', 0, '2026-01-07 17:07:06', '2026-01-07 17:07:33', 0);
+INSERT INTO `auction_goods` VALUES (4, '测试视频', '2', 1, '视频', 200.00, 30.00, 500.00, '2025-12-31 16:00:00', '2026-01-30 16:00:00', 1, '', 0, '2026-01-07 17:08:26', '2026-01-07 17:17:05', 0);
+INSERT INTO `auction_goods` VALUES (5, '测试文件', '1,2', 1, '文件', 200.00, 20.00, 1000.00, '2025-12-31 16:00:00', '2026-01-30 16:00:00', 1, '', 0, '2026-01-07 17:15:11', '2026-01-07 17:17:04', 0);
+INSERT INTO `auction_goods` VALUES (6, '测试添加多个图片', '1,2', 1, '多个图片', 200.00, 50.00, 2000.00, '2025-12-31 16:00:00', '2026-01-30 16:00:00', 1, '', 0, '2026-01-07 17:18:05', '2026-01-07 17:37:54', 0);
+INSERT INTO `auction_goods` VALUES (7, '测试图片', '1,2', 1, 'dcz', 5411.00, 85.00, 8745.00, '2025-12-31 16:00:00', '2026-01-30 16:00:00', 1, '', 0, '2026-01-07 17:23:19', '2026-01-07 17:37:53', 0);
+INSERT INTO `auction_goods` VALUES (8, '测试文件上传', '1,2', 1, '图片', 0.00, 0.00, 0.00, '2025-12-31 16:00:00', '2026-01-30 16:00:00', 0, NULL, 0, '2026-01-07 17:38:43', '2026-01-07 17:38:43', 0);
+INSERT INTO `auction_goods` VALUES (9, '测试视频', '2,1', 1, '123', 0.00, 0.00, 0.00, '2025-12-31 16:00:00', '2026-01-30 16:00:00', 0, NULL, 0, '2026-01-07 17:43:24', '2026-01-07 17:43:24', 0);
+INSERT INTO `auction_goods` VALUES (10, '测试添加视频', '2,1', 1, '视频', 0.00, 0.00, 0.00, '2025-12-31 16:00:00', '2026-01-30 16:00:00', 0, NULL, 0, '2026-01-07 17:48:00', '2026-01-07 17:48:00', 0);
+INSERT INTO `auction_goods` VALUES (11, '祝友志的苦茶', '1', 1, '商周的新鲜货', 10000.00, 500.00, 9000.00, '2026-01-05 16:00:00', '2026-01-27 16:00:00', 0, NULL, 0, '2026-01-07 17:51:22', '2026-01-07 17:51:22', 0);
 
 -- ----------------------------
 -- Table structure for auction_menu

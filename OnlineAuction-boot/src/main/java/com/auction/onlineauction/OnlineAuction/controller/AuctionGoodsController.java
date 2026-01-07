@@ -1,7 +1,9 @@
 package com.auction.onlineauction.OnlineAuction.controller;
 
 import com.auction.onlineauction.OnlineAuction.common.Result;
+import com.auction.onlineauction.OnlineAuction.entity.AuctionFile;
 import com.auction.onlineauction.OnlineAuction.entity.AuctionGoods;
+import com.auction.onlineauction.OnlineAuction.service.IAuctionFileService;
 import com.auction.onlineauction.OnlineAuction.service.IAuctionGoodsService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.github.pagehelper.PageHelper;
@@ -26,6 +28,9 @@ public class AuctionGoodsController {
 
     @Autowired
     private IAuctionGoodsService goodsService;
+
+    @Autowired
+    private IAuctionFileService fileService;
 
     /**
      * 分页查询商品列表
@@ -61,6 +66,15 @@ public class AuctionGoodsController {
             // 查询数据（此时会自动分页）
             List<AuctionGoods> list = goodsService.list(wrapper);
 
+            // 为每个商品加载文件信息
+            for (AuctionGoods goods : list) {
+                List<AuctionFile> files = fileService.lambdaQuery()
+                        .eq(AuctionFile::getGoodsId, goods.getId())
+                        .eq(AuctionFile::getDelFlag, 0)
+                        .list();
+                goods.setFiles(files);
+            }
+
             // 使用 PageInfo 包装结果
             PageInfo<AuctionGoods> pageInfo = new PageInfo<>(list);
 
@@ -80,6 +94,16 @@ public class AuctionGoodsController {
             wrapper.eq("del_flag", 0);
             wrapper.orderByDesc("create_time");
             List<AuctionGoods> list = goodsService.list(wrapper);
+
+            // 为每个商品加载文件信息
+            for (AuctionGoods goods : list) {
+                List<AuctionFile> files = fileService.lambdaQuery()
+                        .eq(AuctionFile::getGoodsId, goods.getId())
+                        .eq(AuctionFile::getDelFlag, 0)
+                        .list();
+                goods.setFiles(files);
+            }
+
             return Result.success("查询成功", list);
         } catch (Exception e) {
             return Result.error("查询失败：" + e.getMessage());
@@ -96,6 +120,12 @@ public class AuctionGoodsController {
             if (goods == null || goods.getDelFlag() == 1) {
                 return Result.error("商品不存在");
             }
+            // 加载文件信息
+            List<AuctionFile> files = fileService.lambdaQuery()
+                    .eq(AuctionFile::getGoodsId, id)
+                    .eq(AuctionFile::getDelFlag, 0)
+                    .list();
+            goods.setFiles(files);
             return Result.success("查询成功", goods);
         } catch (Exception e) {
             return Result.error("查询失败：" + e.getMessage());
@@ -125,6 +155,13 @@ public class AuctionGoodsController {
             goods.setDelFlag(0);
             boolean success = goodsService.save(goods);
             if (success) {
+                // 如果有文件ID列表，更新文件的goodsId
+                if (goods.getFiles() != null && !goods.getFiles().isEmpty()) {
+                    for (AuctionFile file : goods.getFiles()) {
+                        file.setGoodsId(goods.getId());
+                        fileService.updateById(file);
+                    }
+                }
                 return Result.success("新增成功", goods);
             } else {
                 return Result.error("新增失败");
@@ -158,6 +195,13 @@ public class AuctionGoodsController {
             goods.setDelFlag(existing.getDelFlag());
             boolean success = goodsService.updateById(goods);
             if (success) {
+                // 如果有文件列表，更新文件的goodsId
+                if (goods.getFiles() != null && !goods.getFiles().isEmpty()) {
+                    for (AuctionFile file : goods.getFiles()) {
+                        file.setGoodsId(goods.getId());
+                        fileService.updateById(file);
+                    }
+                }
                 return Result.success("更新成功", goods);
             } else {
                 return Result.error("更新失败");
