@@ -471,7 +471,7 @@ export default {
           goodsStatus: this.searchForm.goodsStatus || undefined,
         };
         const result = await getGoodsPage(params);
-        this.tableData = result.records || [];
+        this.tableData = result.list || [];
         this.pagination.total = result.total || 0;
       } catch (error) {
         console.error("加载商品列表失败:", error);

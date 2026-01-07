@@ -79,7 +79,7 @@ public class AuctionCategoryController {
      * 根据ID获取商品分类详情
      */
     @GetMapping("/{id}")
-    public Result<AuctionCategory> getCategoryById(@PathVariable String id) {
+    public Result<AuctionCategory> getCategoryById(@PathVariable Long id) {
         try {
             AuctionCategory category = categoryService.getById(id);
             if (category == null || category.getDelFlag() == 1) {
@@ -109,8 +109,6 @@ public class AuctionCategoryController {
             if (count > 0) {
                 return Result.error("分类名称已存在");
             }
-            String uuid = UUID.randomUUID().toString().replace("-", "");
-            category.setId(uuid);
             // 设置默认值
             if (category.getCategorySort() == null) {
                 category.setCategorySort(0);
@@ -133,7 +131,7 @@ public class AuctionCategoryController {
      * 更新商品分类
      */
     @PutMapping("/{id}")
-    public Result<AuctionCategory> updateCategory(@PathVariable String id, @RequestBody AuctionCategory category) {
+    public Result<AuctionCategory> updateCategory(@PathVariable Long id, @RequestBody AuctionCategory category) {
         try {
             // 验证分类是否存在
             AuctionCategory existing = categoryService.getById(id);
@@ -175,7 +173,7 @@ public class AuctionCategoryController {
      * 删除商品分类（逻辑删除）
      */
     @DeleteMapping("/{id}")
-    public Result<Void> deleteCategory(@PathVariable String id) {
+    public Result<Void> deleteCategory(@PathVariable Long id) {
         try {
             AuctionCategory category = categoryService.getById(id);
             if (category == null || category.getDelFlag() == 1) {
@@ -199,12 +197,12 @@ public class AuctionCategoryController {
      * 批量删除商品分类
      */
     @DeleteMapping("/batch")
-    public Result<Void> batchDeleteCategory(@RequestBody List<String> ids) {
+    public Result<Void> batchDeleteCategory(@RequestBody List<Long> ids) {
         try {
             if (ids == null || ids.isEmpty()) {
                 return Result.error("请选择要删除的分类");
             }
-            for (String id : ids) {
+            for (Long id : ids) {
                 AuctionCategory category = categoryService.getById(id);
                 if (category != null && category.getDelFlag() == 0) {
                     category.setDelFlag(1);

@@ -169,7 +169,7 @@ export default {
           status: this.statusFilter,
         };
         const result = await getGoodsList(params);
-        this.goodsList = result.list || [];  // 将records改为list
+        this.goodsList = result.list || [];
         this.pagination.total = result.total || 0;
       } catch (error) {
         console.error("加载商品列表失败:", error);

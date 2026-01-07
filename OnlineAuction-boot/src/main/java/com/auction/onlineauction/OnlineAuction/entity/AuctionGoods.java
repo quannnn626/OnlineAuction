@@ -43,7 +43,7 @@ public class AuctionGoods implements Serializable {
      * 商品类目ID（关联auction_category.id）
      */
     @TableField("category_id")
-    private Long categoryId;
+    private String categoryId;
 
     /**
      * 卖方用户ID（关联auction_user.id）

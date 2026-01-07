@@ -243,8 +243,7 @@ export default {
         // MyBatis Plus的Page对象结构：{ records: [], total: 0, current: 1, size: 10, pages: 0 }
         if (result && typeof result === "object") {
           // 处理不同的字段名可能（total, totalCount, totalElements等）
-          const total =
-            result.total || result.totalCount || result.totalElements || 0;
+          const total = result.total || result.totalCount || result.totalElements || 0;
           const records = result.records || result.list || result.data || [];
 
           this.tableData = records;

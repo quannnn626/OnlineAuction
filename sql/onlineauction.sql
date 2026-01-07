@@ -44,30 +44,20 @@ CREATE TABLE `auction_banner`  (
 -- ----------------------------
 DROP TABLE IF EXISTS `auction_category`;
 CREATE TABLE `auction_category`  (
-  `id` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '类目ID，32位UUID',
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '类目ID，自增',
   `category_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '类目名称（如：奢侈品、房产、艺术品）',
   `category_sort` int NOT NULL DEFAULT 0 COMMENT '排序值（数字越小越靠前）',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `del_flag` tinyint NOT NULL DEFAULT 0 COMMENT '逻辑删除：0=未删除 1=已删除',
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '拍卖商品类目表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '拍卖商品类目表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of auction_category
 -- ----------------------------
-INSERT INTO `auction_category` VALUES ('550e8400e29b41d4a716446655440000', '古玩', 1, '2026-01-04 17:01:42', '2026-01-04 17:01:42', 0);
-INSERT INTO `auction_category` VALUES ('550e8400e29b41d4a716446655440001', '青眼白龙', 2, '2026-01-04 17:02:08', '2026-01-04 17:02:08', 0);
-INSERT INTO `auction_category` VALUES ('550e8400e29b41d4a716446655440002', '3', 3, '2026-01-04 17:02:40', '2026-01-04 17:02:40', 0);
-INSERT INTO `auction_category` VALUES ('550e8400e29b41d4a716446655440003', '4', 4, '2026-01-04 17:02:43', '2026-01-04 17:02:43', 0);
-INSERT INTO `auction_category` VALUES ('550e8400e29b41d4a716446655440004', '5', 5, '2026-01-04 17:02:47', '2026-01-04 17:02:47', 0);
-INSERT INTO `auction_category` VALUES ('550e8400e29b41d4a716446655440005', '6', 6, '2026-01-04 17:02:50', '2026-01-04 17:02:50', 0);
-INSERT INTO `auction_category` VALUES ('550e8400e29b41d4a716446655440006', '7', 7, '2026-01-04 17:02:53', '2026-01-04 17:02:53', 0);
-INSERT INTO `auction_category` VALUES ('550e8400e29b41d4a716446655440007', '8', 8, '2026-01-04 17:02:58', '2026-01-04 17:02:58', 0);
-INSERT INTO `auction_category` VALUES ('550e8400e29b41d4a716446655440008', '9', 9, '2026-01-04 17:03:04', '2026-01-04 17:03:04', 0);
-INSERT INTO `auction_category` VALUES ('550e8400e29b41d4a716446655440009', '10', 10, '2026-01-04 17:03:11', '2026-01-04 17:03:11', 0);
-INSERT INTO `auction_category` VALUES ('550e8400e29b41d4a716446655440010', '11', 11, '2026-01-04 17:03:14', '2026-01-04 17:03:14', 0);
-INSERT INTO `auction_category` VALUES ('550e8400e29b41d4a716446655440011', '12', 12, '2026-01-04 17:03:21', '2026-01-04 17:03:21', 0);
+INSERT INTO `auction_category` VALUES (1, '古玩', 1, '2026-01-04 17:01:42', '2026-01-04 17:01:42', 0);
+INSERT INTO `auction_category` VALUES (2, '青眼白龙', 2, '2026-01-04 17:02:08', '2026-01-04 17:02:08', 0);
 
 -- ----------------------------
 -- Table structure for auction_deposit
@@ -100,7 +90,7 @@ DROP TABLE IF EXISTS `auction_goods`;
 CREATE TABLE `auction_goods`  (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '商品ID，自增',
   `goods_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '商品名称',
-  `category_id` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '商品类目ID（关联auction_category.id）',
+  `category_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '商品类目ID（关联auction_category.id，多个用逗号分隔）',
   `seller_id` bigint NOT NULL COMMENT '卖方用户ID（关联auction_user.id）',
   `goods_desc` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '商品详情（含瑕疵说明）',
   `goods_img` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '商品主图（本地路径，多个用逗号分隔，如D:/auction/upload/goods/202512/xxx.jpg）',
