@@ -11,7 +11,7 @@
  Target Server Version : 80019
  File Encoding         : 65001
 
- Date: 06/01/2026 14:32:01
+ Date: 07/01/2026 15:48:40
 */
 
 SET NAMES utf8mb4;
@@ -51,7 +51,7 @@ CREATE TABLE `auction_category`  (
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `del_flag` tinyint NOT NULL DEFAULT 0 COMMENT '逻辑删除：0=未删除 1=已删除',
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '拍卖商品类目表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 3 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '拍卖商品类目表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of auction_category
@@ -82,6 +82,30 @@ CREATE TABLE `auction_deposit`  (
 -- ----------------------------
 -- Records of auction_deposit
 -- ----------------------------
+
+-- ----------------------------
+-- Table structure for auction_file
+-- ----------------------------
+DROP TABLE IF EXISTS `auction_file`;
+CREATE TABLE `auction_file`  (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '文件ID，自增',
+  `file_name` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '原始文件名',
+  `file_path` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '文件存储路径',
+  `file_type` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '文件类型：image=图片 video=视频',
+  `goods_id` bigint NULL DEFAULT NULL COMMENT '关联商品ID',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `del_flag` tinyint NOT NULL DEFAULT 0 COMMENT '逻辑删除：0=未删除 1=已删除',
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `idx_goods_id`(`goods_id` ASC) USING BTREE,
+  INDEX `idx_file_type`(`file_type` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '商品文件表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of auction_file
+-- ----------------------------
+INSERT INTO `auction_file` VALUES (1, 'QQ图片20230426170644.jpg', 'D:/auction/upload/goods/20261/35e88165a70643a899b720b354ed33ea.jpg', 'image', NULL, '2026-01-07 14:57:05', '2026-01-07 14:57:05', 0);
+INSERT INTO `auction_file` VALUES (2, '微信图片_20250329220729.png', 'D:/auction/upload/goods/20261/fbad0c49f41d4b0198032fc30dd3148a.png', 'image', NULL, '2026-01-07 14:57:19', '2026-01-07 14:57:19', 0);
 
 -- ----------------------------
 -- Table structure for auction_goods
@@ -115,6 +139,7 @@ CREATE TABLE `auction_goods`  (
 -- ----------------------------
 -- Records of auction_goods
 -- ----------------------------
+INSERT INTO `auction_goods` VALUES (1, '青眼白龙', '1,2', 1, '游戏王', '', 100.00, 20.00, 2000.00, '2025-12-31 16:00:00', '2026-01-30 16:00:00', 1, '', 0, '2026-01-07 15:48:22', '2026-01-07 15:48:24', 0);
 
 -- ----------------------------
 -- Table structure for auction_menu
