@@ -63,3 +63,13 @@ export function getMyGoodsList(params) {
     params,
   });
 }
+
+/**
+ * 获取商品详情
+ */
+export function getGoodsDetail(id) {
+  return request({
+    url: `/goods/${id}`,
+    method: "get",
+  });
+}

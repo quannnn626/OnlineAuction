@@ -535,8 +535,11 @@ export default {
     },
     // 查看
     handleView(goods) {
-      this.$message.info(`查看商品: ${goods.goodsName}`);
-      // TODO: 跳转到商品详情页面
+      // 跳转到商品详情页面
+      this.$router.push({ 
+        path: "/goods-detail", 
+        query: { id: goods.id } 
+      });
     },
     // 审核通过
     async handleAudit(goods, status) {
