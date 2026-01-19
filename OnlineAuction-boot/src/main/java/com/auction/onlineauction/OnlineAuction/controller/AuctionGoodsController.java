@@ -12,7 +12,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -136,8 +138,55 @@ public class AuctionGoodsController {
      * 新增商品
      */
     @PostMapping("/addGoods")
-    public Result<AuctionGoods> addGoods(@RequestBody AuctionGoods goods) {
+    public Result<AuctionGoods> addGoods(@RequestBody Map<String, Object> requestData) {
         try {
+            // 将Map转换为AuctionGoods对象
+            AuctionGoods goods = new AuctionGoods();
+            if (requestData.get("goodsName") != null) {
+                goods.setGoodsName(requestData.get("goodsName").toString());
+            }
+            if (requestData.get("categoryId") != null) {
+                goods.setCategoryId(requestData.get("categoryId").toString());
+            }
+            if (requestData.get("goodsDesc") != null) {
+                goods.setGoodsDesc(requestData.get("goodsDesc").toString());
+            }
+            if (requestData.get("basePrice") != null) {
+                goods.setBasePrice(new java.math.BigDecimal(requestData.get("basePrice").toString()));
+            }
+            if (requestData.get("addPrice") != null) {
+                goods.setAddPrice(new java.math.BigDecimal(requestData.get("addPrice").toString()));
+            }
+            if (requestData.get("reservePrice") != null) {
+                goods.setReservePrice(new java.math.BigDecimal(requestData.get("reservePrice").toString()));
+            }
+            if (requestData.get("startTime") != null) {
+                String startTimeStr = requestData.get("startTime").toString();
+                try {
+                    // 处理前端传递的日期时间格式（可能是ISO格式或时间戳）
+                    if (startTimeStr.contains("T")) {
+                        goods.setStartTime(LocalDateTime.parse(startTimeStr.replace("Z", "")));
+                    } else {
+                        goods.setStartTime(LocalDateTime.parse(startTimeStr));
+                    }
+                } catch (Exception e) {
+                    // 如果解析失败，忽略该字段
+                }
+            }
+            if (requestData.get("endTime") != null) {
+                String endTimeStr = requestData.get("endTime").toString();
+                try {
+                    // 处理前端传递的日期时间格式（可能是ISO格式或时间戳）
+                    if (endTimeStr.contains("T")) {
+                        goods.setEndTime(LocalDateTime.parse(endTimeStr.replace("Z", "")));
+                    } else {
+                        goods.setEndTime(LocalDateTime.parse(endTimeStr));
+                    }
+                } catch (Exception e) {
+                    // 如果解析失败，忽略该字段
+                }
+            }
+            
             // 验证商品名称
             if (goods.getGoodsName() == null || goods.getGoodsName().trim().isEmpty()) {
                 return Result.error("商品名称不能为空");
@@ -153,15 +202,57 @@ public class AuctionGoodsController {
             goods.setCreateTime(LocalDateTime.now());
             goods.setUpdateTime(LocalDateTime.now());
             goods.setDelFlag(0);
+            
             boolean success = goodsService.save(goods);
             if (success) {
-                // 如果有文件ID列表，更新文件的goodsId
-                if (goods.getFiles() != null && !goods.getFiles().isEmpty()) {
-                    for (AuctionFile file : goods.getFiles()) {
-                        file.setGoodsId(goods.getId());
-                        fileService.updateById(file);
+                // 获取文件ID列表并更新文件的goodsId
+                Object fileIdsObj = requestData.get("fileIds");
+                if (fileIdsObj != null) {
+                    List<Long> fileIds = new ArrayList<>();
+                    if (fileIdsObj instanceof List) {
+                        // 如果是数组
+                        List<?> list = (List<?>) fileIdsObj;
+                        for (Object item : list) {
+                            if (item != null) {
+                                try {
+                                    fileIds.add(Long.parseLong(item.toString()));
+                                } catch (NumberFormatException e) {
+                                    // 忽略无效的ID
+                                }
+                            }
+                        }
+                    } else if (fileIdsObj instanceof String) {
+                        // 如果是逗号分隔的字符串
+                        String[] ids = fileIdsObj.toString().split(",");
+                        for (String id : ids) {
+                            try {
+                                fileIds.add(Long.parseLong(id.trim()));
+                            } catch (NumberFormatException e) {
+                                // 忽略无效的ID
+                            }
+                        }
+                    }
+                    
+                    // 根据文件ID更新goodsId
+                    for (Long fileId : fileIds) {
+                        AuctionFile file = fileService.getById(fileId);
+                        if (file != null && file.getDelFlag() == 0) {
+                            file.setGoodsId(goods.getId());
+                            fileService.updateById(file);
+                        }
                     }
                 }
+                
+                // 兼容处理：如果有files数组
+                if (goods.getFiles() != null && !goods.getFiles().isEmpty()) {
+                    for (AuctionFile file : goods.getFiles()) {
+                        if (file.getId() != null) {
+                            file.setGoodsId(goods.getId());
+                            fileService.updateById(file);
+                        }
+                    }
+                }
+                
                 return Result.success("新增成功", goods);
             } else {
                 return Result.error("新增失败");
@@ -175,33 +266,175 @@ public class AuctionGoodsController {
      * 更新商品
      */
     @PutMapping("/{id}")
-    public Result<AuctionGoods> updateGoods(@PathVariable Long id, @RequestBody AuctionGoods goods) {
+    public Result<AuctionGoods> updateGoods(@PathVariable Long id, @RequestBody Map<String, Object> requestData) {
         try {
             // 验证商品是否存在
             AuctionGoods existing = goodsService.getById(id);
             if (existing == null || existing.getDelFlag() == 1) {
                 return Result.error("商品不存在");
             }
+            
+            // 将Map转换为AuctionGoods对象
+            AuctionGoods goods = new AuctionGoods();
+            goods.setId(id);
+            if (requestData.get("goodsName") != null) {
+                goods.setGoodsName(requestData.get("goodsName").toString());
+            }
+            if (requestData.get("categoryId") != null) {
+                goods.setCategoryId(requestData.get("categoryId").toString());
+            }
+            if (requestData.get("goodsDesc") != null) {
+                goods.setGoodsDesc(requestData.get("goodsDesc").toString());
+            }
+            if (requestData.get("basePrice") != null) {
+                goods.setBasePrice(new java.math.BigDecimal(requestData.get("basePrice").toString()));
+            }
+            if (requestData.get("addPrice") != null) {
+                goods.setAddPrice(new java.math.BigDecimal(requestData.get("addPrice").toString()));
+            }
+            if (requestData.get("reservePrice") != null) {
+                goods.setReservePrice(new java.math.BigDecimal(requestData.get("reservePrice").toString()));
+            }
+            if (requestData.get("startTime") != null) {
+                String startTimeStr = requestData.get("startTime").toString();
+                try {
+                    if (startTimeStr.contains("T")) {
+                        goods.setStartTime(LocalDateTime.parse(startTimeStr.replace("Z", "")));
+                    } else {
+                        goods.setStartTime(LocalDateTime.parse(startTimeStr));
+                    }
+                } catch (Exception e) {
+                    // 如果解析失败，使用原有值
+                    goods.setStartTime(existing.getStartTime());
+                }
+            } else {
+                goods.setStartTime(existing.getStartTime());
+            }
+            if (requestData.get("endTime") != null) {
+                String endTimeStr = requestData.get("endTime").toString();
+                try {
+                    if (endTimeStr.contains("T")) {
+                        goods.setEndTime(LocalDateTime.parse(endTimeStr.replace("Z", "")));
+                    } else {
+                        goods.setEndTime(LocalDateTime.parse(endTimeStr));
+                    }
+                } catch (Exception e) {
+                    // 如果解析失败，使用原有值
+                    goods.setEndTime(existing.getEndTime());
+                }
+            } else {
+                goods.setEndTime(existing.getEndTime());
+            }
+            
             // 验证商品名称
             if (goods.getGoodsName() == null || goods.getGoodsName().trim().isEmpty()) {
                 return Result.error("商品名称不能为空");
             }
+            
             // 设置更新信息
-            goods.setId(id);
             goods.setUpdateTime(LocalDateTime.now());
-            // 保留创建时间
+            // 保留创建时间、删除标志、审核状态、商品状态、卖方ID等
             goods.setCreateTime(existing.getCreateTime());
-            // 保留删除标志
             goods.setDelFlag(existing.getDelFlag());
+            goods.setAuditStatus(existing.getAuditStatus());
+            goods.setGoodsStatus(existing.getGoodsStatus());
+            goods.setSellerId(existing.getSellerId());
+            
             boolean success = goodsService.updateById(goods);
             if (success) {
-                // 如果有文件列表，更新文件的goodsId
-                if (goods.getFiles() != null && !goods.getFiles().isEmpty()) {
-                    for (AuctionFile file : goods.getFiles()) {
-                        file.setGoodsId(goods.getId());
-                        fileService.updateById(file);
+                // 处理文件关联更新
+                Object fileIdsObj = requestData.get("fileIds");
+                if (fileIdsObj != null) {
+                    List<Long> newFileIds = new ArrayList<>();
+                    if (fileIdsObj instanceof List) {
+                        // 如果是数组
+                        List<?> list = (List<?>) fileIdsObj;
+                        for (Object item : list) {
+                            if (item != null) {
+                                try {
+                                    newFileIds.add(Long.parseLong(item.toString()));
+                                } catch (NumberFormatException e) {
+                                    // 忽略无效的ID
+                                }
+                            }
+                        }
+                    } else if (fileIdsObj instanceof String) {
+                        // 如果是逗号分隔的字符串
+                        String[] ids = fileIdsObj.toString().split(",");
+                        for (String fileId : ids) {
+                            try {
+                                newFileIds.add(Long.parseLong(fileId.trim()));
+                            } catch (NumberFormatException e) {
+                                // 忽略无效的ID
+                            }
+                        }
+                    }
+                    
+                    // 获取商品原有的文件列表
+                    List<AuctionFile> oldFiles = fileService.lambdaQuery()
+                            .eq(AuctionFile::getGoodsId, id)
+                            .eq(AuctionFile::getDelFlag, 0)
+                            .list();
+                    List<Long> oldFileIds = new ArrayList<>();
+                    for (AuctionFile file : oldFiles) {
+                        if (file.getId() != null) {
+                            oldFileIds.add(file.getId());
+                        }
+                    }
+                    
+                    // 找出需要删除的文件（旧文件列表中不在新文件列表中的）
+                    List<Long> filesToRemove = new ArrayList<>();
+                    for (Long oldFileId : oldFileIds) {
+                        if (!newFileIds.contains(oldFileId)) {
+                            filesToRemove.add(oldFileId);
+                        }
+                    }
+                    
+                    // 删除旧文件关联（逻辑删除）
+                    for (Long fileId : filesToRemove) {
+                        AuctionFile file = fileService.getById(fileId);
+                        if (file != null) {
+                            file.setGoodsId(null); // 清除关联
+                            fileService.updateById(file);
+                        }
+                    }
+                    
+                    // 更新新文件的goodsId
+                    for (Long fileId : newFileIds) {
+                        AuctionFile file = fileService.getById(fileId);
+                        if (file != null && file.getDelFlag() == 0) {
+                            file.setGoodsId(id);
+                            fileService.updateById(file);
+                        }
                     }
                 }
+                
+                // 兼容处理：如果有files数组
+                if (requestData.get("files") != null) {
+                    Object filesObj = requestData.get("files");
+                    if (filesObj instanceof List) {
+                        List<?> filesList = (List<?>) filesObj;
+                        for (Object fileObj : filesList) {
+                            if (fileObj instanceof Map) {
+                                Map<?, ?> fileMap = (Map<?, ?>) fileObj;
+                                Object fileIdObj = fileMap.get("id");
+                                if (fileIdObj != null) {
+                                    try {
+                                        Long fileId = Long.parseLong(fileIdObj.toString());
+                                        AuctionFile file = fileService.getById(fileId);
+                                        if (file != null) {
+                                            file.setGoodsId(id);
+                                            fileService.updateById(file);
+                                        }
+                                    } catch (NumberFormatException e) {
+                                        // 忽略无效的ID
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
                 return Result.success("更新成功", goods);
             } else {
                 return Result.error("更新失败");

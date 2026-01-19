@@ -619,9 +619,11 @@ export default {
           const data = {
             ...this.formData,
             categoryId: this.formData.categoryIds.join(","), // 多个分类用逗号分隔
+            fileIds: this.formData.fileIds || [], // 确保传递文件ID列表
           };
           if (this.formData.id) {
             await updateGoods(data);
+            this.$message.success("修改成功");
           } else {
             await addGoods(data);
             this.$message.success("添加成功");
@@ -640,10 +642,69 @@ export default {
     handleUploadSuccess(response, file, fileList) {
       if (response.code === 200 && response.data) {
         this.fileList = fileList;
-        // 确保正确提取filePath
-        this.formData.goodsImg = fileList
-          .map((f) => f.response.data.filePath)
-          .join(",");
+        // 提取文件路径和文件ID
+        const filePaths = [];
+        const fileIds = [];
+        
+        // response.data 是文件数组（后端返回的是 List<AuctionFile>）
+        if (Array.isArray(response.data)) {
+          response.data.forEach((fileData) => {
+            if (fileData.filePath) {
+              filePaths.push(fileData.filePath);
+            }
+            if (fileData.id) {
+              fileIds.push(fileData.id);
+            }
+          });
+        } else {
+          // 兼容处理：如果返回的是单个文件对象
+          if (response.data.filePath) {
+            filePaths.push(response.data.filePath);
+          }
+          if (response.data.id) {
+            fileIds.push(response.data.id);
+          }
+        }
+        
+        // 更新所有文件的路径和ID（合并所有已上传的文件和已有文件）
+        fileList.forEach((f) => {
+          // 处理新上传的文件（有response字段）
+          if (f.response && f.response.data) {
+            if (Array.isArray(f.response.data)) {
+              f.response.data.forEach((fileData) => {
+                if (fileData.filePath && !filePaths.includes(fileData.filePath)) {
+                  filePaths.push(fileData.filePath);
+                }
+                if (fileData.id && !fileIds.includes(fileData.id)) {
+                  fileIds.push(fileData.id);
+                }
+              });
+            } else {
+              if (f.response.data.filePath && !filePaths.includes(f.response.data.filePath)) {
+                filePaths.push(f.response.data.filePath);
+              }
+              if (f.response.data.id && !fileIds.includes(f.response.data.id)) {
+                fileIds.push(f.response.data.id);
+              }
+            }
+          } else if (f.id) {
+            // 处理已有文件（从服务器加载的文件，有id字段）
+            if (f.url && !filePaths.includes(f.url)) {
+              filePaths.push(f.url);
+            }
+            if (!fileIds.includes(f.id)) {
+              fileIds.push(f.id);
+            }
+          } else if (f.url && !f.response) {
+            // 处理已有文件（只有url，没有response）
+            if (!filePaths.includes(f.url)) {
+              filePaths.push(f.url);
+            }
+          }
+        });
+        
+        this.formData.goodsImg = filePaths.join(",");
+        this.formData.fileIds = fileIds;
       } else {
         this.$message.error(`上传失败: ${response.msg || "未知错误"}`);
       }
@@ -651,18 +712,52 @@ export default {
     // 上传移除
     handleUploadRemove(file, fileList) {
       this.fileList = fileList;
-      // 修复：更新goodsImg字段，而不是操作不存在的fileIds
-      this.formData.goodsImg = fileList
-        .map((f) =>
-          f.response && f.response.data ? f.response.data.filePath : ""
-        )
-        .filter(Boolean)
-        .join(",");
+      // 更新文件路径和文件ID
+      const filePaths = [];
+      const fileIds = [];
+      
+      fileList.forEach((f) => {
+        // 处理新上传的文件（有response字段）
+        if (f.response && f.response.data) {
+          // 如果返回的是数组（多个文件）
+          if (Array.isArray(f.response.data)) {
+            f.response.data.forEach((fileData) => {
+              if (fileData.filePath) {
+                filePaths.push(fileData.filePath);
+              }
+              if (fileData.id) {
+                fileIds.push(fileData.id);
+              }
+            });
+          } else {
+            // 如果返回的是单个文件对象
+            if (f.response.data.filePath) {
+              filePaths.push(f.response.data.filePath);
+            }
+            if (f.response.data.id) {
+              fileIds.push(f.response.data.id);
+            }
+          }
+        } else if (f.id) {
+          // 处理已有文件（从服务器加载的文件，有id字段）
+          if (f.url) {
+            filePaths.push(f.url);
+          }
+          fileIds.push(f.id);
+        } else if (f.url && !f.response) {
+          // 处理已有文件（只有url，没有response）
+          filePaths.push(f.url);
+        }
+      });
+      
+      this.formData.goodsImg = filePaths.join(",");
+      this.formData.fileIds = fileIds;
     },
     // 获取文件列表
     getFileListFromImages(files) {
       if (!files || !Array.isArray(files)) return [];
       return files.map((file) => ({
+        id: file.id, // 保留文件ID，用于编辑时识别已有文件
         name: file.fileName,
         url: file.filePath,
         response: { data: file },

@@ -40,7 +40,7 @@ export function addGoods(data) {
 
 export function updateGoods(data) {
   return request({
-    url: "/OnlineAuction/auctionGoods",
+    url: `/OnlineAuction/auctionGoods/${data.id}`,
     method: "put",
     data,
   });
