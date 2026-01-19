@@ -55,7 +55,7 @@ public class GoodsApiController extends BaseApiController {
             
             wrapper.orderByDesc("create_time");
 
-            // 查询数据（此时会自动分页）
+            // 查询数据
             List<AuctionGoods> list = goodsService.list(wrapper);
 
             // 使用 PageInfo 包装结果
