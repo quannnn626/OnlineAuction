@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -33,6 +34,18 @@ public class AuctionCategory implements Serializable {
     private Long id;
 
     /**
+     * 父分类ID（0表示顶级分类）
+     */
+    @TableField("parent_id")
+    private Long parentId;
+
+    /**
+     * 分类层级：1=一级 2=二级 3=三级
+     */
+    @TableField("level")
+    private Integer level;
+
+    /**
      * 类目名称（如：奢侈品、房产、艺术品）
      */
     @TableField("category_name")
@@ -43,6 +56,12 @@ public class AuctionCategory implements Serializable {
      */
     @TableField("category_sort")
     private Integer categorySort;
+
+    /**
+     * 状态：0=禁用 1=启用
+     */
+    @TableField("category_status")
+    private Integer categoryStatus;
 
     /**
      * 创建时间
@@ -62,5 +81,9 @@ public class AuctionCategory implements Serializable {
     @TableField("del_flag")
     private Integer delFlag;
 
-
+    /**
+     * 子分类列表（前端展示用，不映射到数据库）
+     */
+    @TableField(exist = false)
+    private List<AuctionCategory> children;
 }

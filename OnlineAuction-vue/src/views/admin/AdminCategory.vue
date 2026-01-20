@@ -3,16 +3,8 @@
     <div class="page-header">
       <h2>拍卖商品类目管理</h2>
       <div class="header-actions">
-        <el-button
-          v-if="selectedRows.length > 0"
-          type="danger"
-          icon="el-icon-delete"
-          @click="handleBatchDelete"
-        >
-          批量删除 ({{ selectedRows.length }})
-        </el-button>
         <el-button type="primary" icon="el-icon-plus" @click="handleAdd">
-          新增分类
+          新增一级分类
         </el-button>
       </div>
     </div>
@@ -39,100 +31,76 @@
       </el-form>
     </div>
 
-    <!-- 表格区域 -->
-    <div class="table-section">
-      <el-table
-        :data="tableData"
+    <!-- 树形控件区域 -->
+    <div class="tree-section">
+      <el-tree
+        :data="treeData"
+        :props="treeProps"
+        node-key="id"
+        :expand-on-click-node="false"
         v-loading="loading"
-        border
-        stripe
-        @selection-change="handleSelectionChange"
+        class="category-tree"
       >
-        <el-table-column
-          type="selection"
-          width="55"
-          align="center"
-        ></el-table-column>
-        <el-table-column
-          type="index"
-          label="序号"
-          width="80"
-          align="center"
-          :index-method="indexMethod"
-        ></el-table-column>
-        <el-table-column
-          prop="categoryName"
-          label="分类名称"
-          min-width="150"
-        ></el-table-column>
-        <el-table-column
-          prop="categorySort"
-          label="排序值"
-          width="100"
-          align="center"
-        >
-          <template slot-scope="scope">
-            <el-tag size="small">{{ scope.row.categorySort || 0 }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="createTime"
-          label="创建时间"
-          width="180"
-          align="center"
-        >
-          <template slot-scope="scope">
-            {{ formatDateTime(scope.row.createTime) }}
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="updateTime"
-          label="更新时间"
-          width="180"
-          align="center"
-        >
-          <template slot-scope="scope">
-            {{ formatDateTime(scope.row.updateTime) }}
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="200" align="center" fixed="right">
-          <template slot-scope="scope">
-            <el-button
-              type="text"
-              icon="el-icon-edit"
-              @click="handleEdit(scope.row)"
-              >编辑</el-button
+        <span class="custom-tree-node" slot-scope="{ node, data }">
+          <span class="node-label">
+            <el-tag
+              :type="getLevelTagType(data.level)"
+              size="mini"
+              style="margin-right: 8px"
             >
+              {{ getLevelText(data.level) }}
+            </el-tag>
+            <span class="category-name">{{ data.categoryName }}</span>
+            <el-tag
+              v-if="data.categoryStatus === 0"
+              type="info"
+              size="mini"
+              style="margin-left: 8px"
+            >
+              已禁用
+            </el-tag>
+            <span class="category-sort" style="margin-left: 8px; color: #909399">
+              排序: {{ data.categorySort || 0 }}
+            </span>
+          </span>
+          <span class="node-actions">
             <el-button
               type="text"
+              size="mini"
+              icon="el-icon-plus"
+              @click="handleAddChild(data)"
+              :disabled="data.level >= 3"
+              :title="data.level >= 3 ? '最多只能有三级分类' : '添加子分类'"
+            >
+              添加
+            </el-button>
+            <el-button
+              type="text"
+              size="mini"
+              icon="el-icon-edit"
+              @click="handleEdit(data)"
+            >
+              编辑
+            </el-button>
+            <el-button
+              type="text"
+              size="mini"
               icon="el-icon-delete"
               style="color: #f56c6c"
-              @click="handleDelete(scope.row)"
-              >删除</el-button
+              @click="handleDelete(data)"
             >
-          </template>
-        </el-table-column>
-      </el-table>
-
-      <!-- 分页 -->
-      <div class="pagination-section">
-        <el-pagination
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-          :current-page="pagination.current"
-          :page-sizes="[10, 20, 50, 100]"
-          :page-size="pagination.size"
-          :total="pagination.total"
-          layout="total, sizes, prev, pager, next, jumper"
-        ></el-pagination>
-      </div>
+              删除
+            </el-button>
+          </span>
+        </span>
+      </el-tree>
     </div>
 
     <!-- 新增/编辑对话框 -->
     <el-dialog
       :title="dialogTitle"
       :visible.sync="dialogVisible"
-      width="500px"
+      width="600px"
       @close="handleDialogClose"
     >
       <el-form
@@ -141,6 +109,24 @@
         ref="categoryForm"
         label-width="100px"
       >
+        <el-form-item label="父分类" prop="parentId" v-if="formData.level > 1">
+          <el-cascader
+            v-model="parentIdPath"
+            :options="categoryTreeOptions"
+            :props="cascaderProps"
+            clearable
+            :disabled="isEdit && formData.level === 3"
+            placeholder="请选择父分类（不选则为一级分类）"
+            style="width: 100%"
+            @change="handleParentChange"
+          ></el-cascader>
+          <div style="color: #909399; font-size: 12px; margin-top: 5px">
+            提示：最多只能有三级分类，三级分类不能再添加子分类
+            <span v-if="isEdit && formData.level === 3" style="color: #f56c6c">
+              （三级分类不能修改父分类）
+            </span>
+          </div>
+        </el-form-item>
         <el-form-item label="分类名称" prop="categoryName">
           <el-input
             v-model="formData.categoryName"
@@ -161,6 +147,15 @@
             提示：数字越小，排序越靠前
           </div>
         </el-form-item>
+        <el-form-item label="状态" prop="categoryStatus">
+          <el-switch
+            v-model="formData.categoryStatus"
+            :active-value="1"
+            :inactive-value="0"
+            active-text="启用"
+            inactive-text="禁用"
+          ></el-switch>
+        </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button @click="dialogVisible = false">取消</el-button>
@@ -174,11 +169,10 @@
 
 <script>
 import {
-  getCategoryPage,
+  getCategoryTree,
   addCategory,
   updateCategory,
   deleteCategory,
-  batchDeleteCategory,
 } from "@/api/category";
 
 export default {
@@ -187,22 +181,33 @@ export default {
     return {
       loading: false,
       submitLoading: false,
-      tableData: [],
-      selectedRows: [],
+      treeData: [],
+      treeProps: {
+        children: "children",
+        label: "categoryName",
+      },
       searchForm: {
         categoryName: "",
       },
-      pagination: {
-        current: 1,
-        size: 10,
-        total: 0,
-      },
       dialogVisible: false,
       dialogTitle: "新增分类",
+      isEdit: false,
       formData: {
         id: null,
+        parentId: 0,
+        level: 1,
         categoryName: "",
         categorySort: 0,
+        categoryStatus: 1,
+      },
+      parentIdPath: [], // 级联选择器的路径
+      categoryTreeOptions: [], // 用于级联选择器的树形数据
+      cascaderProps: {
+        value: "id",
+        label: "categoryName",
+        children: "children",
+        checkStrictly: true, // 允许选择任意一级
+        emitPath: true, // 返回完整路径
       },
       formRules: {
         categoryName: [
@@ -224,113 +229,168 @@ export default {
     this.loadData();
   },
   methods: {
-    // 自定义序号生成方法
-    indexMethod(index) {
-      return (this.pagination.current - 1) * this.pagination.size + index + 1;
-    },
     // 加载数据
     async loadData() {
       this.loading = true;
       try {
-        const params = {
-          current: this.pagination.current,
-          size: this.pagination.size,
-          categoryName: this.searchForm.categoryName || undefined,
-        };
-        const result = await getCategoryPage(params);
-        console.log("分页数据:", result); // 调试信息
-        console.log("分页数据所有字段:", Object.keys(result || {})); // 打印所有字段名
-        // MyBatis Plus的Page对象结构：{ records: [], total: 0, current: 1, size: 10, pages: 0 }
-        if (result && typeof result === "object") {
-          // 处理不同的字段名可能（total, totalCount, totalElements等）
-          const total = result.total || result.totalCount || result.totalElements || 0;
-          const records = result.records || result.list || result.data || [];
-
-          this.tableData = records;
-          this.pagination.total = total;
-
-          console.log(
-            "解析后的数据 - total:",
-            total,
-            "records数量:",
-            records.length
-          );
-
-          // 同步当前页（防止后端返回的数据与前端不一致）
-          if (result.current !== undefined) {
-            this.pagination.current = result.current;
-          }
+        // request.js 的响应拦截器已经返回了 res.data，所以这里 result 就是树形数据数组
+        const result = await getCategoryTree(true); // 获取所有分类（包括禁用的）
+        console.log("API返回结果:", result);
+        console.log("result类型:", typeof result);
+        console.log("result是否为数组:", Array.isArray(result));
+        
+        if (result && Array.isArray(result)) {
+          console.log("设置treeData，数据长度:", result.length);
+          console.log("treeData内容:", JSON.stringify(result, null, 2));
+          this.treeData = result;
+          // 同时加载用于级联选择器的数据（包含所有分类，不限制状态）
+          await this.loadCategoryTreeOptions();
         } else {
-          // 如果返回的不是Page对象，可能是数组或其他格式
-          console.warn("返回数据格式异常:", result);
-          this.tableData = Array.isArray(result) ? result : [];
-          this.pagination.total = Array.isArray(result) ? result.length : 0;
+          console.warn("返回数据为空或格式不正确，result:", result);
+          this.treeData = [];
         }
       } catch (error) {
         console.error("加载数据失败:", error);
         this.$message.error("加载数据失败");
+        this.treeData = [];
       } finally {
         this.loading = false;
+        console.log("最终treeData:", this.treeData);
+        console.log("treeData长度:", this.treeData?.length);
       }
+    },
+    // 加载用于级联选择器的分类树（包含所有分类，用于选择父分类）
+    async loadCategoryTreeOptions() {
+      try {
+        // 获取所有分类（包括禁用的），用于选择父分类
+        // request.js 的响应拦截器已经返回了 res.data，所以这里 result 就是树形数据数组
+        const result = await getCategoryTree(true);
+        if (result && Array.isArray(result)) {
+          // 过滤掉三级分类，因为三级分类不能再有子分类
+          this.categoryTreeOptions = this.filterTreeForCascader(result);
+        }
+      } catch (error) {
+        console.error("加载分类树失败:", error);
+      }
+    },
+    // 过滤树形数据，移除三级分类（因为三级分类不能再有子分类）
+    filterTreeForCascader(tree) {
+      return tree
+        .filter((item) => item.level < 3)
+        .map((item) => {
+          const newNode = { ...item };
+          if (newNode.children && newNode.children.length > 0) {
+            newNode.children = this.filterTreeForCascader(newNode.children);
+          }
+          return newNode;
+        });
     },
     // 搜索
     handleSearch() {
-      this.pagination.current = 1;
+      // 树形结构搜索，可以展开匹配的节点
       this.loadData();
     },
     // 重置
     handleReset() {
       this.searchForm.categoryName = "";
-      this.pagination.current = 1;
       this.loadData();
     },
-    // 新增
+    // 新增一级分类
     handleAdd() {
-      this.dialogTitle = "新增分类";
+      this.dialogTitle = "新增一级分类";
+      this.isEdit = false;
       this.formData = {
         id: null,
+        parentId: 0,
+        level: 1,
         categoryName: "",
         categorySort: 0,
+        categoryStatus: 1,
       };
+      this.parentIdPath = [];
+      this.dialogVisible = true;
+    },
+    // 添加子分类
+    handleAddChild(parentData) {
+      if (parentData.level >= 3) {
+        this.$message.warning("最多只能有三级分类，无法继续添加");
+        return;
+      }
+      this.dialogTitle = `新增${this.getLevelText(parentData.level + 1)}分类`;
+      this.isEdit = false;
+      this.formData = {
+        id: null,
+        parentId: parentData.id,
+        level: parentData.level + 1,
+        categoryName: "",
+        categorySort: 0,
+        categoryStatus: 1,
+      };
+      // 设置级联选择器的路径
+      this.parentIdPath = this.getParentPath(parentData.id);
       this.dialogVisible = true;
     },
     // 编辑
-    handleEdit(row) {
-      this.dialogTitle = "编辑分类";
+    handleEdit(data) {
+      this.dialogTitle = `编辑${this.getLevelText(data.level)}分类`;
+      this.isEdit = true;
       this.formData = {
-        id: row.id,
-        categoryName: row.categoryName,
-        categorySort: row.categorySort || 0,
+        id: data.id,
+        parentId: data.parentId || 0,
+        level: data.level,
+        categoryName: data.categoryName,
+        categorySort: data.categorySort || 0,
+        categoryStatus: data.categoryStatus !== undefined ? data.categoryStatus : 1,
       };
+      // 设置级联选择器的路径（三级分类也显示，但禁用）
+      this.parentIdPath = this.getParentPath(data.parentId || 0);
       this.dialogVisible = true;
     },
-    // 删除
-    handleDelete(row) {
-      this.$confirm(`确定要删除分类"${row.categoryName}"吗？`, "提示", {
-        confirmButtonText: "确定",
-        cancelButtonText: "取消",
-        type: "warning",
-      })
-        .then(async () => {
-          try {
-            await deleteCategory(row.id);
-            this.$message.success("删除成功");
-            this.loadData();
-          } catch (error) {
-            console.error("删除失败:", error);
-            this.$message.error("删除失败");
-          }
-        })
-        .catch(() => {});
-    },
-    // 批量删除
-    handleBatchDelete() {
-      if (this.selectedRows.length === 0) {
-        this.$message.warning("请选择要删除的分类");
-        return;
+    // 获取父分类的路径（用于级联选择器）
+    getParentPath(parentId) {
+      if (!parentId || parentId === 0) {
+        return [];
       }
+      // 递归查找父分类路径
+      const findPath = (nodes, targetId, path = []) => {
+        for (const node of nodes) {
+          if (node.id === targetId) {
+            return [...path, node.id];
+          }
+          if (node.children && node.children.length > 0) {
+            const result = findPath(node.children, targetId, [...path, node.id]);
+            if (result) {
+              return result;
+            }
+          }
+        }
+        return null;
+      };
+      return findPath(this.categoryTreeOptions, parentId) || [];
+    },
+    // 父分类变化处理
+    handleParentChange(value) {
+      if (value && value.length > 0) {
+        // 取最后一个ID作为父分类ID
+        this.formData.parentId = value[value.length - 1];
+        // 计算层级
+        this.formData.level = value.length + 1;
+        // 限制最多三级
+        if (this.formData.level > 3) {
+          this.$message.warning("最多只能有三级分类");
+          this.formData.parentId = 0;
+          this.formData.level = 1;
+          this.parentIdPath = [];
+        }
+      } else {
+        this.formData.parentId = 0;
+        this.formData.level = 1;
+      }
+    },
+    // 删除
+    handleDelete(data) {
       this.$confirm(
-        `确定要删除选中的 ${this.selectedRows.length} 个分类吗？`,
+        `确定要删除分类"${data.categoryName}"吗？${data.children && data.children.length > 0 ? '删除后其子分类也将被删除！' : ''}`,
         "提示",
         {
           confirmButtonText: "确定",
@@ -340,14 +400,12 @@ export default {
       )
         .then(async () => {
           try {
-            const ids = this.selectedRows.map((row) => row.id);
-            await batchDeleteCategory(ids);
-            this.$message.success("批量删除成功");
-            this.selectedRows = [];
+            await deleteCategory(data.id);
+            this.$message.success("删除成功");
             this.loadData();
           } catch (error) {
-            console.error("批量删除失败:", error);
-            this.$message.error("批量删除失败");
+            console.error("删除失败:", error);
+            this.$message.error(error.response?.data?.message || "删除失败");
           }
         })
         .catch(() => {});
@@ -358,6 +416,13 @@ export default {
         if (!valid) {
           return false;
         }
+        
+        // 验证层级限制
+        if (this.formData.level > 3) {
+          this.$message.error("分类层级最多为三级");
+          return;
+        }
+        
         this.submitLoading = true;
         try {
           if (this.formData.id) {
@@ -373,7 +438,7 @@ export default {
           this.loadData();
         } catch (error) {
           console.error("操作失败:", error);
-          this.$message.error(error.message || "操作失败");
+          this.$message.error(error.response?.data?.message || "操作失败");
         } finally {
           this.submitLoading = false;
         }
@@ -382,35 +447,25 @@ export default {
     // 对话框关闭
     handleDialogClose() {
       this.$refs.categoryForm && this.$refs.categoryForm.resetFields();
+      this.parentIdPath = [];
     },
-    // 选择变化
-    handleSelectionChange(selection) {
-      this.selectedRows = selection;
+    // 获取层级标签类型
+    getLevelTagType(level) {
+      const types = {
+        1: "primary",
+        2: "success",
+        3: "warning",
+      };
+      return types[level] || "info";
     },
-    // 分页大小变化
-    handleSizeChange(size) {
-      console.log("分页大小变化:", size, "当前值:", this.pagination.size);
-      this.pagination.size = size;
-      this.pagination.current = 1;
-      this.loadData();
-    },
-    // 当前页变化
-    handleCurrentChange(current) {
-      console.log("当前页变化:", current, "当前值:", this.pagination.current);
-      this.pagination.current = current;
-      this.loadData();
-    },
-    // 格式化日期时间
-    formatDateTime(dateTime) {
-      if (!dateTime) return "-";
-      const date = new Date(dateTime);
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const day = String(date.getDate()).padStart(2, "0");
-      const hours = String(date.getHours()).padStart(2, "0");
-      const minutes = String(date.getMinutes()).padStart(2, "0");
-      const seconds = String(date.getSeconds()).padStart(2, "0");
-      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    // 获取层级文本
+    getLevelText(level) {
+      const texts = {
+        1: "一级",
+        2: "二级",
+        3: "三级",
+      };
+      return texts[level] || "未知";
     },
   },
 };
@@ -430,7 +485,7 @@ export default {
 
 .header-actions {
   display: flex;
-  gap: 10px; /* 按钮间距 */
+  gap: 10px;
 }
 
 .page-header h2 {
@@ -452,20 +507,72 @@ export default {
   margin: 0;
 }
 
-.table-section {
+.tree-section {
   background: #fff;
   padding: 20px;
   border-radius: 4px;
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  min-height: 400px;
 }
 
-.batch-actions {
-  margin-top: 20px;
-  padding: 10px 0;
+.category-tree {
+  font-size: 14px;
 }
 
-.pagination-section {
-  margin-top: 20px;
-  text-align: right;
+.custom-tree-node {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  padding-right: 8px;
+}
+
+.node-label {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.category-name {
+  font-weight: 500;
+  color: #303133;
+}
+
+.category-sort {
+  font-size: 12px;
+}
+
+.node-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.node-actions .el-button {
+  padding: 0 5px;
+}
+
+.node-actions .el-button.is-disabled {
+  color: #c0c4cc;
+  cursor: not-allowed;
+}
+
+/* 树节点样式优化 */
+.category-tree ::v-deep .el-tree-node__content {
+  height: 40px;
+  line-height: 40px;
+}
+
+.category-tree ::v-deep .el-tree-node__content:hover {
+  background-color: #f5f7fa;
+}
+
+.category-tree ::v-deep .el-tree-node__expand-icon {
+  color: #606266;
+}
+
+.category-tree ::v-deep .el-tree-node__expand-icon.is-leaf {
+  color: transparent;
+  cursor: default;
 }
 </style>

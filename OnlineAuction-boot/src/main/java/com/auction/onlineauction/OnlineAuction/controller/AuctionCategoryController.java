@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -101,17 +102,45 @@ public class AuctionCategoryController {
             if (category.getCategoryName() == null || category.getCategoryName().trim().isEmpty()) {
                 return Result.error("分类名称不能为空");
             }
-            // 检查分类名称是否重复
+            
+            // 处理父分类ID和层级
+            Long parentId = category.getParentId();
+            if (parentId == null) {
+                parentId = 0L;
+            }
+            category.setParentId(parentId);
+            
+            // 计算层级
+            Integer level = 1;
+            if (parentId != null && parentId > 0) {
+                AuctionCategory parent = categoryService.getById(parentId);
+                if (parent == null || parent.getDelFlag() == 1) {
+                    return Result.error("父分类不存在");
+                }
+                level = parent.getLevel() + 1;
+                // 限制最多三级
+                if (level > 3) {
+                    return Result.error("分类层级最多为三级，无法继续添加");
+                }
+            }
+            category.setLevel(level);
+            
+            // 检查分类名称是否重复（同一父分类下）
             QueryWrapper<AuctionCategory> wrapper = new QueryWrapper<>();
             wrapper.eq("category_name", category.getCategoryName());
+            wrapper.eq("parent_id", parentId);
             wrapper.eq("del_flag", 0);
             long count = categoryService.count(wrapper);
             if (count > 0) {
-                return Result.error("分类名称已存在");
+                return Result.error("同级分类名称已存在");
             }
+            
             // 设置默认值
             if (category.getCategorySort() == null) {
                 category.setCategorySort(0);
+            }
+            if (category.getCategoryStatus() == null) {
+                category.setCategoryStatus(1); // 默认启用
             }
             category.setCreateTime(LocalDateTime.now());
             category.setUpdateTime(LocalDateTime.now());
@@ -142,15 +171,44 @@ public class AuctionCategoryController {
             if (category.getCategoryName() == null || category.getCategoryName().trim().isEmpty()) {
                 return Result.error("分类名称不能为空");
             }
-            // 检查分类名称是否重复（排除自己）
+            
+            // 处理父分类ID和层级（如果修改了父分类）
+            Long parentId = category.getParentId();
+            if (parentId == null) {
+                parentId = existing.getParentId();
+            }
+            
+            // 如果修改了父分类，需要重新计算层级
+            Integer level = existing.getLevel();
+            if (!parentId.equals(existing.getParentId())) {
+                if (parentId == null || parentId == 0) {
+                    level = 1;
+                } else {
+                    AuctionCategory parent = categoryService.getById(parentId);
+                    if (parent == null || parent.getDelFlag() == 1) {
+                        return Result.error("父分类不存在");
+                    }
+                    level = parent.getLevel() + 1;
+                    // 限制最多三级
+                    if (level > 3) {
+                        return Result.error("分类层级最多为三级，无法继续添加");
+                    }
+                }
+                category.setParentId(parentId);
+                category.setLevel(level);
+            }
+            
+            // 检查分类名称是否重复（同一父分类下，排除自己）
             QueryWrapper<AuctionCategory> wrapper = new QueryWrapper<>();
             wrapper.eq("category_name", category.getCategoryName());
+            wrapper.eq("parent_id", parentId);
             wrapper.eq("del_flag", 0);
             wrapper.ne("id", id);
             long count = categoryService.count(wrapper);
             if (count > 0) {
-                return Result.error("分类名称已存在");
+                return Result.error("同级分类名称已存在");
             }
+            
             // 设置更新信息
             category.setId(id);
             category.setUpdateTime(LocalDateTime.now());
@@ -158,6 +216,18 @@ public class AuctionCategoryController {
             category.setCreateTime(existing.getCreateTime());
             // 保留删除标志
             category.setDelFlag(existing.getDelFlag());
+            // 如果没有传递level，保留原有的
+            if (category.getLevel() == null) {
+                category.setLevel(existing.getLevel());
+            }
+            // 如果没有传递parentId，保留原有的
+            if (category.getParentId() == null) {
+                category.setParentId(existing.getParentId());
+            }
+            // 如果没有传递categoryStatus，保留原有的
+            if (category.getCategoryStatus() == null) {
+                category.setCategoryStatus(existing.getCategoryStatus());
+            }
             boolean success = categoryService.updateById(category);
             if (success) {
                 return Result.success("更新成功", category);
@@ -178,6 +248,10 @@ public class AuctionCategoryController {
             AuctionCategory category = categoryService.getById(id);
             if (category == null || category.getDelFlag() == 1) {
                 return Result.error("分类不存在");
+            }
+            // 检查是否可以删除
+            if (!categoryService.canDelete(id)) {
+                return Result.error("该分类存在子分类或关联商品，无法删除");
             }
             // 逻辑删除
             category.setDelFlag(1);
@@ -205,6 +279,10 @@ public class AuctionCategoryController {
             for (Long id : ids) {
                 AuctionCategory category = categoryService.getById(id);
                 if (category != null && category.getDelFlag() == 0) {
+                    // 检查是否可以删除
+                    if (!categoryService.canDelete(id)) {
+                        return Result.error("分类\"" + category.getCategoryName() + "\"存在子分类或关联商品，无法删除");
+                    }
                     category.setDelFlag(1);
                     category.setUpdateTime(LocalDateTime.now());
                     categoryService.updateById(category);
@@ -213,6 +291,67 @@ public class AuctionCategoryController {
             return Result.success("批量删除成功", null);
         } catch (Exception e) {
             return Result.error("批量删除失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 获取商品分类树形结构（用于树形控件展示，管理页面使用，包含所有分类包括禁用的）
+     */
+    @GetMapping("/tree")
+    public Result<List<AuctionCategory>> getCategoryTree(
+            @RequestParam(required = false, defaultValue = "false") Boolean includeDisabled) {
+        try {
+            QueryWrapper<AuctionCategory> wrapper = new QueryWrapper<>();
+            wrapper.eq("del_flag", 0);
+            if (!includeDisabled) {
+                wrapper.eq("category_status", 1); // 默认只获取启用的分类
+            }
+            wrapper.orderByAsc("category_sort", "id");
+            List<AuctionCategory> allCategories = categoryService.list(wrapper);
+            
+            // 构建树形结构
+            List<AuctionCategory> tree = buildCategoryTree(allCategories);
+            return Result.success("查询成功", tree);
+        } catch (Exception e) {
+            return Result.error("查询失败：" + e.getMessage());
+        }
+    }
+    
+    /**
+     * 递归构建分类树
+     */
+    private List<AuctionCategory> buildCategoryTree(List<AuctionCategory> allCategories) {
+        List<AuctionCategory> rootCategories = allCategories.stream()
+                .filter(category -> category.getParentId() == null || category.getParentId() == 0)
+                .collect(Collectors.toList());
+
+        for (AuctionCategory root : rootCategories) {
+            root.setChildren(findCategoryChildren(root.getId(), allCategories));
+        }
+        return rootCategories;
+    }
+
+    private List<AuctionCategory> findCategoryChildren(Long parentId, List<AuctionCategory> allCategories) {
+        List<AuctionCategory> children = allCategories.stream()
+                .filter(category -> parentId != null && parentId.equals(category.getParentId()))
+                .collect(Collectors.toList());
+
+        for (AuctionCategory child : children) {
+            child.setChildren(findCategoryChildren(child.getId(), allCategories));
+        }
+        return children;
+    }
+
+    /**
+     * 根据父ID获取子分类列表
+     */
+    @GetMapping("/children/{parentId}")
+    public Result<List<AuctionCategory>> getChildrenByParentId(@PathVariable Long parentId) {
+        try {
+            List<AuctionCategory> children = categoryService.getChildrenByParentId(parentId);
+            return Result.success("查询成功", children);
+        } catch (Exception e) {
+            return Result.error("查询失败：" + e.getMessage());
         }
     }
 }

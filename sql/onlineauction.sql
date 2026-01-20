@@ -11,7 +11,7 @@
  Target Server Version : 80019
  File Encoding         : 65001
 
- Date: 19/01/2026 10:53:25
+ Date: 20/01/2026 17:06:54
 */
 
 SET NAMES utf8mb4;
@@ -45,19 +45,319 @@ CREATE TABLE `auction_banner`  (
 DROP TABLE IF EXISTS `auction_category`;
 CREATE TABLE `auction_category`  (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '类目ID，自增',
+  `parent_id` bigint NOT NULL DEFAULT 0 COMMENT '父分类ID（0表示顶级分类/一级分类）',
+  `level` tinyint NOT NULL DEFAULT 1 COMMENT '分类层级：1=一级分类（大类） 2=二级分类（小类） 3=三级分类（具体类型）',
   `category_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '类目名称（如：奢侈品、房产、艺术品）',
   `category_sort` int NOT NULL DEFAULT 0 COMMENT '排序值（数字越小越靠前）',
+  `category_status` tinyint NOT NULL DEFAULT 1 COMMENT '状态：0=禁用 1=启用',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `del_flag` tinyint NOT NULL DEFAULT 0 COMMENT '逻辑删除：0=未删除 1=已删除',
-  PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 3 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '拍卖商品类目表' ROW_FORMAT = DYNAMIC;
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `idx_parent_id`(`parent_id` ASC) USING BTREE,
+  INDEX `idx_level`(`level` ASC) USING BTREE,
+  INDEX `idx_category_status`(`category_status` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 101314 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '拍卖商品类目表（支持多级分类）' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of auction_category
 -- ----------------------------
-INSERT INTO `auction_category` VALUES (1, '古玩', 1, '2026-01-04 17:01:42', '2026-01-04 17:01:42', 0);
-INSERT INTO `auction_category` VALUES (2, '青眼白龙', 2, '2026-01-04 17:02:08', '2026-01-04 17:02:08', 0);
+INSERT INTO `auction_category` VALUES (1, 0, 1, '艺术品', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (2, 0, 1, '珠宝首饰', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (3, 0, 1, '古玩杂项', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (4, 0, 1, '名表名包', 4, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (5, 0, 1, '房产汽车', 5, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (6, 0, 1, '酒类收藏', 6, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (7, 0, 1, '邮品钱币', 7, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (8, 0, 1, '古籍善本', 8, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (9, 0, 1, '现当代艺术', 9, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (10, 0, 1, '奢侈品', 10, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (11, 1, 2, '书画', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (12, 1, 2, '陶瓷', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (13, 1, 2, '玉器', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (14, 1, 2, '雕塑', 4, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (15, 1, 2, '当代艺术', 5, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (21, 2, 2, '翡翠玉石', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (22, 2, 2, '钻石', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (23, 2, 2, '黄金', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (24, 2, 2, '彩色宝石', 4, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (25, 2, 2, '珍珠', 5, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (31, 3, 2, '青铜器', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (32, 3, 2, '钱币', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (33, 3, 2, '文房四宝', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (34, 3, 2, '紫砂壶', 4, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (35, 3, 2, '竹木牙角', 5, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (41, 4, 2, '瑞士名表', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (42, 4, 2, '古董表', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (43, 4, 2, '奢侈包袋', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (44, 4, 2, '配饰', 4, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (51, 5, 2, '房产', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (52, 5, 2, '汽车', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (53, 5, 2, '摩托车', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (61, 6, 2, '白酒', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (62, 6, 2, '红酒', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (63, 6, 2, '威士忌', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (71, 7, 2, '邮票', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (72, 7, 2, '邮封', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (73, 7, 2, '邮戳', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (74, 7, 2, '钱币', 4, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (75, 7, 2, '纸币', 5, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (81, 8, 2, '古籍', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (82, 8, 2, '善本', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (83, 8, 2, '碑帖', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (84, 8, 2, '信札', 4, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (85, 8, 2, '手稿', 5, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (91, 9, 2, '当代绘画', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (92, 9, 2, '当代雕塑', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (93, 9, 2, '装置艺术', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (94, 9, 2, '影像艺术', 4, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (95, 9, 2, '行为艺术', 5, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (101, 10, 2, '高级定制', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (102, 10, 2, '珠宝', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (103, 10, 2, '腕表', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (104, 10, 2, '皮具', 4, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (105, 10, 2, '配饰', 5, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (111, 11, 3, '国画', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (112, 11, 3, '油画', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (113, 11, 3, '书法', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (114, 11, 3, '版画', 4, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (115, 11, 3, '水彩画', 5, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (121, 12, 3, '明清瓷器', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (122, 12, 3, '现代陶瓷', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (123, 12, 3, '官窑瓷器', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (124, 12, 3, '民窑瓷器', 4, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (131, 13, 3, '和田玉', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (132, 13, 3, '翡翠', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (133, 13, 3, '岫玉', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (134, 13, 3, '古玉', 4, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (141, 14, 3, '石雕', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (142, 14, 3, '木雕', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (143, 14, 3, '铜雕', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (144, 14, 3, '玉雕', 4, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (145, 14, 3, '现代雕塑', 5, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (151, 15, 3, '抽象艺术', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (152, 15, 3, '观念艺术', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (153, 15, 3, '新媒体艺术', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (200, 0, 1, '钟表收藏', 11, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (201, 0, 1, '茶具收藏', 12, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (202, 0, 1, '文玩收藏', 13, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (203, 0, 1, '红色收藏', 14, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (204, 0, 1, '当代工艺品', 15, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (211, 21, 3, '翡翠手镯', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (212, 21, 3, '挂件吊坠', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (213, 21, 3, '翡翠戒指', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (214, 21, 3, '翡翠项链', 4, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (215, 21, 3, '翡翠耳环', 5, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (221, 22, 3, '钻戒', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (222, 22, 3, '钻石项链', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (223, 22, 3, '钻石耳环', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (224, 22, 3, '钻石手链', 4, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (231, 23, 3, '黄金饰品', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (232, 23, 3, '金条', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (233, 23, 3, '金币', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (241, 24, 3, '红宝石', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (242, 24, 3, '蓝宝石', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (243, 24, 3, '祖母绿', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (244, 24, 3, '碧玺', 4, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (245, 24, 3, '坦桑石', 5, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (246, 24, 3, '其他彩色宝石', 6, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (251, 25, 3, '海水珍珠', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (252, 25, 3, '淡水珍珠', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (253, 25, 3, '南洋珍珠', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (254, 25, 3, '大溪地黑珍珠', 4, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (255, 25, 3, '古董珍珠', 5, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (311, 31, 3, '青铜礼器', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (312, 31, 3, '青铜兵器', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (313, 31, 3, '青铜杂器', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (321, 32, 3, '古钱币', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (322, 32, 3, '机制币', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (323, 32, 3, '纸币', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (324, 32, 3, '纪念币', 4, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (331, 33, 3, '毛笔', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (332, 33, 3, '墨', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (333, 33, 3, '纸', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (334, 33, 3, '砚台', 4, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (341, 34, 3, '明清紫砂', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (342, 34, 3, '现代紫砂', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (343, 34, 3, '名家紫砂', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (344, 34, 3, '紫砂摆件', 4, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (351, 35, 3, '竹雕', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (352, 35, 3, '木雕', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (353, 35, 3, '象牙', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (354, 35, 3, '角雕', 4, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (355, 35, 3, '核雕', 5, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (411, 41, 3, '百达翡丽', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (412, 41, 3, '劳力士', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (413, 41, 3, '江诗丹顿', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (414, 41, 3, '欧米茄', 4, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (421, 42, 3, '怀表', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (422, 42, 3, '座钟', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (423, 42, 3, '古董腕表', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (424, 42, 3, '限量版', 4, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (431, 43, 3, '爱马仕', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (432, 43, 3, '香奈儿', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (433, 43, 3, '路易威登', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (434, 43, 3, '古驰', 4, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (441, 44, 3, '太阳镜', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (442, 44, 3, '丝巾', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (443, 44, 3, '腰带', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (444, 44, 3, '钱包', 4, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (445, 44, 3, '卡包', 5, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (511, 51, 3, '住宅', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (512, 51, 3, '商业地产', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (513, 51, 3, '土地', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (514, 51, 3, '别墅', 4, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (515, 51, 3, '商铺', 5, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (516, 51, 3, '写字楼', 6, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (521, 52, 3, '轿车', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (522, 52, 3, 'SUV', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (523, 52, 3, '跑车', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (524, 52, 3, '古董车', 4, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (525, 52, 3, '豪华车', 5, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (526, 52, 3, '新能源车', 6, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (531, 53, 3, '哈雷', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (532, 53, 3, '杜卡迪', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (533, 53, 3, '宝马摩托', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (534, 53, 3, '其他品牌', 4, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (611, 61, 3, '茅台', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (612, 61, 3, '五粮液', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (613, 61, 3, '剑南春', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (614, 61, 3, '泸州老窖', 4, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (615, 61, 3, '洋河', 5, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (616, 61, 3, '郎酒', 6, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (617, 61, 3, '汾酒', 7, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (618, 61, 3, '古井贡酒', 8, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (619, 61, 3, '其他名酒', 9, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (621, 62, 3, '拉菲', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (622, 62, 3, '拉图', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (623, 62, 3, '玛歌', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (624, 62, 3, '木桐', 4, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (625, 62, 3, '奥比昂', 5, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (626, 62, 3, '勃艮第', 6, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (627, 62, 3, '其他红酒', 7, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (631, 63, 3, '苏格兰威士忌', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (632, 63, 3, '日本威士忌', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (633, 63, 3, '美国威士忌', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (634, 63, 3, '其他威士忌', 4, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (711, 71, 3, '清代邮票', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (712, 71, 3, '民国邮票', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (713, 71, 3, '新中国邮票', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (714, 71, 3, '外国邮票', 4, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (715, 71, 3, '特种邮票', 5, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (716, 71, 3, '纪念邮票', 6, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (721, 72, 3, '实寄封', 1, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (722, 72, 3, '首日封', 2, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (723, 72, 3, '纪念封', 3, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (724, 72, 3, '其他邮封', 4, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (731, 73, 3, '日戳', 1, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (732, 73, 3, '纪念戳', 2, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (733, 73, 3, '风景戳', 3, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (734, 73, 3, '其他邮戳', 4, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (741, 74, 3, '古钱币', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (742, 74, 3, '机制币', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (743, 74, 3, '银元', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (744, 74, 3, '铜币', 4, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (745, 74, 3, '纪念币', 5, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (751, 75, 3, '第一套人民币', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (752, 75, 3, '第二套人民币', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (753, 75, 3, '第三套人民币', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (754, 75, 3, '第四套人民币', 4, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (755, 75, 3, '第五套人民币', 5, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (756, 75, 3, '外汇券', 6, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (757, 75, 3, '外国纸币', 7, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (811, 81, 3, '宋刻本', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (812, 81, 3, '元刻本', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (813, 81, 3, '明刻本', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (814, 81, 3, '清刻本', 4, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (815, 81, 3, '民国刻本', 5, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (816, 81, 3, '抄本', 6, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (821, 82, 3, '经部', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (822, 82, 3, '史部', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (823, 82, 3, '子部', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (824, 82, 3, '集部', 4, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (831, 83, 3, '碑拓', 1, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (832, 83, 3, '帖拓', 2, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (833, 83, 3, '其他碑帖', 3, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (841, 84, 3, '名人信札', 1, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (842, 84, 3, '历史信札', 2, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (843, 84, 3, '其他信札', 3, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (851, 85, 3, '名人手稿', 1, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (852, 85, 3, '历史手稿', 2, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (853, 85, 3, '其他手稿', 3, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (911, 91, 3, '抽象绘画', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (912, 91, 3, '写实绘画', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (913, 91, 3, '表现主义', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (914, 91, 3, '超现实主义', 4, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (915, 91, 3, '波普艺术', 5, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (921, 92, 3, '金属雕塑', 1, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (922, 92, 3, '石雕', 2, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (923, 92, 3, '木雕', 3, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (924, 92, 3, '其他雕塑', 4, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (931, 93, 3, '装置艺术', 1, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (932, 93, 3, '其他装置', 2, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (941, 94, 3, '摄影作品', 1, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (942, 94, 3, '视频艺术', 2, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (943, 94, 3, '其他影像', 3, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (951, 95, 3, '行为艺术', 1, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (952, 95, 3, '其他行为', 2, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (1011, 101, 3, '高级时装', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (1012, 101, 3, '定制礼服', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (1013, 101, 3, '定制西装', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (1021, 102, 3, '高级珠宝', 1, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (1022, 102, 3, '其他珠宝', 2, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (1031, 103, 3, '高级腕表', 1, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (1032, 103, 3, '其他腕表', 2, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (1041, 104, 3, '高级皮具', 1, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (1042, 104, 3, '其他皮具', 2, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (1051, 105, 3, '高级配饰', 1, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (1052, 105, 3, '其他配饰', 2, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (2001, 200, 2, '怀表', 1, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (2002, 200, 2, '座钟', 2, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (2003, 200, 2, '挂钟', 3, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (2011, 201, 2, '紫砂茶具', 1, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (2012, 201, 2, '瓷器茶具', 2, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (2013, 201, 2, '银器茶具', 3, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (2014, 201, 2, '其他茶具', 4, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (2021, 202, 2, '手串', 1, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (2022, 202, 2, '把件', 2, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (2023, 202, 2, '摆件', 3, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (2024, 202, 2, '其他文玩', 4, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (2031, 203, 2, '红色文献', 1, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (2032, 203, 2, '红色徽章', 2, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (2033, 203, 2, '红色纪念品', 3, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (2041, 204, 2, '当代陶瓷', 1, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (2042, 204, 2, '当代漆器', 2, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (2043, 204, 2, '当代金属工艺', 3, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (2044, 204, 2, '其他工艺品', 4, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (4124, 41, 3, '真力时', 13, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (4125, 41, 3, '百年灵', 14, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (4126, 41, 3, '宇舶', 15, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (4127, 41, 3, '萧邦', 16, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (4128, 41, 3, '伯爵', 17, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (4129, 41, 3, '其他品牌', 18, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (20111, 2011, 3, '紫砂壶', 1, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (20112, 2011, 3, '紫砂杯', 2, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (20113, 2011, 3, '紫砂茶盘', 3, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (20114, 2011, 3, '其他紫砂', 4, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (20121, 2012, 3, '青花茶具', 1, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (20122, 2012, 3, '粉彩茶具', 2, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (20123, 2012, 3, '单色釉茶具', 3, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (20124, 2012, 3, '其他瓷器茶具', 4, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (20211, 2021, 3, '小叶紫檀', 1, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (20212, 2021, 3, '海南黄花梨', 2, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (20213, 2021, 3, '金丝楠', 3, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (20214, 2021, 3, '沉香', 4, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (20215, 2021, 3, '崖柏', 5, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (20216, 2021, 3, '菩提', 6, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (20217, 2021, 3, '其他手串', 7, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (20221, 2022, 3, '和田玉把件', 1, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (20222, 2022, 3, '翡翠把件', 2, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (20223, 2022, 3, '其他把件', 3, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (41111, 4111, 3, '百达翡丽', 1, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (41112, 4111, 3, '其他百达翡丽', 2, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (41121, 4112, 3, '劳力士', 1, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (41122, 4112, 3, '其他劳力士', 2, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
+INSERT INTO `auction_category` VALUES (101313, 2041, 3, '义乌出品', 1, 1, '2026-01-20 16:35:41', '2026-01-20 16:35:41', 0);
 
 -- ----------------------------
 -- Table structure for auction_deposit
@@ -99,7 +399,7 @@ CREATE TABLE `auction_file`  (
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `idx_goods_id`(`goods_id` ASC) USING BTREE,
   INDEX `idx_file_type`(`file_type` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 8 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '商品文件表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 9 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '商品文件表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of auction_file
@@ -145,7 +445,7 @@ CREATE TABLE `auction_goods`  (
   INDEX `idx_view_count`(`view_count` DESC) USING BTREE,
   INDEX `idx_collect_count`(`collect_count` DESC) USING BTREE,
   INDEX `idx_bid_count`(`bid_count` DESC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 11 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '拍卖商品表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 12 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '拍卖商品表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of auction_goods
@@ -321,7 +621,7 @@ CREATE TABLE `auction_permission`  (
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `idx_permission_code`(`permission_code` ASC) USING BTREE,
   INDEX `idx_permission_status`(`permission_status` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 93 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '系统权限表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 94 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '系统权限表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of auction_permission
@@ -411,7 +711,7 @@ CREATE TABLE `auction_role_permission`  (
   UNIQUE INDEX `idx_role_permission`(`role_type` ASC, `permission_id` ASC) USING BTREE,
   INDEX `idx_role_type`(`role_type` ASC) USING BTREE,
   INDEX `idx_permission_id`(`permission_id` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 128 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '角色权限关联表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 129 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '角色权限关联表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of auction_role_permission

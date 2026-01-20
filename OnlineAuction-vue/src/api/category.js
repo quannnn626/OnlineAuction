@@ -83,3 +83,27 @@ export function getCategoryListForHome() {
     method: "get",
   });
 }
+
+/**
+ * 获取商品分类树形结构（用于树形控件展示）
+ * @param {Boolean} includeDisabled 是否包含禁用的分类，默认false
+ */
+export function getCategoryTree(includeDisabled = true) {
+  return request({
+    url: "/OnlineAuction/auctionCategory/tree",
+    method: "get",
+    params: {
+      includeDisabled: includeDisabled,
+    },
+  });
+}
+
+/**
+ * 根据父ID获取子分类列表
+ */
+export function getChildrenByParentId(parentId) {
+  return request({
+    url: `/OnlineAuction/auctionCategory/children/${parentId}`,
+    method: "get",
+  });
+}
