@@ -6,9 +6,33 @@ server:
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3307/onlineauction?characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&rewriteBatchedStatements=true
+    url: jdbc:mysql://localhost:3307/onlineauction?characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&rewriteBatchedStatements=true&autoReconnect=true&failOverReadOnly=false&maxReconnects=3&initialTimeout=2&connectTimeout=30000&socketTimeout=60000
     username: root
     password: root
+    # HikariCP 连接池配置
+    hikari:
+      # 连接池最小空闲连接数（保持至少5个连接）
+      minimum-idle: 5
+      # 连接池最大连接数
+      maximum-pool-size: 20
+      # 连接超时时间（毫秒）
+      connection-timeout: 30000
+      # 空闲连接存活最大时间（毫秒，10分钟）
+      idle-timeout: 600000
+      # 连接池中连接的最大生命周期（毫秒，30分钟）
+      max-lifetime: 1800000
+      # 连接测试查询（用于验证连接是否有效）
+      connection-test-query: SELECT 1
+      # 连接池名称
+      pool-name: OnlineAuctionHikariCP
+      # 连接泄漏检测时间（毫秒，如果连接超过此时间未归还，会记录警告）
+      leak-detection-threshold: 60000
+      # 是否在启动时初始化连接池（设置为1，确保启动时就建立连接）
+      initialization-fail-timeout: 1
+      # 连接验证超时时间（毫秒）
+      validation-timeout: 3000
+      # 是否自动提交事务
+      auto-commit: true
   # 文件上传配置
   servlet:
     multipart:
