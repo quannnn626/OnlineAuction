@@ -2,6 +2,7 @@ package com.auction.onlineauction.OnlineAuction.service;
 
 import com.auction.onlineauction.OnlineAuction.entity.AuctionCategory;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.github.pagehelper.PageInfo;
 
 import java.util.List;
 
@@ -16,10 +17,46 @@ import java.util.List;
 public interface IAuctionCategoryService extends IService<AuctionCategory> {
 
     /**
-     * 获取所有商品分类的树形结构
+     * 分页查询商品分类列表
+     */
+    PageInfo<AuctionCategory> getCategoryPage(Integer current, Integer size, String categoryName);
+
+    /**
+     * 获取所有商品分类列表（不分页）
+     */
+    List<AuctionCategory> getCategoryList();
+
+    /**
+     * 根据ID获取商品分类详情
+     */
+    AuctionCategory getCategoryById(Long id);
+
+    /**
+     * 新增商品分类
+     */
+    AuctionCategory addCategory(AuctionCategory category);
+
+    /**
+     * 更新商品分类
+     */
+    AuctionCategory updateCategory(Long id, AuctionCategory category);
+
+    /**
+     * 删除商品分类（逻辑删除）
+     */
+    void deleteCategory(Long id);
+
+    /**
+     * 批量删除商品分类
+     */
+    void batchDeleteCategory(List<Long> ids);
+
+    /**
+     * 获取商品分类树形结构
+     * @param includeDisabled 是否包含禁用的分类
      * @return 树形结构的分类列表
      */
-    List<AuctionCategory> getCategoryTree();
+    List<AuctionCategory> getCategoryTree(boolean includeDisabled);
 
     /**
      * 根据父ID获取子分类列表

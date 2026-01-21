@@ -81,10 +81,11 @@ public class AuctionUser implements Serializable {
     private String sex;
 
     /**
-     * 用户角色：1=买方用户 2=卖方用户 3=后台管理员
+     * 用户角色（多个角色用逗号分隔）：1=买方用户 2=卖方用户 3=后台管理员
+     * 例如："1" 表示只有买方身份，"1,2" 表示同时拥有买方和卖方身份
      */
     @TableField("user_role")
-    private Integer userRole;
+    private String userRole;
 
     /**
      * 卖方资质审核状态：0=未提交 1=待审核 2=审核通过 3=审核驳回（买方默认为0）
@@ -97,6 +98,30 @@ public class AuctionUser implements Serializable {
      */
     @TableField("seller_audit_remark")
     private String sellerAuditRemark;
+
+    /**
+     * 卖方资质证明材料（文件路径，多个文件用逗号分隔）
+     */
+    @TableField("seller_certificate_files")
+    private String sellerCertificateFiles;
+
+    /**
+     * 卖方资质申请时间
+     */
+    @TableField("seller_audit_apply_time")
+    private LocalDateTime sellerAuditApplyTime;
+
+    /**
+     * 卖方资质审核时间
+     */
+    @TableField("seller_audit_time")
+    private LocalDateTime sellerAuditTime;
+
+    /**
+     * 卖方资质审核人ID（管理员ID）
+     */
+    @TableField("seller_audit_user_id")
+    private Long sellerAuditUserId;
 
     /**
      * 账号状态：0=正常 1=禁用（替代物理删除）

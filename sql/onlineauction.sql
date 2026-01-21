@@ -11,7 +11,7 @@
  Target Server Version : 80019
  File Encoding         : 65001
 
- Date: 21/01/2026 10:45:06
+ Date: 21/01/2026 14:55:21
 */
 
 SET NAMES utf8mb4;
@@ -57,7 +57,7 @@ CREATE TABLE `auction_category`  (
   INDEX `idx_parent_id`(`parent_id` ASC) USING BTREE,
   INDEX `idx_level`(`level` ASC) USING BTREE,
   INDEX `idx_category_status`(`category_status` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 101314 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '拍卖商品类目表（支持多级分类）' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 101317 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '拍卖商品类目表（支持多级分类）' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of auction_category
@@ -117,7 +117,7 @@ INSERT INTO `auction_category` VALUES (102, 10, 2, '珠宝', 2, 1, '2026-01-20 1
 INSERT INTO `auction_category` VALUES (103, 10, 2, '腕表', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
 INSERT INTO `auction_category` VALUES (104, 10, 2, '皮具', 4, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
 INSERT INTO `auction_category` VALUES (105, 10, 2, '配饰', 5, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
-INSERT INTO `auction_category` VALUES (111, 11, 3, '国画', 1, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
+INSERT INTO `auction_category` VALUES (111, 11, 3, '国画', 1, 1, '2026-01-20 16:08:33', '2026-01-21 14:50:33', 0);
 INSERT INTO `auction_category` VALUES (112, 11, 3, '油画', 2, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
 INSERT INTO `auction_category` VALUES (113, 11, 3, '书法', 3, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
 INSERT INTO `auction_category` VALUES (114, 11, 3, '版画', 4, 1, '2026-01-20 16:08:33', '2026-01-20 16:08:33', 0);
@@ -358,6 +358,9 @@ INSERT INTO `auction_category` VALUES (41112, 4111, 3, '其他百达翡丽', 2, 
 INSERT INTO `auction_category` VALUES (41121, 4112, 3, '劳力士', 1, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
 INSERT INTO `auction_category` VALUES (41122, 4112, 3, '其他劳力士', 2, 1, '2026-01-20 16:08:34', '2026-01-20 16:08:34', 0);
 INSERT INTO `auction_category` VALUES (101313, 2041, 3, '义乌出品', 1, 1, '2026-01-20 16:35:41', '2026-01-20 16:35:41', 0);
+INSERT INTO `auction_category` VALUES (101314, 0, 1, '现代艺术', 0, 1, '2026-01-21 14:51:05', '2026-01-21 14:52:29', 1);
+INSERT INTO `auction_category` VALUES (101315, 101314, 2, '雕塑', 1, 1, '2026-01-21 14:51:20', '2026-01-21 14:52:26', 1);
+INSERT INTO `auction_category` VALUES (101316, 101315, 3, '克劳狄乌斯半身像', 0, 1, '2026-01-21 14:52:13', '2026-01-21 14:52:19', 1);
 
 -- ----------------------------
 -- Table structure for auction_deposit
@@ -399,7 +402,7 @@ CREATE TABLE `auction_file`  (
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `idx_goods_id`(`goods_id` ASC) USING BTREE,
   INDEX `idx_file_type`(`file_type` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 9 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '商品文件表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 10 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '商品文件表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of auction_file
@@ -446,7 +449,7 @@ CREATE TABLE `auction_goods`  (
   INDEX `idx_view_count`(`view_count` DESC) USING BTREE,
   INDEX `idx_collect_count`(`collect_count` DESC) USING BTREE,
   INDEX `idx_bid_count`(`bid_count` DESC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 12 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '拍卖商品表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 13 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '拍卖商品表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of auction_goods
@@ -791,9 +794,13 @@ CREATE TABLE `auction_user`  (
   `email` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT '' COMMENT '用户邮箱',
   `avatar` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT '' COMMENT '用户头像地址',
   `sex` char(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT '2' COMMENT '用户性别（0男 1女 2未知）',
-  `user_role` tinyint NOT NULL COMMENT '用户角色：1=买方用户 2=卖方用户 3=后台管理员',
+  `user_role` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT '1' COMMENT '用户角色（多个角色用逗号分隔）：1=买方用户 2=卖方用户 3=后台管理员，默认1（买方）',
   `seller_audit_status` tinyint NULL DEFAULT 0 COMMENT '卖方资质审核状态：0=未提交 1=待审核 2=审核通过 3=审核驳回（买方默认为0）',
   `seller_audit_remark` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '卖方资质审核驳回原因',
+  `seller_certificate_files` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '卖方资质证明材料（文件路径，多个文件用逗号分隔）',
+  `seller_audit_apply_time` datetime NULL DEFAULT NULL COMMENT '卖方资质申请时间',
+  `seller_audit_time` datetime NULL DEFAULT NULL COMMENT '卖方资质审核时间',
+  `seller_audit_user_id` bigint NULL DEFAULT NULL COMMENT '卖方资质审核人ID（管理员ID）',
   `user_status` tinyint NOT NULL DEFAULT 0 COMMENT '账号状态：0=正常 1=禁用（替代物理删除）',
   `login_ip` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT '' COMMENT '最后登录IP',
   `login_date` datetime NULL DEFAULT NULL COMMENT '最后登录时间',
@@ -805,10 +812,11 @@ CREATE TABLE `auction_user`  (
   UNIQUE INDEX `idx_user_name`(`user_name` ASC) USING BTREE,
   INDEX `idx_user_role`(`user_role` ASC) USING BTREE,
   INDEX `idx_user_status`(`user_status` ASC) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '系统用户表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '系统用户表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of auction_user
 -- ----------------------------
+INSERT INTO `auction_user` VALUES (1, 'admin', 'e10adc3949ba59abbe56e057f20f883e', '芊芊', '芊芊', '17713356500', '1709348112@qq.com', '', '0', '3', 0, NULL, NULL, NULL, NULL, NULL, 0, '', NULL, '2026-01-21 14:54:06', '2026-01-21 14:54:36', 0);
 
 SET FOREIGN_KEY_CHECKS = 1;
