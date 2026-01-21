@@ -5,6 +5,14 @@ import com.auction.onlineauction.OnlineAuction.mapper.AuctionFileMapper;
 import com.auction.onlineauction.OnlineAuction.service.IAuctionFileService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.File;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * <p>
@@ -17,4 +25,103 @@ import org.springframework.stereotype.Service;
 @Service
 public class AuctionFileServiceImpl extends ServiceImpl<AuctionFileMapper, AuctionFile> implements IAuctionFileService {
 
+    @Override
+    public List<AuctionFile> uploadFiles(MultipartFile[] files, Long goodsId) {
+        List<AuctionFile> uploadedFiles = new ArrayList<>();
+
+        for (MultipartFile file : files) {
+            if (file.isEmpty()) {
+                continue;
+            }
+
+            // 检查文件类型
+            String contentType = file.getContentType();
+            String fileType = "image";
+            if (contentType != null && contentType.startsWith("video/")) {
+                fileType = "video";
+            } else if (contentType != null && !contentType.startsWith("image/")) {
+                throw new RuntimeException("只支持上传图片和视频文件");
+            }
+
+            // 生成文件名
+            String originalFilename = file.getOriginalFilename();
+            if (originalFilename == null || !originalFilename.contains(".")) {
+                throw new RuntimeException("文件名格式错误");
+            }
+            String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            String fileName = UUID.randomUUID().toString().replace("-", "") + extension;
+
+            // 创建上传目录
+            String uploadDir = System.getProperty("user.dir") + "/upload/goods/" + LocalDateTime.now().getYear() +
+                             String.format("%02d", LocalDateTime.now().getMonthValue()) + "/";
+            File dir = new File(uploadDir);
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+
+            // 保存文件
+            String relativePath = "/upload/goods/" + LocalDateTime.now().getYear() +
+                            String.format("%02d", LocalDateTime.now().getMonthValue()) + "/" + fileName;
+            String fullPath = uploadDir + fileName;
+            File destFile = new File(fullPath);
+            try {
+                file.transferTo(destFile);
+            } catch (IOException e) {
+                throw new RuntimeException("文件保存失败：" + e.getMessage());
+            }
+
+            // 保存到数据库
+            AuctionFile auctionFile = new AuctionFile();
+            auctionFile.setFileName(originalFilename);
+            auctionFile.setFilePath(relativePath);
+            auctionFile.setGoodsId(goodsId);
+            auctionFile.setFileType(fileType);
+            auctionFile.setCreateTime(LocalDateTime.now());
+            auctionFile.setDelFlag(0);
+
+            boolean success = save(auctionFile);
+            if (!success) {
+                // 如果数据库保存失败，删除已上传的文件
+                destFile.delete();
+                throw new RuntimeException("文件信息保存失败");
+            }
+            uploadedFiles.add(auctionFile);
+        }
+
+        return uploadedFiles;
+    }
+
+    @Override
+    public List<AuctionFile> getFilesByGoodsId(Long goodsId) {
+        return lambdaQuery()
+                .eq(AuctionFile::getGoodsId, goodsId)
+                .eq(AuctionFile::getDelFlag, 0)
+                .list();
+    }
+
+    @Override
+    public void deleteFile(Long id) {
+        AuctionFile file = getById(id);
+        if (file == null || file.getDelFlag() == 1) {
+            throw new RuntimeException("文件不存在");
+        }
+
+        // 删除物理文件
+        String filePath = System.getProperty("user.dir") + file.getFilePath();
+        File physicalFile = new File(filePath);
+        if (physicalFile.exists()) {
+            boolean deleted = physicalFile.delete();
+            if (!deleted) {
+                // 如果物理文件删除失败，记录日志但不阻止逻辑删除
+                System.err.println("物理文件删除失败: " + filePath);
+            }
+        }
+
+        // 逻辑删除数据库记录
+        file.setDelFlag(1);
+        boolean success = updateById(file);
+        if (!success) {
+            throw new RuntimeException("删除失败");
+        }
+    }
 }

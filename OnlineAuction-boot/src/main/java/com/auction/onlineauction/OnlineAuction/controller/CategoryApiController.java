@@ -3,7 +3,6 @@ package com.auction.onlineauction.OnlineAuction.controller;
 import com.auction.onlineauction.OnlineAuction.common.Result;
 import com.auction.onlineauction.OnlineAuction.entity.AuctionCategory;
 import com.auction.onlineauction.OnlineAuction.service.IAuctionCategoryService;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -33,10 +32,7 @@ public class CategoryApiController {
     @GetMapping("/list")
     public Result<List<AuctionCategory>> getCategoryList() {
         try {
-            QueryWrapper<AuctionCategory> wrapper = new QueryWrapper<>();
-            wrapper.eq("del_flag", 0);
-            wrapper.orderByAsc("category_sort", "id");
-            List<AuctionCategory> list = categoryService.list(wrapper);
+            List<AuctionCategory> list = categoryService.getCategoryList();
             return Result.success("获取成功", list);
         } catch (Exception e) {
             return Result.error("获取失败：" + e.getMessage());
