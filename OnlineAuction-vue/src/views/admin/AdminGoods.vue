@@ -214,20 +214,62 @@
           </el-input>
         </el-form-item>
         <el-form-item label="商品分类" prop="categoryIds">
-          <el-select
-            v-model="formData.categoryIds"
-            multiple
-            placeholder="请选择商品分类"
-            style="width: 100%"
+          <el-popover
+            placement="bottom-start"
+            width="400"
+            trigger="click"
+            v-model="categoryTreeVisible"
           >
-            <el-option
-              v-for="category in categoryList"
-              :key="category.id"
-              :label="category.categoryName"
-              :value="category.id"
+            <el-tree
+              :data="categoryTreeData"
+              :props="categoryTreeProps"
+              show-checkbox
+              node-key="id"
+              @check="handleCategoryTreeCheck"
+              :check-strictly="false"
+              ref="categoryTree"
+              :key="dialogVisible ? 'tree-' + formData.id : 'tree-new'"
+              style="max-height: 300px; overflow-y: auto"
             >
-            </el-option>
-          </el-select>
+              <span class="custom-tree-node" slot-scope="{ node, data }">
+                <el-tag
+                  :type="getLevelTagType(data.level)"
+                  size="mini"
+                  style="margin-right: 8px"
+                >
+                  {{ getLevelText(data.level) }}
+                </el-tag>
+                <span>{{ data.categoryName }}</span>
+              </span>
+            </el-tree>
+            <el-input
+              slot="reference"
+              v-model="selectedCategoryNames"
+              placeholder="请选择商品分类（点击展开树形选择）"
+              readonly
+              style="cursor: pointer"
+            >
+              <i
+                slot="prefix"
+                class="el-input__icon el-icon-arrow-down"
+                :class="{ 'is-reverse': categoryTreeVisible }"
+              ></i>
+            </el-input>
+          </el-popover>
+          <div
+            v-if="formData.categoryIds && formData.categoryIds.length > 0"
+            style="margin-top: 8px"
+          >
+            <el-tag
+              v-for="id in formData.categoryIds"
+              :key="id"
+              closable
+              @close="handleRemoveCategory(id)"
+              style="margin-right: 8px; margin-bottom: 4px"
+            >
+              {{ getCategoryNameById(id) }}
+            </el-tag>
+          </div>
         </el-form-item>
         <el-form-item label="商品介绍" prop="goodsDesc">
           <el-input
@@ -356,7 +398,7 @@ import {
   deleteGoods,
   auditGoods,
 } from "@/api/goods";
-import { getCategoryList } from "@/api/category";
+import { getCategoryTree } from "@/api/category";
 
 export default {
   name: "AdminGoods",
@@ -366,7 +408,13 @@ export default {
       submitLoading: false,
       auditLoading: false,
       tableData: [],
-      categoryList: [],
+      categoryTreeData: [],
+      categoryTreeVisible: false,
+      categoryTreeProps: {
+        children: "children",
+        label: "categoryName",
+      },
+      categoryMap: {}, // 用于快速查找分类名称
       searchForm: {
         goodsName: "",
         auditStatus: "",
@@ -391,6 +439,7 @@ export default {
         startTime: null,
         endTime: null,
       },
+      selectedCategoryNames: "", // 已选择分类的名称显示
       fileList: [],
       uploadAction: "/api/OnlineAuction/auctionFile/upload", // 文件上传接口
       formRules: {
@@ -482,14 +531,89 @@ export default {
         this.loading = false;
       }
     },
-    // 加载分类列表
+    // 加载分类树
     async loadCategories() {
       try {
-        const result = await getCategoryList();
-        this.categoryList = result || [];
+        const result = await getCategoryTree(true); // 获取所有分类，包括禁用的
+        this.categoryTreeData = result || [];
+        // 构建分类映射表，方便快速查找分类名称
+        this.buildCategoryMap(this.categoryTreeData);
       } catch (error) {
-        console.error("加载分类列表失败:", error);
+        console.error("加载分类树失败:", error);
+        this.$message.error("加载分类列表失败");
       }
+    },
+    // 构建分类映射表（扁平化树结构）
+    buildCategoryMap(treeData) {
+      const map = {};
+      const flatten = (nodes) => {
+        if (!nodes || !Array.isArray(nodes)) return;
+        nodes.forEach((node) => {
+          map[node.id] = node.categoryName;
+          if (node.children && node.children.length > 0) {
+            flatten(node.children);
+          }
+        });
+      };
+      flatten(treeData);
+      this.categoryMap = map;
+    },
+    // 处理树节点选择
+    handleCategoryTreeCheck(data, checkedInfo) {
+      // 获取所有选中的节点（包括半选中的父节点，但我们只要完全选中的）
+      const checkedKeys = checkedInfo.checkedKeys || [];
+      // 确保所有ID都是数字类型
+      this.formData.categoryIds = checkedKeys.map((id) => Number(id));
+      // 更新显示的分类名称
+      this.updateSelectedCategoryNames();
+    },
+    // 更新已选择的分类名称显示
+    updateSelectedCategoryNames() {
+      if (!this.formData.categoryIds || this.formData.categoryIds.length === 0) {
+        this.selectedCategoryNames = "";
+        return;
+      }
+      const names = this.formData.categoryIds
+        .map((id) => this.getCategoryNameById(id))
+        .filter((name) => name)
+        .join("、");
+      this.selectedCategoryNames = names || "";
+    },
+    // 根据ID获取分类名称
+    getCategoryNameById(id) {
+      return this.categoryMap[id] || `分类ID: ${id}`;
+    },
+    // 移除分类
+    handleRemoveCategory(id) {
+      const index = this.formData.categoryIds.indexOf(id);
+      if (index > -1) {
+        this.formData.categoryIds.splice(index, 1);
+        // 同步更新树的选中状态
+        this.$nextTick(() => {
+          if (this.$refs.categoryTree) {
+            this.$refs.categoryTree.setCheckedKeys(this.formData.categoryIds);
+          }
+          this.updateSelectedCategoryNames();
+        });
+      }
+    },
+    // 获取层级标签类型
+    getLevelTagType(level) {
+      const typeMap = {
+        1: "primary",
+        2: "success",
+        3: "warning",
+      };
+      return typeMap[level] || "info";
+    },
+    // 获取层级文本
+    getLevelText(level) {
+      const textMap = {
+        1: "一级",
+        2: "二级",
+        3: "三级",
+      };
+      return textMap[level] || "未知";
     },
     // 搜索
     handleSearch() {
@@ -519,18 +643,39 @@ export default {
         startTime: null,
         endTime: null,
       };
+      this.selectedCategoryNames = "";
       this.fileList = [];
+      // 重置树的选中状态
+      this.$nextTick(() => {
+        if (this.$refs.categoryTree) {
+          this.$refs.categoryTree.setCheckedKeys([]);
+        }
+      });
       this.dialogVisible = true;
     },
     // 编辑
     handleEdit(goods) {
       this.dialogTitle = "编辑商品";
+      const categoryIds = goods.categoryId
+        ? goods.categoryId
+            .split(",")
+            .map((id) => parseInt(id))
+            .filter((id) => !isNaN(id))
+        : [];
       this.formData = {
         ...goods,
-        categoryIds: goods.categoryId ? goods.categoryId.split(",") : [],
+        categoryIds: categoryIds,
         fileIds: goods.files ? goods.files.map((f) => f.id) : [],
       };
       this.fileList = this.getFileListFromImages(goods.files);
+      // 更新选中分类名称显示
+      this.updateSelectedCategoryNames();
+      // 同步更新树的选中状态
+      this.$nextTick(() => {
+        if (this.$refs.categoryTree) {
+          this.$refs.categoryTree.setCheckedKeys(categoryIds);
+        }
+      });
       this.dialogVisible = true;
     },
     // 查看
@@ -904,5 +1049,36 @@ export default {
   background: #f5f5f5;
   color: #909399;
   font-size: 24px;
+}
+
+/* 分类树选择器样式 */
+.custom-tree-node {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  padding-right: 8px;
+}
+
+.custom-tree-node span {
+  flex: 1;
+}
+
+.el-input__icon.is-reverse {
+  transform: rotate(180deg);
+}
+
+/* 树形选择器滚动条样式 */
+.el-tree {
+  background: transparent;
+}
+
+.el-tree-node__content {
+  height: 32px;
+  line-height: 32px;
+}
+
+.el-tree-node__content:hover {
+  background-color: #f5f7fa;
 }
 </style>
