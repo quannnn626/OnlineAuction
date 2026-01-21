@@ -64,25 +64,77 @@
     <!-- 商品类别区域 -->
     <div class="category-section">
       <div class="category-title"><i class="el-icon-menu"></i> 商品分类</div>
-      <div class="category-list" v-loading="categoryLoading">
+      <div class="category-nav" v-loading="categoryLoading">
+        <!-- 全部按钮 -->
         <div
-          class="category-item"
+          class="category-nav-item"
           :class="{ active: selectedCategoryId === 0 }"
           @click="handleCategoryClick(0)"
         >
           全部
         </div>
+        <!-- 一级分类导航 -->
         <div
-          v-for="category in categoryList"
+          v-for="category in level1Categories"
           :key="category.id"
-          class="category-item"
+          class="category-nav-item"
           :class="{ active: selectedCategoryId === category.id }"
+          @mouseenter="handleCategoryHover(category)"
+          @mouseleave="handleCategoryLeave"
           @click="handleCategoryClick(category.id)"
         >
           {{ category.categoryName }}
+          <!-- 悬浮下拉面板（只有当有子分类时才显示） -->
+          <div
+            v-if="hoveredCategoryId === category.id && hasChildren(category)"
+            class="category-dropdown"
+            @mouseenter="handleDropdownEnter"
+            @mouseleave="handleDropdownLeave"
+          >
+            <div class="category-dropdown-content">
+              <!-- 遍历二级分类 -->
+              <div
+                v-for="level2Category in category.children"
+                :key="level2Category.id"
+                class="category-dropdown-row"
+              >
+                <!-- 二级分类（左侧） -->
+                <div
+                  class="category-level2"
+                  @click.stop="handleCategoryClick(level2Category.id)"
+                >
+                  {{ level2Category.categoryName }}
+                </div>
+                <!-- 三级分类（右侧） -->
+                <div class="category-level3-list">
+                  <span
+                    v-for="level3Category in (level2Category.children || [])"
+                    :key="level3Category.id"
+                    class="category-level3-item"
+                    @click.stop="handleCategoryClick(level3Category.id)"
+                  >
+                    {{ level3Category.categoryName }}
+                  </span>
+                  <span
+                    v-if="!level2Category.children || level2Category.children.length === 0"
+                    class="category-level3-empty"
+                  >
+                    暂无三级分类
+                  </span>
+                </div>
+              </div>
+              <!-- 如果二级分类为空，显示提示 -->
+              <div
+                v-if="!category.children || category.children.length === 0"
+                class="category-dropdown-empty"
+              >
+                暂无二级分类
+              </div>
+            </div>
+          </div>
         </div>
         <div
-          v-if="!categoryLoading && categoryList.length === 0"
+          v-if="!categoryLoading && level1Categories.length === 0"
           class="category-empty"
         >
           暂无分类数据
@@ -90,9 +142,9 @@
       </div>
     </div>
 
-    <!-- 热门商品列表区域 -->
+    <!-- 猜你喜欢商品列表区域 -->
     <div class="goods-section">
-      <div class="goods-title"><i class="el-icon-star-on"></i> 热门商品</div>
+      <div class="goods-title"><i class="el-icon-thumb"></i> 猜你喜欢</div>
       <div class="goods-list" v-if="goodsList.length > 0">
         <div
           v-for="goods in goodsList"
@@ -140,7 +192,7 @@
 </template>
 
 <script>
-import { getCategoryListForHome } from "@/api/category";
+import { getCategoryTree } from "@/api/category";
 
 export default {
   name: "Home",
@@ -167,9 +219,12 @@ export default {
           goodsName: "名家字画",
         },
       ],
-      categoryList: [],
+      categoryTree: [], // 完整的分类树数据
+      level1Categories: [], // 一级分类列表
       selectedCategoryId: 0,
+      hoveredCategoryId: null, // 当前悬浮的一级分类ID
       categoryLoading: false,
+      dropdownTimer: null, // 用于延迟隐藏下拉面板
       goodsList: [
         {
           id: 1,
@@ -189,19 +244,55 @@ export default {
     this.loadCategories();
   },
   methods: {
-    // 加载商品分类列表
+    // 加载商品分类树
     async loadCategories() {
       this.categoryLoading = true;
       try {
-        const data = await getCategoryListForHome();
-        this.categoryList = data || [];
+        const data = await getCategoryTree(false); // 只获取启用的分类
+        this.categoryTree = data || [];
+        // 提取一级分类
+        this.level1Categories = this.categoryTree.filter(
+          (cat) => cat.level === 1
+        );
       } catch (error) {
         console.error("加载商品分类失败:", error);
-        // 如果加载失败，使用空数组，不显示错误提示（避免影响用户体验）
-        this.categoryList = [];
+        this.categoryTree = [];
+        this.level1Categories = [];
       } finally {
         this.categoryLoading = false;
       }
+    },
+    // 处理分类悬浮
+    handleCategoryHover(category) {
+      // 清除之前的定时器
+      if (this.dropdownTimer) {
+        clearTimeout(this.dropdownTimer);
+        this.dropdownTimer = null;
+      }
+      this.hoveredCategoryId = category.id;
+    },
+    // 处理分类离开
+    handleCategoryLeave() {
+      // 延迟隐藏下拉面板，避免鼠标移动到下拉面板时闪烁
+      this.dropdownTimer = setTimeout(() => {
+        this.hoveredCategoryId = null;
+      }, 200);
+    },
+    // 处理下拉面板进入
+    handleDropdownEnter() {
+      // 清除隐藏定时器
+      if (this.dropdownTimer) {
+        clearTimeout(this.dropdownTimer);
+        this.dropdownTimer = null;
+      }
+    },
+    // 处理下拉面板离开
+    handleDropdownLeave() {
+      this.hoveredCategoryId = null;
+    },
+    // 检查分类是否有子分类
+    hasChildren(category) {
+      return category.children && category.children.length > 0;
     },
     handleSearch() {
       if (!this.searchKeyword.trim()) {
@@ -223,7 +314,15 @@ export default {
     },
     handleCategoryClick(categoryId) {
       this.selectedCategoryId = categoryId;
-      this.$message.info("筛选类别功能开发中...");
+      // 跳转到商品列表页面，带上分类ID参数
+      if (categoryId === 0) {
+        this.$router.push({ path: "/goods" });
+      } else {
+        this.$router.push({
+          path: "/goods",
+          query: { categoryId: categoryId },
+        });
+      }
     },
     handleGoodsClick(goods) {
       this.$router.push({ path: "/goods-detail", query: { id: goods.id } });
@@ -329,31 +428,172 @@ export default {
   border-bottom: 2px solid #409eff;
 }
 
-.category-list {
+.category-nav {
   display: flex;
   flex-wrap: wrap;
-  gap: 15px;
+  gap: 0;
+  position: relative;
 }
 
-.category-item {
+.category-nav-item {
+  position: relative;
   flex: 0 0 auto;
   padding: 12px 24px;
   background: #f5f7fa;
-  border-radius: 20px;
+  border-radius: 0;
   cursor: pointer;
   transition: all 0.3s;
   border: 2px solid transparent;
+  border-right: 1px solid #e4e7ed;
+  font-size: 14px;
+  color: #303133;
 }
 
-.category-item:hover {
+.category-nav-item:first-child {
+  border-top-left-radius: 4px;
+  border-bottom-left-radius: 4px;
+}
+
+.category-nav-item:last-child {
+  border-top-right-radius: 4px;
+  border-bottom-right-radius: 4px;
+  border-right: 2px solid transparent;
+}
+
+.category-nav-item:hover {
   background: #ecf5ff;
+  color: #409eff;
+  z-index: 10;
+}
+
+.category-nav-item.active {
+  background: #409eff;
+  color: #fff;
   border-color: #409eff;
+}
+
+/* 下拉面板样式 */
+.category-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: #fff;
+  border: 1px solid #e4e7ed;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 600px;
+  max-width: 900px;
+  z-index: 1000;
+  margin-top: 2px;
+  padding: 20px;
+  animation: fadeInDown 0.2s ease-out;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.category-dropdown-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.category-dropdown-row {
+  display: flex;
+  align-items: flex-start;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+  transition: background-color 0.2s;
+}
+
+.category-dropdown-row:last-child {
+  border-bottom: none;
+}
+
+.category-dropdown-row:hover {
+  background-color: #f5f7fa;
+}
+
+.category-level2 {
+  flex: 0 0 140px;
+  font-weight: 500;
+  color: #303133;
+  padding-right: 20px;
+  cursor: pointer;
+  transition: color 0.2s;
+  font-size: 14px;
+  line-height: 1.8;
+  word-break: keep-all;
+}
+
+.category-level2:hover {
   color: #409eff;
 }
 
-.category-item.active {
-  background: #409eff;
-  color: #fff;
+.category-level3-list {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.category-level3-item {
+  padding: 4px 12px;
+  background: #f5f7fa;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #606266;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.category-level3-item:hover {
+  background: #ecf5ff;
+  color: #409eff;
+}
+
+.category-level3-empty {
+  font-size: 12px;
+  color: #909399;
+  font-style: italic;
+}
+
+.category-dropdown-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: #909399;
+  font-size: 14px;
+}
+
+/* 下拉面板滚动条样式 */
+.category-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.category-dropdown::-webkit-scrollbar-track {
+  background: #f5f7fa;
+  border-radius: 3px;
+}
+
+.category-dropdown::-webkit-scrollbar-thumb {
+  background: #c0c4cc;
+  border-radius: 3px;
+}
+
+.category-dropdown::-webkit-scrollbar-thumb:hover {
+  background: #909399;
 }
 
 .category-empty {
@@ -428,6 +668,7 @@ export default {
   margin-bottom: 10px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
