@@ -45,15 +45,15 @@
           <div class="header-content">
             <h3>{{ currentPageTitle }}</h3>
             <div class="header-right">
-              <el-dropdown>
+              <el-dropdown @command="handleCommand">
                 <span class="user-info">
                   <i class="el-icon-user"></i>
-                  <span>用户</span>
+                  <span>{{ userName || "用户" }}</span>
                   <i class="el-icon-arrow-down"></i>
                 </span>
                 <el-dropdown-menu slot="dropdown">
-                  <el-dropdown-item>个人中心</el-dropdown-item>
-                  <el-dropdown-item divided>退出登录</el-dropdown-item>
+                  <el-dropdown-item command="profile">个人中心</el-dropdown-item>
+                  <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
                 </el-dropdown-menu>
               </el-dropdown>
             </div>
@@ -71,6 +71,7 @@
 
 <script>
 import { getMenuTree } from "@/api/menu";
+import { logout } from "@/api/auth";
 
 export default {
   name: "Index",
@@ -81,9 +82,11 @@ export default {
       currentPageTitle: "首页",
       menuMap: {},
       loading: false,
+      userName: "",
     };
   },
   mounted() {
+    this.loadUserInfo();
     this.loadMenus();
     this.setActiveMenu();
     this.updatePageTitle();
@@ -99,7 +102,8 @@ export default {
       this.loading = true;
       try {
         console.log("开始加载菜单...");
-        const data = await getMenuTree(true);
+        // 不传all参数，让后端根据当前登录用户的角色自动过滤菜单
+        const data = await getMenuTree(false);
         console.log("菜单数据:", data);
         this.menuTree = data || [];
         this.buildMenuMap(this.menuTree);
@@ -195,6 +199,58 @@ export default {
         };
         this.currentPageTitle = titleMap[routeName] || "在线拍卖系统";
       }
+    },
+    loadUserInfo() {
+      const userInfo = localStorage.getItem("userInfo");
+      if (userInfo) {
+        try {
+          const user = JSON.parse(userInfo);
+          this.userName = user.nickName || user.userName || "用户";
+        } catch (e) {
+          console.error("解析用户信息失败:", e);
+        }
+      }
+    },
+    handleCommand(command) {
+      if (command === "logout") {
+        this.handleLogout();
+      } else if (command === "profile") {
+        this.$router.push("/profile");
+      }
+    },
+    handleLogout() {
+      this.$confirm("确定要退出登录吗？", "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+      })
+        .then(() => {
+          logout()
+            .then(() => {
+              // 清除本地存储
+              localStorage.removeItem("userInfo");
+              localStorage.removeItem("userId");
+              localStorage.removeItem("userName");
+              localStorage.removeItem("userRole");
+              localStorage.removeItem("isAdmin");
+              localStorage.removeItem("isSuperAdmin");
+              localStorage.removeItem("isBuyer");
+              localStorage.removeItem("isSeller");
+              
+              this.$message.success("退出登录成功");
+              // 跳转到登录页
+              this.$router.push("/login");
+            })
+            .catch((error) => {
+              console.error("登出失败:", error);
+              // 即使登出失败，也清除本地存储并跳转
+              localStorage.clear();
+              this.$router.push("/login");
+            });
+        })
+        .catch(() => {
+          // 用户取消
+        });
     },
   },
 };

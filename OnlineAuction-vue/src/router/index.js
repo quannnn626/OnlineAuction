@@ -5,6 +5,11 @@ Vue.use(VueRouter);
 
 const routes = [
   {
+    path: "/login",
+    name: "Login",
+    component: () => import("@/views/Login.vue"),
+  },
+  {
     path: "/",
     name: "Index",
     component: () => import("@/views/Index.vue"),
@@ -42,6 +47,12 @@ const routes = [
         path: "notice",
         name: "Notice",
         component: () => import("@/views/Notice.vue"),
+      },
+      {
+        path: "message-board",
+        name: "MessageBoard",
+        component: () => import("@/views/MessageBoard.vue"),
+        meta: { roles: ["1", "2"] }, // 仅买方和卖方可以访问
       },
       {
         path: "profile",
@@ -127,6 +138,67 @@ const router = new VueRouter({
   mode: "history",
   base: process.env.BASE_URL,
   routes,
+});
+
+// 路由守卫：根据登录状态和角色进行路由跳转
+router.beforeEach((to, from, next) => {
+  const userInfo = localStorage.getItem("userInfo");
+  const isLogin = !!userInfo;
+  
+  // 如果访问登录页，已登录则跳转到首页
+  if (to.path === "/login") {
+    if (isLogin) {
+      const user = JSON.parse(userInfo);
+      if (user.isAdmin) {
+        next("/admin/profile");
+      } else if (user.isSeller) {
+        next("/my-goods");
+      } else {
+        next("/home");
+      }
+    } else {
+      next();
+    }
+    return;
+  }
+  
+  // 如果未登录，跳转到登录页
+  if (!isLogin) {
+    next("/login");
+    return;
+  }
+  
+  // 已登录，检查权限
+  const user = JSON.parse(userInfo);
+  
+  // 管理员页面权限检查
+  if (to.path.startsWith("/admin")) {
+    if (!user.isAdmin && !user.isSuperAdmin) {
+      // 非管理员访问后台，跳转到首页
+      next("/home");
+      return;
+    }
+  }
+  
+  // 卖方页面权限检查（如：我的商品、发布商品等）
+  if (to.path === "/my-goods" || to.path.includes("/seller")) {
+    if (!user.isSeller && !user.isAdmin) {
+      // 非卖方用户访问卖方页面，跳转到首页
+      next("/home");
+      return;
+    }
+  }
+  
+  // 留言板页面权限检查（仅买方和卖方可以访问）
+  if (to.path === "/message-board") {
+    if (!user.isBuyer && !user.isSeller) {
+      // 非买方和卖方用户访问留言板，跳转到首页
+      next("/home");
+      return;
+    }
+  }
+  
+  next();
 });
 
 export default router;

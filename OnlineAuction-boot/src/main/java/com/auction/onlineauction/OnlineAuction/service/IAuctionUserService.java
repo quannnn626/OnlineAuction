@@ -1,5 +1,6 @@
 package com.auction.onlineauction.OnlineAuction.service;
 
+import com.auction.onlineauction.OnlineAuction.dto.LoginDTO;
 import com.auction.onlineauction.OnlineAuction.entity.AuctionUser;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.github.pagehelper.PageInfo;
@@ -25,14 +26,21 @@ public interface IAuctionUserService extends IService<AuctionUser> {
     AuctionUser getUserByIdWithoutPassword(Long id);
 
     /**
-     * 创建用户
+     * 创建用户（需要传入当前登录用户ID，用于权限检查）
+     * @param user 要创建的用户信息
+     * @param currentUserId 当前登录用户ID
+     * @return 创建的用户信息
      */
-    AuctionUser createUser(AuctionUser user);
+    AuctionUser createUser(AuctionUser user, Long currentUserId);
 
     /**
-     * 更新用户信息
+     * 更新用户信息（需要传入当前登录用户ID，用于权限检查）
+     * @param id 要更新的用户ID
+     * @param user 更新的用户信息
+     * @param currentUserId 当前登录用户ID
+     * @return 更新后的用户信息
      */
-    AuctionUser updateUser(Long id, AuctionUser user);
+    AuctionUser updateUser(Long id, AuctionUser user, Long currentUserId);
 
     /**
      * 更新用户状态（禁用/恢复）
@@ -53,4 +61,13 @@ public interface IAuctionUserService extends IService<AuctionUser> {
      * 删除用户（逻辑删除）
      */
     void deleteUser(Long id);
+
+    /**
+     * 用户登录
+     * @param userName 用户名
+     * @param password 密码（明文）
+     * @param loginIp 登录IP
+     * @return 登录信息（不包含密码）
+     */
+    LoginDTO login(String userName, String password, String loginIp);
 }

@@ -20,9 +20,10 @@ public class WebMvcConfig implements WebMvcConfigurer {
         // 统一配置：所有 /api/** 路径都允许跨域
         registry.addMapping("/api/**")
                 .allowedOriginPatterns("*")  // 允许所有来源（生产环境应指定具体域名）
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD")
                 .allowedHeaders("*")
-                .allowCredentials(true)
+                .exposedHeaders("Set-Cookie")  // 暴露Set-Cookie头，允许前端读取
+                .allowCredentials(true)  // 允许携带Cookie
                 .maxAge(3600);
     }
 

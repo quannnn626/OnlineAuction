@@ -7,6 +7,9 @@ import com.github.pagehelper.PageInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+
 /**
  * <p>
  * 系统用户表 前端控制器
@@ -55,13 +58,53 @@ public class AuctionUserController {
 
     /**
      * 创建用户（管理员创建，可选择角色）
+     * 权限说明：
+     * - 超级管理员可以创建所有角色（买方、卖方、管理员、超级管理员）
+     * - 管理员只能创建买方和卖方账号
      */
     @PostMapping
-    public Result<AuctionUser> createUser(@RequestBody AuctionUser user) {
+    public Result<AuctionUser> createUser(@RequestBody AuctionUser user, HttpServletRequest request) {
         try {
-            AuctionUser createdUser = userService.createUser(user);
+            // 从Session获取当前登录用户ID
+            // 先尝试获取现有Session，如果不存在则创建新Session（用于调试）
+            HttpSession session = request.getSession(false);
+            if (session == null) {
+                System.out.println("DEBUG: Session is null, trying to create new session");
+                session = request.getSession(true);
+                System.out.println("DEBUG: Created new session: " + session.getId());
+            }
+            
+            // 检查Session中是否有userId
+            Long currentUserId = (Long) session.getAttribute("userId");
+            if (currentUserId == null) {
+                System.out.println("DEBUG: userId is null in session");
+                System.out.println("DEBUG: Session ID: " + session.getId());
+                System.out.println("DEBUG: Request cookies: " + java.util.Arrays.toString(request.getCookies()));
+                
+                // 尝试从Cookie中获取Session ID
+                javax.servlet.http.Cookie[] cookies = request.getCookies();
+                if (cookies != null) {
+                    for (javax.servlet.http.Cookie cookie : cookies) {
+                        System.out.println("DEBUG: Cookie name: " + cookie.getName() + ", value: " + cookie.getValue());
+                    }
+                }
+                
+                // 列出所有Session属性
+                java.util.Enumeration<String> attrNames = session.getAttributeNames();
+                java.util.List<String> attrs = new java.util.ArrayList<>();
+                while (attrNames.hasMoreElements()) {
+                    attrs.add(attrNames.nextElement());
+                }
+                System.out.println("DEBUG: Session attributes: " + attrs);
+                
+                return Result.error(401, "未登录，无法创建用户，请重新登录");
+            }
+            
+            System.out.println("DEBUG: Current user ID: " + currentUserId);
+            AuctionUser createdUser = userService.createUser(user, currentUserId);
             return Result.success("创建成功", createdUser);
         } catch (Exception e) {
+            e.printStackTrace();
             return Result.error("创建失败：" + e.getMessage());
         }
     }
@@ -70,9 +113,19 @@ public class AuctionUserController {
      * 更新用户信息
      */
     @PutMapping("/{id}")
-    public Result<AuctionUser> updateUser(@PathVariable Long id, @RequestBody AuctionUser user) {
+    public Result<AuctionUser> updateUser(@PathVariable Long id, @RequestBody AuctionUser user, HttpServletRequest request) {
         try {
-            AuctionUser updatedUser = userService.updateUser(id, user);
+            // 从Session获取当前登录用户ID
+            HttpSession session = request.getSession(false);
+            if (session == null) {
+                return Result.error("未登录，无法更新用户");
+            }
+            Long currentUserId = (Long) session.getAttribute("userId");
+            if (currentUserId == null) {
+                return Result.error("未登录，无法更新用户");
+            }
+            
+            AuctionUser updatedUser = userService.updateUser(id, user, currentUserId);
             return Result.success("更新成功", updatedUser);
         } catch (Exception e) {
             return Result.error("更新失败：" + e.getMessage());

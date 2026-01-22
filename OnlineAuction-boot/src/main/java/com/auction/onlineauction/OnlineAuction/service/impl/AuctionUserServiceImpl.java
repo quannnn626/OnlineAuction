@@ -1,5 +1,6 @@
 package com.auction.onlineauction.OnlineAuction.service.impl;
 
+import com.auction.onlineauction.OnlineAuction.dto.LoginDTO;
 import com.auction.onlineauction.OnlineAuction.entity.AuctionUser;
 import com.auction.onlineauction.OnlineAuction.mapper.AuctionUserMapper;
 import com.auction.onlineauction.OnlineAuction.service.IAuctionUserService;
@@ -11,7 +12,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -59,7 +62,7 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
     }
 
     @Override
-    public AuctionUser createUser(AuctionUser user) {
+    public AuctionUser createUser(AuctionUser user, Long currentUserId) {
         // 验证必填字段
         if (user.getUserName() == null || user.getUserName().trim().isEmpty()) {
             throw new RuntimeException("用户名不能为空");
@@ -75,15 +78,45 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
             user.setUserRole("1");
         }
         
+        // 权限检查：只有管理员或超级管理员才能创建用户
+        if (currentUserId == null) {
+            throw new RuntimeException("未登录，无法创建用户");
+        }
+        
+        AuctionUser currentUser = getById(currentUserId);
+        if (currentUser == null || currentUser.getDelFlag() == 1) {
+            throw new RuntimeException("当前用户不存在");
+        }
+        
+        String currentUserRole = currentUser.getUserRole();
+        boolean isSuperAdmin = currentUserRole != null && currentUserRole.contains("4");
+        boolean isAdmin = currentUserRole != null && currentUserRole.contains("3");
+        
+        if (!isSuperAdmin && !isAdmin) {
+            throw new RuntimeException("只有管理员或超级管理员才能创建用户");
+        }
+        
         // 验证角色值格式（支持单个或多个角色，用逗号分隔）
         String roleStr = user.getUserRole().trim();
         String[] roles = roleStr.split(",");
         for (String role : roles) {
             role = role.trim();
-            if (!role.equals("1") && !role.equals("2") && !role.equals("3")) {
-                throw new RuntimeException("用户角色值无效（1=买方，2=卖方，3=管理员）");
+            if (!role.equals("1") && !role.equals("2") && !role.equals("3") && !role.equals("4")) {
+                throw new RuntimeException("用户角色值无效（1=买方，2=卖方，3=管理员，4=超级管理员）");
             }
         }
+        
+        // 权限检查：管理员只能创建买方和卖方，超级管理员可以创建所有角色
+        if (!isSuperAdmin) {
+            // 管理员只能创建买方（1）和卖方（2）
+            for (String role : roles) {
+                role = role.trim();
+                if (role.equals("3") || role.equals("4")) {
+                    throw new RuntimeException("管理员只能创建买方和卖方账号，无法创建管理员或超级管理员账号");
+                }
+            }
+        }
+        
         // 规范化角色字符串（去重、排序）
         user.setUserRole(String.join(",", roles));
         
@@ -133,7 +166,7 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
     }
 
     @Override
-    public AuctionUser updateUser(Long id, AuctionUser user) {
+    public AuctionUser updateUser(Long id, AuctionUser user, Long currentUserId) {
         AuctionUser existingUser = getById(id);
         if (existingUser == null || existingUser.getDelFlag() == 1) {
             throw new RuntimeException("用户不存在");
@@ -141,6 +174,51 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
         
         // 设置ID
         user.setId(id);
+        
+        // 如果修改了角色，需要进行权限检查
+        if (user.getUserRole() != null && !user.getUserRole().equals(existingUser.getUserRole())) {
+            // 权限检查：只有管理员或超级管理员才能修改用户角色
+            if (currentUserId == null) {
+                throw new RuntimeException("未登录，无法修改用户角色");
+            }
+            
+            AuctionUser currentUser = getById(currentUserId);
+            if (currentUser == null || currentUser.getDelFlag() == 1) {
+                throw new RuntimeException("当前用户不存在");
+            }
+            
+            String currentUserRole = currentUser.getUserRole();
+            boolean isSuperAdmin = currentUserRole != null && currentUserRole.contains("4");
+            boolean isAdmin = currentUserRole != null && currentUserRole.contains("3");
+            
+            if (!isSuperAdmin && !isAdmin) {
+                throw new RuntimeException("只有管理员或超级管理员才能修改用户角色");
+            }
+            
+            // 验证角色值格式
+            String roleStr = user.getUserRole().trim();
+            String[] roles = roleStr.split(",");
+            for (String role : roles) {
+                role = role.trim();
+                if (!role.equals("1") && !role.equals("2") && !role.equals("3") && !role.equals("4")) {
+                    throw new RuntimeException("用户角色值无效（1=买方，2=卖方，3=管理员，4=超级管理员）");
+                }
+            }
+            
+            // 权限检查：管理员只能设置买方和卖方角色，超级管理员可以设置所有角色
+            if (!isSuperAdmin) {
+                // 管理员只能设置买方（1）和卖方（2）角色
+                for (String role : roles) {
+                    role = role.trim();
+                    if (role.equals("3") || role.equals("4")) {
+                        throw new RuntimeException("管理员只能设置买方和卖方角色，无法设置管理员或超级管理员角色");
+                    }
+                }
+            }
+            
+            // 规范化角色字符串（去重、排序）
+            user.setUserRole(String.join(",", roles));
+        }
         
         // 如果密码不为空，则加密更新
         if (user.getPassword() != null && !user.getPassword().trim().isEmpty()) {
@@ -317,5 +395,75 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
         if (!success) {
             throw new RuntimeException("删除失败");
         }
+    }
+
+    @Override
+    public LoginDTO login(String userName, String password, String loginIp) {
+        // 验证参数
+        if (userName == null || userName.trim().isEmpty()) {
+            throw new RuntimeException("用户名不能为空");
+        }
+        if (password == null || password.trim().isEmpty()) {
+            throw new RuntimeException("密码不能为空");
+        }
+        
+        // 查询用户
+        QueryWrapper<AuctionUser> wrapper = new QueryWrapper<>();
+        wrapper.eq("user_name", userName);
+        wrapper.eq("del_flag", 0);
+        AuctionUser user = getOne(wrapper);
+        
+        if (user == null) {
+            throw new RuntimeException("用户名或密码错误");
+        }
+        
+        // 验证密码（MD5加密后比较）
+        String md5Password = DigestUtils.md5DigestAsHex(password.getBytes());
+        if (!md5Password.equals(user.getPassword())) {
+            throw new RuntimeException("用户名或密码错误");
+        }
+        
+        // 检查账号状态
+        if (user.getUserStatus() != null && user.getUserStatus() == 1) {
+            throw new RuntimeException("账号已被禁用，请联系管理员");
+        }
+        
+        // 更新登录信息
+        user.setLoginIp(loginIp);
+        user.setLoginDate(LocalDateTime.now());
+        user.setUpdateTime(LocalDateTime.now());
+        updateById(user);
+        
+        // 构建登录响应DTO
+        LoginDTO loginDTO = new LoginDTO();
+        loginDTO.setId(user.getId());
+        loginDTO.setUserName(user.getUserName());
+        loginDTO.setNickName(user.getNickName());
+        loginDTO.setAvatar(user.getAvatar());
+        loginDTO.setUserRole(user.getUserRole());
+        loginDTO.setUserStatus(user.getUserStatus());
+        
+        // 解析角色列表
+        if (user.getUserRole() != null && !user.getUserRole().trim().isEmpty()) {
+            List<String> roles = Arrays.stream(user.getUserRole().split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .collect(Collectors.toList());
+            loginDTO.setRoles(roles);
+            
+            // 判断角色类型
+            loginDTO.setIsAdmin(roles.contains("3"));
+            loginDTO.setIsSuperAdmin(roles.contains("4"));
+            loginDTO.setIsBuyer(roles.contains("1"));
+            loginDTO.setIsSeller(roles.contains("2"));
+        } else {
+            loginDTO.setRoles(Arrays.asList("1")); // 默认买方
+            loginDTO.setIsAdmin(false);
+            loginDTO.setIsSuperAdmin(false);
+            loginDTO.setIsBuyer(true);
+            loginDTO.setIsSeller(false);
+        }
+        
+        return loginDTO;
     }
 }

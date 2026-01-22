@@ -33,7 +33,7 @@ public class AuctionRolePermission implements Serializable {
     private Long id;
 
     /**
-     * 角色类型：1=买方用户 2=卖方用户 3=后台管理员
+     * 角色类型：1=买方用户 2=卖方用户 3=管理员 4=超级管理员
      */
     @TableField("role_type")
     private Integer roleType;

@@ -18,7 +18,7 @@ public interface AuctionMenuMapper extends BaseMapper<AuctionMenu> {
 
     /**
      * 根据角色类型查询菜单列表
-     * @param roleType 角色类型：1=买方用户 2=卖方用户 3=后台管理员
+     * @param roleType 角色类型：1=买方用户 2=卖方用户 3=管理员 4=超级管理员
      * @return 菜单列表
      */
     List<AuctionMenu> selectMenusByRoleType(@Param("roleType") Integer roleType);

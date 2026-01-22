@@ -11,7 +11,7 @@
  Target Server Version : 80019
  File Encoding         : 65001
 
- Date: 21/01/2026 14:55:21
+ Date: 21/01/2026 16:44:26
 */
 
 SET NAMES utf8mb4;
@@ -501,6 +501,7 @@ INSERT INTO `auction_menu` VALUES (4, '个人中心', 0, '/profile', 'el-icon-us
 INSERT INTO `auction_menu` VALUES (5, '订单管理', 4, '/profile/order', NULL, 1, 'order:view', 1, 1, '订单管理', '2025-12-31 14:40:18', '2025-12-31 14:40:18', 0);
 INSERT INTO `auction_menu` VALUES (6, '保证金管理', 4, '/profile/deposit', NULL, 1, 'deposit:view', 2, 1, '保证金管理', '2025-12-31 14:40:18', '2025-12-31 14:40:18', 0);
 INSERT INTO `auction_menu` VALUES (7, '消息中心', 4, '/profile/message', NULL, 1, 'message:view', 3, 1, '消息中心', '2025-12-31 14:40:18', '2025-12-31 14:40:18', 0);
+INSERT INTO `auction_menu` VALUES (8, '留言板', 0, '/message-board', 'el-icon-chat-line-square', 1, 'message:board:view', 5, 1, '留言板', '2025-12-31 14:40:18', '2025-12-31 14:40:18', 0);
 INSERT INTO `auction_menu` VALUES (10, '个人管理中心', 0, '/admin/profile', 'el-icon-user', 1, 'admin:profile:view', 1, 1, '管理员个人中心', '2025-12-31 14:40:18', '2025-12-31 14:40:18', 0);
 INSERT INTO `auction_menu` VALUES (11, '用户账号管理', 0, '/admin/user', 'el-icon-user-solid', 1, 'admin:user:view', 2, 1, '用户账号管理', '2025-12-31 14:40:18', '2025-12-31 14:40:18', 0);
 INSERT INTO `auction_menu` VALUES (12, '拍卖商品类目管理', 0, '/admin/category', 'el-icon-folder', 1, 'admin:category:view', 3, 1, '商品类目管理', '2025-12-31 14:40:18', '2025-12-31 14:40:18', 0);
@@ -626,7 +627,7 @@ CREATE TABLE `auction_permission`  (
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `idx_permission_code`(`permission_code` ASC) USING BTREE,
   INDEX `idx_permission_status`(`permission_status` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 94 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '系统权限表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 97 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '系统权限表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of auction_permission
@@ -647,6 +648,10 @@ INSERT INTO `auction_permission` VALUES (13, '保证金充值', 'deposit:add', 2
 INSERT INTO `auction_permission` VALUES (14, '保证金解冻', 'deposit:edit', 2, '申请保证金解冻', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
 INSERT INTO `auction_permission` VALUES (15, '消息查看', 'message:view', 1, '查看消息', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
 INSERT INTO `auction_permission` VALUES (16, '消息发送', 'message:add', 2, '发送消息', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (17, '个人中心查看', 'profile:view', 1, '查看个人中心', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (18, '留言板发布', 'message:board:add', 2, '发布留言板留言', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (19, '留言板查看', 'message:board:view', 1, '查看留言板所有留言', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (96, '留言板编辑', 'message:board:edit', 2, '编辑自己的留言', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
 INSERT INTO `auction_permission` VALUES (20, '用户查看', 'admin:user:view', 1, '查看用户列表', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
 INSERT INTO `auction_permission` VALUES (21, '用户新增', 'admin:user:add', 2, '新增用户', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
 INSERT INTO `auction_permission` VALUES (22, '用户编辑', 'admin:user:edit', 2, '编辑用户信息', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
@@ -678,6 +683,8 @@ INSERT INTO `auction_permission` VALUES (90, '公告查看', 'admin:notice:view'
 INSERT INTO `auction_permission` VALUES (91, '公告新增', 'admin:notice:add', 2, '发布公告', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
 INSERT INTO `auction_permission` VALUES (92, '公告编辑', 'admin:notice:edit', 2, '编辑公告', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
 INSERT INTO `auction_permission` VALUES (93, '公告删除', 'admin:notice:delete', 2, '删除/下架公告', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (94, '管理员个人中心查看', 'admin:profile:view', 1, '查看管理员个人中心', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (95, '系统设置查看', 'admin:settings:view', 1, '查看系统设置', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
 
 -- ----------------------------
 -- Table structure for auction_record
@@ -709,76 +716,139 @@ CREATE TABLE `auction_record`  (
 DROP TABLE IF EXISTS `auction_role_permission`;
 CREATE TABLE `auction_role_permission`  (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID，自增',
-  `role_type` tinyint NOT NULL COMMENT '角色类型：1=买方用户 2=卖方用户 3=后台管理员',
+  `role_type` tinyint NOT NULL COMMENT '角色类型：1=买方用户 2=卖方用户 3=管理员 4=超级管理员',
   `permission_id` bigint NOT NULL COMMENT '权限ID（关联auction_permission.id）',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `idx_role_permission`(`role_type` ASC, `permission_id` ASC) USING BTREE,
   INDEX `idx_role_type`(`role_type` ASC) USING BTREE,
   INDEX `idx_permission_id`(`permission_id` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 129 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '角色权限关联表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 124 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '角色权限关联表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of auction_role_permission
 -- ----------------------------
-INSERT INTO `auction_role_permission` VALUES (71, 1, 1, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (72, 1, 2, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (73, 1, 3, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (74, 1, 4, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (75, 1, 5, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (76, 1, 9, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (77, 1, 10, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (78, 1, 11, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (79, 1, 12, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (80, 1, 13, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (81, 1, 14, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (82, 1, 15, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (83, 1, 16, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (84, 2, 1, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (85, 2, 2, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (86, 2, 3, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (87, 2, 9, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (88, 2, 10, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (89, 2, 11, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (90, 2, 12, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (91, 2, 13, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (92, 2, 14, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (93, 2, 15, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (94, 2, 16, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (95, 2, 6, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (96, 2, 7, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (97, 2, 8, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (98, 3, 20, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (99, 3, 21, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (100, 3, 22, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (101, 3, 23, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (102, 3, 24, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (103, 3, 25, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (104, 3, 30, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (105, 3, 31, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (106, 3, 32, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (107, 3, 33, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (108, 3, 40, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (109, 3, 41, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (110, 3, 42, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (111, 3, 43, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (112, 3, 50, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (113, 3, 51, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (114, 3, 52, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (115, 3, 60, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (116, 3, 61, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (117, 3, 62, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (118, 3, 70, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (119, 3, 71, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (120, 3, 72, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (121, 3, 80, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (122, 3, 81, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (123, 3, 82, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (124, 3, 83, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (125, 3, 90, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (126, 3, 91, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (127, 3, 92, '2025-12-31 14:40:32');
-INSERT INTO `auction_role_permission` VALUES (128, 3, 93, '2025-12-31 14:40:32');
+INSERT INTO `auction_role_permission` VALUES (1, 1, 1, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (2, 1, 2, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (3, 1, 3, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (4, 1, 4, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (5, 1, 5, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (6, 1, 9, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (7, 1, 10, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (8, 1, 11, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (9, 1, 12, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (10, 1, 13, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (11, 1, 14, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (12, 1, 15, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (13, 1, 16, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (14, 2, 1, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (15, 2, 2, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (16, 2, 3, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (17, 2, 4, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (18, 2, 5, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (19, 2, 6, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (20, 2, 7, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (21, 2, 8, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (22, 2, 9, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (23, 2, 10, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (24, 2, 11, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (25, 2, 12, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (26, 2, 13, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (27, 2, 14, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (28, 2, 15, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (29, 2, 16, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (30, 3, 20, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (31, 3, 21, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (32, 3, 22, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (33, 3, 23, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (34, 3, 24, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (35, 3, 25, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (36, 3, 30, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (37, 3, 31, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (38, 3, 32, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (39, 3, 33, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (40, 3, 40, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (41, 3, 41, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (42, 3, 42, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (43, 3, 43, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (44, 3, 50, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (45, 3, 51, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (46, 3, 52, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (47, 3, 60, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (48, 3, 61, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (49, 3, 62, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (50, 3, 70, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (51, 3, 71, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (52, 3, 72, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (53, 3, 80, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (54, 3, 81, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (55, 3, 82, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (56, 3, 83, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (57, 3, 90, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (58, 3, 91, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (59, 3, 92, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (60, 3, 93, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (61, 4, 1, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (62, 4, 2, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (63, 4, 3, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (64, 4, 4, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (65, 4, 5, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (66, 4, 6, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (67, 4, 7, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (68, 4, 8, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (69, 4, 9, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (70, 4, 10, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (71, 4, 11, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (72, 4, 12, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (73, 4, 13, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (74, 4, 14, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (75, 4, 15, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (76, 4, 16, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (77, 4, 20, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (78, 4, 21, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (79, 4, 22, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (80, 4, 23, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (81, 4, 24, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (82, 4, 25, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (83, 4, 30, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (84, 4, 31, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (85, 4, 32, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (86, 4, 33, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (87, 4, 40, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (88, 4, 41, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (89, 4, 42, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (90, 4, 43, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (91, 4, 50, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (92, 4, 51, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (93, 4, 52, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (94, 4, 60, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (95, 4, 61, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (96, 4, 62, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (97, 4, 70, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (98, 4, 71, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (99, 4, 72, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (100, 4, 80, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (101, 4, 81, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (102, 4, 82, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (103, 4, 83, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (104, 4, 90, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (105, 4, 91, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (106, 4, 92, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (107, 4, 93, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (108, 1, 17, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (109, 1, 18, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (118, 1, 19, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (119, 1, 96, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (110, 2, 17, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (111, 2, 18, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (120, 2, 19, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (121, 2, 96, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (112, 3, 94, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (113, 3, 95, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (114, 4, 17, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (115, 4, 18, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (116, 4, 94, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (117, 4, 95, '2026-01-21 16:14:50');
 
 -- ----------------------------
 -- Table structure for auction_user
@@ -794,7 +864,7 @@ CREATE TABLE `auction_user`  (
   `email` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT '' COMMENT '用户邮箱',
   `avatar` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT '' COMMENT '用户头像地址',
   `sex` char(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT '2' COMMENT '用户性别（0男 1女 2未知）',
-  `user_role` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT '1' COMMENT '用户角色（多个角色用逗号分隔）：1=买方用户 2=卖方用户 3=后台管理员，默认1（买方）',
+  `user_role` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT '1' COMMENT '用户角色（多个角色用逗号分隔）：1=买方用户 2=卖方用户 3=管理员 4=超级管理员，默认1（买方）',
   `seller_audit_status` tinyint NULL DEFAULT 0 COMMENT '卖方资质审核状态：0=未提交 1=待审核 2=审核通过 3=审核驳回（买方默认为0）',
   `seller_audit_remark` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '卖方资质审核驳回原因',
   `seller_certificate_files` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '卖方资质证明材料（文件路径，多个文件用逗号分隔）',
@@ -817,6 +887,9 @@ CREATE TABLE `auction_user`  (
 -- ----------------------------
 -- Records of auction_user
 -- ----------------------------
-INSERT INTO `auction_user` VALUES (1, 'admin', 'e10adc3949ba59abbe56e057f20f883e', '芊芊', '芊芊', '17713356500', '1709348112@qq.com', '', '0', '3', 0, NULL, NULL, NULL, NULL, NULL, 0, '', NULL, '2026-01-21 14:54:06', '2026-01-21 14:54:36', 0);
+INSERT INTO `auction_user` VALUES (1, 'superadmin', 'e10adc3949ba59abbe56e057f20f883e', '芊芊', '芊芊', '17713356500', '1709348112@qq.com', '', '0', '4', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-01-21 16:16:58', '2026-01-21 14:54:06', '2026-01-21 16:16:58', 0);
+INSERT INTO `auction_user` VALUES (2, 'admin', 'e10adc3949ba59abbe56e057f20f883e', 'admin', '管理员', '17034570777', '1709348112@qq.com', '', '0', '3', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-01-21 16:35:47', '2026-01-21 15:50:21', '2026-01-21 16:35:47', 0);
+INSERT INTO `auction_user` VALUES (3, 'buyuser', 'e10adc3949ba59abbe56e057f20f883e', 'buyuser', '买方用户', '19234532287', '1709348112@qq.com', '', '0', '1', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-01-21 16:18:33', '2026-01-21 16:17:43', '2026-01-21 16:18:33', 0);
+INSERT INTO `auction_user` VALUES (4, 'selluser', 'e10adc3949ba59abbe56e057f20f883e', 'selluser', '卖方用户', '18766753345', '1709348112@qq.com', '', '0', '2', 0, NULL, NULL, NULL, NULL, NULL, 0, '', NULL, '2026-01-21 16:18:22', '2026-01-21 16:18:22', 0);
 
 SET FOREIGN_KEY_CHECKS = 1;

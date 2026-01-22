@@ -6,8 +6,7 @@ import com.auction.onlineauction.OnlineAuction.service.IAuctionMenuService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -28,6 +27,35 @@ public class AuctionMenuServiceImpl extends ServiceImpl<AuctionMenuMapper, Aucti
         
         // 构建菜单树
         return buildMenuTree(menuList, 0L);
+    }
+
+    @Override
+    public List<AuctionMenu> getMenuTreeByRoleTypes(List<Integer> roleTypes) {
+        if (roleTypes == null || roleTypes.isEmpty()) {
+            return new ArrayList<>();
+        }
+        
+        // 如果包含超级管理员（4），返回所有菜单
+        if (roleTypes.contains(4)) {
+            return getAllMenuTree();
+        }
+        
+        // 合并所有角色的菜单（去重）
+        Set<Long> menuIdSet = new HashSet<>();
+        List<AuctionMenu> allMenus = new ArrayList<>();
+        
+        for (Integer roleType : roleTypes) {
+            List<AuctionMenu> menus = baseMapper.selectMenusByRoleType(roleType);
+            for (AuctionMenu menu : menus) {
+                if (!menuIdSet.contains(menu.getId())) {
+                    menuIdSet.add(menu.getId());
+                    allMenus.add(menu);
+                }
+            }
+        }
+        
+        // 构建菜单树
+        return buildMenuTree(allMenus, 0L);
     }
 
     @Override

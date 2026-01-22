@@ -38,6 +38,7 @@
             <el-option label="买方用户" :value="1"></el-option>
             <el-option label="卖方用户" :value="2"></el-option>
             <el-option label="管理员" :value="3"></el-option>
+            <el-option label="超级管理员" :value="4"></el-option>
           </el-select>
         </el-col>
         <el-col :span="4">
@@ -193,11 +194,15 @@
           ></el-input>
         </el-form-item>
         <el-form-item label="用户角色" prop="userRole">
-          <el-radio-group v-model="formData.userRole" :disabled="isEdit">
+          <el-radio-group v-model="formData.userRole">
             <el-radio :label="1">买方用户</el-radio>
             <el-radio :label="2">卖方用户</el-radio>
-            <el-radio :label="3">管理员</el-radio>
+            <el-radio v-if="isSuperAdmin" :label="3">管理员</el-radio>
+            <el-radio v-if="isSuperAdmin" :label="4">超级管理员</el-radio>
           </el-radio-group>
+          <div v-if="!isSuperAdmin" style="color: #909399; font-size: 12px; margin-top: 5px;">
+            提示：管理员只能{{ isEdit ? '修改为' : '创建' }}买方和卖方账号
+          </div>
         </el-form-item>
         <el-form-item label="真实姓名" prop="realName">
           <el-input v-model="formData.realName" placeholder="请输入真实姓名"></el-input>
@@ -388,7 +393,23 @@ export default {
   computed: {
     showSellerAuditColumn() {
       // 如果表格中有卖方用户，显示资质审核列
-      return this.tableData.some((user) => user.userRole === 2);
+      return this.tableData.some((user) => {
+        const roles = this.parseUserRole(user.userRole);
+        return roles.includes("2");
+      });
+    },
+    isSuperAdmin() {
+      // 检查当前登录用户是否是超级管理员
+      const userInfo = localStorage.getItem("userInfo");
+      if (userInfo) {
+        try {
+          const user = JSON.parse(userInfo);
+          return user.isSuperAdmin === true;
+        } catch (e) {
+          return false;
+        }
+      }
+      return false;
     },
   },
   mounted() {
@@ -459,8 +480,27 @@ export default {
       try {
         const result = await getUserById(user.id);
         if (result) {
+          // 处理角色字段：如果是字符串，优先显示最高权限角色（因为radio只能选一个）
+          let userRole = result.userRole;
+          if (typeof userRole === "string" && userRole.includes(",")) {
+            // 多角色时，优先显示最高权限角色
+            const roles = userRole.split(",").map(r => r.trim());
+            if (roles.includes("4")) {
+              userRole = 4; // 超级管理员
+            } else if (roles.includes("3")) {
+              userRole = 3; // 管理员
+            } else if (roles.includes("2")) {
+              userRole = 2; // 卖方
+            } else {
+              userRole = parseInt(roles[0]); // 取第一个角色
+            }
+          } else if (typeof userRole === "string") {
+            userRole = parseInt(userRole);
+          }
+          
           this.formData = {
             ...result,
+            userRole: userRole || 1, // 默认买方
             password: "", // 编辑时不显示密码
           };
           this.dialogVisible = true;
@@ -569,6 +609,10 @@ export default {
           if (this.isEdit && !data.password) {
             delete data.password;
           }
+          // 将角色转换为字符串格式（后端期望字符串）
+          if (data.userRole !== null && data.userRole !== undefined) {
+            data.userRole = String(data.userRole);
+          }
           if (this.isEdit) {
             await updateUser(data.id, data);
             this.$message.success("修改成功");
@@ -580,7 +624,8 @@ export default {
           this.loadData();
         } catch (error) {
           console.error("提交失败:", error);
-          this.$message.error("提交失败");
+          const errorMessage = error.response?.data?.message || error.message || "提交失败";
+          this.$message.error(errorMessage);
         } finally {
           this.submitLoading = false;
         }
@@ -590,23 +635,38 @@ export default {
     handleDialogClose() {
       this.$refs.userForm.resetFields();
     },
-    // 获取角色文本
-    getRoleText(role) {
-      const roleMap = {
-        1: "买方用户",
-        2: "卖方用户",
-        3: "管理员",
-      };
-      return roleMap[role] || "未知";
+    // 解析用户角色字符串（可能是"1"、"1,2"、"3"等格式）
+    parseUserRole(roleStr) {
+      if (!roleStr) return [];
+      if (typeof roleStr === "number") {
+        return [String(roleStr)];
+      }
+      return roleStr.toString().split(",").map((r) => r.trim());
     },
-    // 获取角色标签类型
-    getRoleTagType(role) {
-      const typeMap = {
-        1: "primary",
-        2: "success",
-        3: "warning",
+    // 获取角色文本（支持多角色）
+    getRoleText(role) {
+      const roles = this.parseUserRole(role);
+      const roleMap = {
+        "1": "买方",
+        "2": "卖方",
+        "3": "管理员",
+        "4": "超级管理员",
       };
-      return typeMap[role] || "info";
+      if (roles.length === 0) return "未知";
+      if (roles.length === 1) {
+        return roleMap[roles[0]] || "未知";
+      }
+      // 多角色显示
+      return roles.map((r) => roleMap[r] || r).join("、");
+    },
+    // 获取角色标签类型（多角色时显示最高权限）
+    getRoleTagType(role) {
+      const roles = this.parseUserRole(role);
+      if (roles.includes("4")) return "danger"; // 超级管理员
+      if (roles.includes("3")) return "warning"; // 管理员
+      if (roles.includes("2")) return "success"; // 卖方
+      if (roles.includes("1")) return "primary"; // 买方
+      return "info";
     },
     // 获取卖方审核状态文本
     getSellerAuditText(status) {

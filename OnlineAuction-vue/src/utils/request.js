@@ -6,16 +6,13 @@ const service = axios.create({
   // 设置 axios 实例的基础 URL，所有相对请求会被拼接到该前缀，请求超时为10秒
   baseURL: process.env.NODE_ENV === "production" ? "/api" : "/api",
   timeout: 10000,
+  withCredentials: true, // 允许携带Cookie（用于Session认证）
 });
 
 // 请求拦截器
 service.interceptors.request.use(
   (config) => {
-    // 可以在这里添加 token 等认证信息
-    // const token = localStorage.getItem('token')
-    // if (token) {
-    //   config.headers.Authorization = 'Bearer ' + token
-    // }
+    // withCredentials已在axios实例中配置，会自动携带Cookie
     return config;
   },
   (error) => {
@@ -31,8 +28,11 @@ service.interceptors.response.use(
     console.log("API响应:", res); // 调试日志
     // 如果返回的状态码不是 200，则视为错误
     if (res.code !== 200) {
-      Message.error(res.message || "请求失败");
-      return Promise.reject(new Error(res.message || "请求失败"));
+      const errorMessage = res.message || "请求失败";
+      Message.error(errorMessage);
+      const error = new Error(errorMessage);
+      error.response = response; // 保存完整的响应对象，方便前端获取详细信息
+      return Promise.reject(error);
     }
     // 返回数据部分
     return res.data;
