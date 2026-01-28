@@ -79,3 +79,41 @@ export function deleteUser(id) {
     method: "delete",
   });
 }
+
+/**
+ * 更新个人资料
+ */
+export function updateProfile(data) {
+  return request({
+    url: "/OnlineAuction/auctionUser/profile",
+    method: "put",
+    data,
+  });
+}
+
+/**
+ * 修改密码
+ */
+export function changePassword(oldPassword, newPassword) {
+  return request({
+    url: "/OnlineAuction/auctionUser/change-password",
+    method: "post",
+    data: {
+      oldPassword,
+      newPassword,
+    },
+  });
+}
+
+/**
+ * 更新头像
+ */
+export function updateAvatar(avatarFileId) {
+  return request({
+    url: "/OnlineAuction/auctionUser/avatar",
+    method: "post",
+    params: {
+      avatarFileId: avatarFileId,
+    },
+  });
+}

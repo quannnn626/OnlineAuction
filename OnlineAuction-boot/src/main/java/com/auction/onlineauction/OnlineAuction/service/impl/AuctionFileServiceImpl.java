@@ -16,7 +16,7 @@ import java.util.UUID;
 
 /**
  * <p>
- * 商品文件表 服务实现类
+ * 通用文件表 服务实现类
  * </p>
  *
  * @author MrYan
@@ -26,11 +26,21 @@ import java.util.UUID;
 public class AuctionFileServiceImpl extends ServiceImpl<AuctionFileMapper, AuctionFile> implements IAuctionFileService {
 
     @Override
-    public List<AuctionFile> uploadFiles(MultipartFile[] files, Long goodsId) {
+    public List<AuctionFile> uploadFiles(MultipartFile[] files, String fileCategory) {
         List<AuctionFile> uploadedFiles = new ArrayList<>();
+        
+        // 默认分类为goods（商品文件）
+        if (fileCategory == null || fileCategory.trim().isEmpty()) {
+            fileCategory = "goods";
+        }
+
+        // 过滤空文件
+        if (files == null || files.length == 0) {
+            return uploadedFiles;
+        }
 
         for (MultipartFile file : files) {
-            if (file.isEmpty()) {
+            if (file == null || file.isEmpty()) {
                 continue;
             }
 
@@ -51,16 +61,17 @@ public class AuctionFileServiceImpl extends ServiceImpl<AuctionFileMapper, Aucti
             String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
             String fileName = UUID.randomUUID().toString().replace("-", "") + extension;
 
-            // 创建上传目录
-            String uploadDir = System.getProperty("user.dir") + "/upload/goods/" + LocalDateTime.now().getYear() +
-                             String.format("%02d", LocalDateTime.now().getMonthValue()) + "/";
+            // 根据文件分类确定上传目录
+            String uploadSubDir = fileCategory; // goods, avatar等
+            String uploadDir = System.getProperty("user.dir") + "/upload/" + uploadSubDir + "/" + 
+                             LocalDateTime.now().getYear() + String.format("%02d", LocalDateTime.now().getMonthValue()) + "/";
             File dir = new File(uploadDir);
             if (!dir.exists()) {
                 dir.mkdirs();
             }
 
             // 保存文件
-            String relativePath = "/upload/goods/" + LocalDateTime.now().getYear() +
+            String relativePath = "/upload/" + uploadSubDir + "/" + LocalDateTime.now().getYear() +
                             String.format("%02d", LocalDateTime.now().getMonthValue()) + "/" + fileName;
             String fullPath = uploadDir + fileName;
             File destFile = new File(fullPath);
@@ -74,7 +85,6 @@ public class AuctionFileServiceImpl extends ServiceImpl<AuctionFileMapper, Aucti
             AuctionFile auctionFile = new AuctionFile();
             auctionFile.setFileName(originalFilename);
             auctionFile.setFilePath(relativePath);
-            auctionFile.setGoodsId(goodsId);
             auctionFile.setFileType(fileType);
             auctionFile.setCreateTime(LocalDateTime.now());
             auctionFile.setDelFlag(0);
@@ -92,9 +102,32 @@ public class AuctionFileServiceImpl extends ServiceImpl<AuctionFileMapper, Aucti
     }
 
     @Override
-    public List<AuctionFile> getFilesByGoodsId(Long goodsId) {
+    public List<AuctionFile> getFilesByIds(String fileIds) {
+        if (fileIds == null || fileIds.trim().isEmpty()) {
+            return new ArrayList<>();
+        }
+        
+        List<Long> idList = new ArrayList<>();
+        String[] ids = fileIds.split(",");
+        for (String id : ids) {
+            try {
+                idList.add(Long.parseLong(id.trim()));
+            } catch (NumberFormatException e) {
+                // 忽略无效的ID
+            }
+        }
+        
+        return getFilesByIds(idList);
+    }
+
+    @Override
+    public List<AuctionFile> getFilesByIds(List<Long> fileIds) {
+        if (fileIds == null || fileIds.isEmpty()) {
+            return new ArrayList<>();
+        }
+        
         return lambdaQuery()
-                .eq(AuctionFile::getGoodsId, goodsId)
+                .in(AuctionFile::getId, fileIds)
                 .eq(AuctionFile::getDelFlag, 0)
                 .list();
     }

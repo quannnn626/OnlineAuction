@@ -216,14 +216,17 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
      * 为商品加载文件信息
      */
     private void loadFilesForGoods(AuctionGoods goods) {
-        if (goods == null || goods.getId() == null) {
+        if (goods == null) {
             return;
         }
-        List<AuctionFile> files = fileService.lambdaQuery()
-                .eq(AuctionFile::getGoodsId, goods.getId())
-                .eq(AuctionFile::getDelFlag, 0)
-                .list();
-        goods.setFiles(files);
+        // 从fileIds字段加载文件列表
+        String fileIds = goods.getFileIds();
+        if (fileIds != null && !fileIds.trim().isEmpty()) {
+            List<AuctionFile> files = fileService.getFilesByIds(fileIds);
+            goods.setFiles(files);
+        } else {
+            goods.setFiles(new ArrayList<>());
+        }
     }
 
     /**
@@ -265,6 +268,9 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
         if (requestData.get("sellerId") != null) {
             goods.setSellerId(Long.parseLong(requestData.get("sellerId").toString()));
         }
+        if (requestData.get("fileIds") != null) {
+            goods.setFileIds(requestData.get("fileIds").toString());
+        }
         
         return goods;
     }
@@ -299,38 +305,21 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
     private void processFileIds(Long goodsId, Map<String, Object> requestData) {
         List<Long> fileIds = extractFileIds(requestData);
         
-        // 根据文件ID更新goodsId
-        for (Long fileId : fileIds) {
-            AuctionFile file = fileService.getById(fileId);
-            if (file != null && file.getDelFlag() == 0) {
-                file.setGoodsId(goodsId);
-                fileService.updateById(file);
-            }
-        }
-        
-        // 兼容处理：如果有files数组
-        if (requestData.get("files") != null) {
-            Object filesObj = requestData.get("files");
-            if (filesObj instanceof List) {
-                List<?> filesList = (List<?>) filesObj;
-                for (Object fileObj : filesList) {
-                    if (fileObj instanceof Map) {
-                        Map<?, ?> fileMap = (Map<?, ?>) fileObj;
-                        Object fileIdObj = fileMap.get("id");
-                        if (fileIdObj != null) {
-                            try {
-                                Long fileId = Long.parseLong(fileIdObj.toString());
-                                AuctionFile file = fileService.getById(fileId);
-                                if (file != null) {
-                                    file.setGoodsId(goodsId);
-                                    fileService.updateById(file);
-                                }
-                            } catch (NumberFormatException e) {
-                                // 忽略无效的ID
-                            }
-                        }
-                    }
+        // 将文件ID列表转换为逗号分隔的字符串，保存到goods表的file_ids字段
+        if (!fileIds.isEmpty()) {
+            StringBuilder fileIdsStr = new StringBuilder();
+            for (int i = 0; i < fileIds.size(); i++) {
+                if (i > 0) {
+                    fileIdsStr.append(",");
                 }
+                fileIdsStr.append(fileIds.get(i));
+            }
+            
+            // 更新商品的file_ids字段
+            AuctionGoods goods = getById(goodsId);
+            if (goods != null) {
+                goods.setFileIds(fileIdsStr.toString());
+                updateById(goods);
             }
         }
     }
@@ -341,67 +330,40 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
     private void processFileIdsForUpdate(Long goodsId, Map<String, Object> requestData) {
         List<Long> newFileIds = extractFileIds(requestData);
         
-        // 获取商品原有的文件列表
-        List<AuctionFile> oldFiles = fileService.lambdaQuery()
-                .eq(AuctionFile::getGoodsId, goodsId)
-                .eq(AuctionFile::getDelFlag, 0)
-                .list();
+        // 获取商品原有的file_ids
+        AuctionGoods goods = getById(goodsId);
         List<Long> oldFileIds = new ArrayList<>();
-        for (AuctionFile file : oldFiles) {
-            if (file.getId() != null) {
-                oldFileIds.add(file.getId());
-            }
-        }
-        
-        // 找出需要删除的文件（旧文件列表中不在新文件列表中的）
-        List<Long> filesToRemove = new ArrayList<>();
-        for (Long oldFileId : oldFileIds) {
-            if (!newFileIds.contains(oldFileId)) {
-                filesToRemove.add(oldFileId);
-            }
-        }
-        
-        // 删除旧文件关联（清除关联）
-        for (Long fileId : filesToRemove) {
-            AuctionFile file = fileService.getById(fileId);
-            if (file != null) {
-                file.setGoodsId(null); // 清除关联
-                fileService.updateById(file);
-            }
-        }
-        
-        // 更新新文件的goodsId
-        for (Long fileId : newFileIds) {
-            AuctionFile file = fileService.getById(fileId);
-            if (file != null && file.getDelFlag() == 0) {
-                file.setGoodsId(goodsId);
-                fileService.updateById(file);
-            }
-        }
-        
-        // 兼容处理：如果有files数组
-        if (requestData.get("files") != null) {
-            Object filesObj = requestData.get("files");
-            if (filesObj instanceof List) {
-                List<?> filesList = (List<?>) filesObj;
-                for (Object fileObj : filesList) {
-                    if (fileObj instanceof Map) {
-                        Map<?, ?> fileMap = (Map<?, ?>) fileObj;
-                        Object fileIdObj = fileMap.get("id");
-                        if (fileIdObj != null) {
-                            try {
-                                Long fileId = Long.parseLong(fileIdObj.toString());
-                                AuctionFile file = fileService.getById(fileId);
-                                if (file != null) {
-                                    file.setGoodsId(goodsId);
-                                    fileService.updateById(file);
-                                }
-                            } catch (NumberFormatException e) {
-                                // 忽略无效的ID
-                            }
-                        }
-                    }
+        if (goods != null && goods.getFileIds() != null && !goods.getFileIds().trim().isEmpty()) {
+            String[] ids = goods.getFileIds().split(",");
+            for (String id : ids) {
+                try {
+                    oldFileIds.add(Long.parseLong(id.trim()));
+                } catch (NumberFormatException e) {
+                    // 忽略无效的ID
                 }
+            }
+        }
+        
+        // 将新文件ID列表转换为逗号分隔的字符串，保存到goods表的file_ids字段
+        if (!newFileIds.isEmpty()) {
+            StringBuilder fileIdsStr = new StringBuilder();
+            for (int i = 0; i < newFileIds.size(); i++) {
+                if (i > 0) {
+                    fileIdsStr.append(",");
+                }
+                fileIdsStr.append(newFileIds.get(i));
+            }
+            
+            // 更新商品的file_ids字段
+            if (goods != null) {
+                goods.setFileIds(fileIdsStr.toString());
+                updateById(goods);
+            }
+        } else {
+            // 如果没有新文件，清空file_ids
+            if (goods != null) {
+                goods.setFileIds(null);
+                updateById(goods);
             }
         }
     }

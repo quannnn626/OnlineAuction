@@ -69,10 +69,16 @@ public class AuctionUser implements Serializable {
     private String email;
 
     /**
-     * 用户头像地址
+     * 用户头像地址（保留用于兼容，新上传的头像使用avatar_file_id）
      */
     @TableField("avatar")
     private String avatar;
+
+    /**
+     * 头像文件ID（关联auction_file.id）
+     */
+    @TableField("avatar_file_id")
+    private Long avatarFileId;
 
     /**
      * 用户性别（0男 1女 2未知）

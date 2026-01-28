@@ -59,6 +59,12 @@ public class AuctionGoods implements Serializable {
     private String goodsDesc;
 
     /**
+     * 关联文件ID列表（多个文件ID用逗号分隔，如：1,2,3）
+     */
+    @TableField("file_ids")
+    private String fileIds;
+
+    /**
      * 文件列表（非数据库字段）
      */
     @TableField(exist = false)

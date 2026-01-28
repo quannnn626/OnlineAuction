@@ -285,6 +285,8 @@
         <el-form-item label="商品图片/视频" prop="fileIds">
           <el-upload
             ref="upload"
+            :auto-upload="false"
+            :on-change="handleUploadChange"
             :action="uploadAction"
             :on-success="handleUploadSuccess"
             :on-remove="handleUploadRemove"

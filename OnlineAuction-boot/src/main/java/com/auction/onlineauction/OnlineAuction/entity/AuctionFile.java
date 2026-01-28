@@ -12,7 +12,7 @@ import lombok.experimental.Accessors;
 
 /**
  * <p>
- * 商品文件表
+ * 通用文件表（可存储商品图片、用户头像等各类文件）
  * </p>
  *
  * @author MrYan
@@ -43,12 +43,6 @@ public class AuctionFile implements Serializable {
      */
     @TableField("file_path")
     private String filePath;
-
-    /**
-     * 商品ID（关联auction_goods.id）
-     */
-    @TableField("goods_id")
-    private Long goodsId;
 
     /**
      * 文件类型：image=图片 video=视频

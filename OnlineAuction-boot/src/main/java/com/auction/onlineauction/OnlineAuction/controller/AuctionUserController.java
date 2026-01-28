@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+import java.util.Map;
 
 /**
  * <p>
@@ -198,6 +199,75 @@ public class AuctionUserController {
             return Result.success("删除成功", null);
         } catch (Exception e) {
             return Result.error("删除失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 更新个人资料（用户自己更新）
+     */
+    @PutMapping("/profile")
+    public Result<AuctionUser> updateProfile(@RequestBody AuctionUser user, HttpServletRequest request) {
+        try {
+            HttpSession session = request.getSession(false);
+            if (session == null) {
+                return Result.error(401, "未登录");
+            }
+            Long userId = (Long) session.getAttribute("userId");
+            if (userId == null) {
+                return Result.error(401, "未登录");
+            }
+            
+            AuctionUser updatedUser = userService.updateProfile(userId, user);
+            return Result.success("更新成功", updatedUser);
+        } catch (Exception e) {
+            return Result.error("更新失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 修改密码
+     */
+    @PostMapping("/change-password")
+    public Result<Void> changePassword(@RequestBody Map<String, String> requestData, HttpServletRequest request) {
+        try {
+            HttpSession session = request.getSession(false);
+            if (session == null) {
+                return Result.error(401, "未登录");
+            }
+            Long userId = (Long) session.getAttribute("userId");
+            if (userId == null) {
+                return Result.error(401, "未登录");
+            }
+            
+            String oldPassword = requestData.get("oldPassword");
+            String newPassword = requestData.get("newPassword");
+            
+            userService.changePassword(userId, oldPassword, newPassword);
+            return Result.success("密码修改成功", null);
+        } catch (Exception e) {
+            return Result.error("密码修改失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 上传并更新头像
+     */
+    @PostMapping("/avatar")
+    public Result<AuctionUser> updateAvatar(@RequestParam("avatarFileId") Long avatarFileId, HttpServletRequest request) {
+        try {
+            HttpSession session = request.getSession(false);
+            if (session == null) {
+                return Result.error(401, "未登录");
+            }
+            Long userId = (Long) session.getAttribute("userId");
+            if (userId == null) {
+                return Result.error(401, "未登录");
+            }
+            
+            AuctionUser updatedUser = userService.updateAvatar(userId, avatarFileId);
+            return Result.success("头像更新成功", updatedUser);
+        } catch (Exception e) {
+            return Result.error("头像更新失败：" + e.getMessage());
         }
     }
 }

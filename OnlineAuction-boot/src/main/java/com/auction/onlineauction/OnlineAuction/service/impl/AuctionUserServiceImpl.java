@@ -497,4 +497,108 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
         
         return loginDTO;
     }
+
+    @Override
+    public AuctionUser updateProfile(Long userId, AuctionUser user) {
+        AuctionUser existingUser = getById(userId);
+        if (existingUser == null || existingUser.getDelFlag() == 1) {
+            throw new RuntimeException("用户不存在");
+        }
+
+        // 只更新允许的字段
+        if (user.getNickName() != null) {
+            existingUser.setNickName(user.getNickName());
+        }
+        if (user.getRealName() != null) {
+            existingUser.setRealName(user.getRealName());
+        }
+        if (user.getPhone() != null) {
+            // 验证手机号是否已被其他用户使用
+            QueryWrapper<AuctionUser> wrapper = new QueryWrapper<>();
+            wrapper.eq("phone", user.getPhone());
+            wrapper.ne("id", userId);
+            wrapper.eq("del_flag", 0);
+            long count = count(wrapper);
+            if (count > 0) {
+                throw new RuntimeException("该手机号已被其他用户使用");
+            }
+            existingUser.setPhone(user.getPhone());
+        }
+        if (user.getEmail() != null) {
+            existingUser.setEmail(user.getEmail());
+        }
+        if (user.getSex() != null) {
+            existingUser.setSex(user.getSex());
+        }
+
+        existingUser.setUpdateTime(LocalDateTime.now());
+        boolean success = updateById(existingUser);
+        if (!success) {
+            throw new RuntimeException("更新失败");
+        }
+
+        return getUserByIdWithoutPassword(userId);
+    }
+
+    @Override
+    public void changePassword(Long userId, String oldPassword, String newPassword) {
+        if (oldPassword == null || oldPassword.trim().isEmpty()) {
+            throw new RuntimeException("旧密码不能为空");
+        }
+        if (newPassword == null || newPassword.trim().isEmpty()) {
+            throw new RuntimeException("新密码不能为空");
+        }
+        if (newPassword.length() < 6) {
+            throw new RuntimeException("新密码长度不能少于6位");
+        }
+
+        AuctionUser user = getById(userId);
+        if (user == null || user.getDelFlag() == 1) {
+            throw new RuntimeException("用户不存在");
+        }
+
+        // 验证旧密码
+        String md5OldPassword = DigestUtils.md5DigestAsHex(oldPassword.getBytes());
+        if (!md5OldPassword.equals(user.getPassword())) {
+            throw new RuntimeException("旧密码错误");
+        }
+
+        // 更新密码
+        String md5NewPassword = DigestUtils.md5DigestAsHex(newPassword.getBytes());
+        user.setPassword(md5NewPassword);
+        user.setUpdateTime(LocalDateTime.now());
+        boolean success = updateById(user);
+        if (!success) {
+            throw new RuntimeException("修改密码失败");
+        }
+    }
+
+    @Override
+    public AuctionUser updateAvatar(Long userId, Long avatarFileId) {
+        AuctionUser user = getById(userId);
+        if (user == null || user.getDelFlag() == 1) {
+            throw new RuntimeException("用户不存在");
+        }
+
+        // 验证文件是否存在
+        if (avatarFileId != null) {
+            // 这里可以添加文件存在性验证，如果需要的话
+            // 暂时直接设置
+            user.setAvatarFileId(avatarFileId);
+            
+            // 同时更新avatar字段（兼容旧数据）
+            // 可以通过fileService获取文件路径，这里简化处理
+            // user.setAvatar(filePath);
+        } else {
+            user.setAvatarFileId(null);
+        }
+
+        user.setUpdateTime(LocalDateTime.now());
+        boolean success = updateById(user);
+        if (!success) {
+            throw new RuntimeException("更新头像失败");
+        }
+
+        return getUserByIdWithoutPassword(userId);
+    }
 }

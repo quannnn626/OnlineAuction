@@ -11,7 +11,7 @@ import java.util.List;
 
 /**
  * <p>
- * 商品文件表 前端控制器
+ * 通用文件表 前端控制器
  * </p>
  *
  * @author MrYan
@@ -26,12 +26,14 @@ public class AuctionFileController {
 
     /**
      * 上传文件（图片或视频）
+     * @param files 文件数组
+     * @param fileCategory 文件分类（goods=商品文件，avatar=用户头像等），默认为goods
      */
     @PostMapping("/upload")
     public Result<List<AuctionFile>> uploadFiles(@RequestParam("files") MultipartFile[] files,
-                                                @RequestParam(value = "goodsId", required = false) Long goodsId) {
+                                                @RequestParam(value = "fileCategory", required = false, defaultValue = "goods") String fileCategory) {
         try {
-            List<AuctionFile> uploadedFiles = fileService.uploadFiles(files, goodsId);
+            List<AuctionFile> uploadedFiles = fileService.uploadFiles(files, fileCategory);
             return Result.success("上传成功", uploadedFiles);
         } catch (Exception e) {
             return Result.error("上传失败：" + e.getMessage());
@@ -39,12 +41,13 @@ public class AuctionFileController {
     }
 
     /**
-     * 根据商品ID获取文件列表
+     * 根据文件ID列表获取文件列表（支持逗号分隔的ID字符串）
+     * @param fileIds 文件ID列表（逗号分隔的字符串，如："1,2,3"）
      */
-    @GetMapping("/list/{goodsId}")
-    public Result<List<AuctionFile>> getFilesByGoodsId(@PathVariable Long goodsId) {
+    @GetMapping("/list")
+    public Result<List<AuctionFile>> getFilesByIds(@RequestParam(value = "fileIds", required = false) String fileIds) {
         try {
-            List<AuctionFile> files = fileService.getFilesByGoodsId(goodsId);
+            List<AuctionFile> files = fileService.getFilesByIds(fileIds);
             return Result.success("查询成功", files);
         } catch (Exception e) {
             return Result.error("查询失败：" + e.getMessage());

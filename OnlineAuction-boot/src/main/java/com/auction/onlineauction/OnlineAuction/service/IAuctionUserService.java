@@ -71,4 +71,28 @@ public interface IAuctionUserService extends IService<AuctionUser> {
      * @return 登录信息（不包含密码）
      */
     LoginDTO login(String userName, String password, String loginIp);
+
+    /**
+     * 更新个人资料（用户自己更新）
+     * @param userId 当前登录用户ID
+     * @param user 更新的用户信息（只更新允许的字段：nickName, realName, phone, email, sex）
+     * @return 更新后的用户信息
+     */
+    AuctionUser updateProfile(Long userId, AuctionUser user);
+
+    /**
+     * 修改密码
+     * @param userId 当前登录用户ID
+     * @param oldPassword 旧密码（明文）
+     * @param newPassword 新密码（明文）
+     */
+    void changePassword(Long userId, String oldPassword, String newPassword);
+
+    /**
+     * 上传并更新头像
+     * @param userId 当前登录用户ID
+     * @param avatarFileId 头像文件ID（关联auction_file.id）
+     * @return 更新后的用户信息
+     */
+    AuctionUser updateAvatar(Long userId, Long avatarFileId);
 }
