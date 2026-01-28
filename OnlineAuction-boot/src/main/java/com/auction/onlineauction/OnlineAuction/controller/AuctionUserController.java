@@ -27,6 +27,9 @@ public class AuctionUserController {
 
     /**
      * 分页查询用户列表
+     * 权限说明：
+     * - 超级管理员可以查看所有用户，除了超级管理员自己
+     * - 管理员可以查看所有普通用户（买方和卖方），无法查看其他管理员以及超级管理员
      */
     @GetMapping("/page")
     public Result<PageInfo<AuctionUser>> getUserPage(
@@ -34,9 +37,17 @@ public class AuctionUserController {
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(required = false) String userName,
             @RequestParam(required = false) Integer userRole,
-            @RequestParam(required = false) Integer userStatus) {
+            @RequestParam(required = false) Integer userStatus,
+            HttpServletRequest request) {
         try {
-            PageInfo<AuctionUser> pageInfo = userService.getUserPage(current, size, userName, userRole, userStatus);
+            // 从Session获取当前登录用户ID
+            HttpSession session = request.getSession(false);
+            Long currentUserId = null;
+            if (session != null) {
+                currentUserId = (Long) session.getAttribute("userId");
+            }
+            
+            PageInfo<AuctionUser> pageInfo = userService.getUserPage(current, size, userName, userRole, userStatus, currentUserId);
             return Result.success("查询成功", pageInfo);
         } catch (Exception e) {
             return Result.error("查询失败：" + e.getMessage());

@@ -11,7 +11,7 @@
  Target Server Version : 80019
  File Encoding         : 65001
 
- Date: 21/01/2026 16:44:26
+ Date: 28/01/2026 14:00:39
 */
 
 SET NAMES utf8mb4;
@@ -651,7 +651,6 @@ INSERT INTO `auction_permission` VALUES (16, '消息发送', 'message:add', 2, '
 INSERT INTO `auction_permission` VALUES (17, '个人中心查看', 'profile:view', 1, '查看个人中心', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
 INSERT INTO `auction_permission` VALUES (18, '留言板发布', 'message:board:add', 2, '发布留言板留言', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
 INSERT INTO `auction_permission` VALUES (19, '留言板查看', 'message:board:view', 1, '查看留言板所有留言', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
-INSERT INTO `auction_permission` VALUES (96, '留言板编辑', 'message:board:edit', 2, '编辑自己的留言', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
 INSERT INTO `auction_permission` VALUES (20, '用户查看', 'admin:user:view', 1, '查看用户列表', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
 INSERT INTO `auction_permission` VALUES (21, '用户新增', 'admin:user:add', 2, '新增用户', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
 INSERT INTO `auction_permission` VALUES (22, '用户编辑', 'admin:user:edit', 2, '编辑用户信息', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
@@ -685,6 +684,7 @@ INSERT INTO `auction_permission` VALUES (92, '公告编辑', 'admin:notice:edit'
 INSERT INTO `auction_permission` VALUES (93, '公告删除', 'admin:notice:delete', 2, '删除/下架公告', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
 INSERT INTO `auction_permission` VALUES (94, '管理员个人中心查看', 'admin:profile:view', 1, '查看管理员个人中心', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
 INSERT INTO `auction_permission` VALUES (95, '系统设置查看', 'admin:settings:view', 1, '查看系统设置', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
+INSERT INTO `auction_permission` VALUES (96, '留言板编辑', 'message:board:edit', 2, '编辑自己的留言', 1, '2025-12-31 14:40:32', '2025-12-31 14:40:32', 0);
 
 -- ----------------------------
 -- Table structure for auction_record
@@ -837,18 +837,18 @@ INSERT INTO `auction_role_permission` VALUES (106, 4, 92, '2026-01-21 16:14:50')
 INSERT INTO `auction_role_permission` VALUES (107, 4, 93, '2026-01-21 16:14:50');
 INSERT INTO `auction_role_permission` VALUES (108, 1, 17, '2026-01-21 16:14:50');
 INSERT INTO `auction_role_permission` VALUES (109, 1, 18, '2026-01-21 16:14:50');
-INSERT INTO `auction_role_permission` VALUES (118, 1, 19, '2026-01-21 16:14:50');
-INSERT INTO `auction_role_permission` VALUES (119, 1, 96, '2026-01-21 16:14:50');
 INSERT INTO `auction_role_permission` VALUES (110, 2, 17, '2026-01-21 16:14:50');
 INSERT INTO `auction_role_permission` VALUES (111, 2, 18, '2026-01-21 16:14:50');
-INSERT INTO `auction_role_permission` VALUES (120, 2, 19, '2026-01-21 16:14:50');
-INSERT INTO `auction_role_permission` VALUES (121, 2, 96, '2026-01-21 16:14:50');
 INSERT INTO `auction_role_permission` VALUES (112, 3, 94, '2026-01-21 16:14:50');
 INSERT INTO `auction_role_permission` VALUES (113, 3, 95, '2026-01-21 16:14:50');
 INSERT INTO `auction_role_permission` VALUES (114, 4, 17, '2026-01-21 16:14:50');
 INSERT INTO `auction_role_permission` VALUES (115, 4, 18, '2026-01-21 16:14:50');
 INSERT INTO `auction_role_permission` VALUES (116, 4, 94, '2026-01-21 16:14:50');
 INSERT INTO `auction_role_permission` VALUES (117, 4, 95, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (118, 1, 19, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (119, 1, 96, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (120, 2, 19, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (121, 2, 96, '2026-01-21 16:14:50');
 
 -- ----------------------------
 -- Table structure for auction_user
@@ -882,14 +882,14 @@ CREATE TABLE `auction_user`  (
   UNIQUE INDEX `idx_user_name`(`user_name` ASC) USING BTREE,
   INDEX `idx_user_role`(`user_role` ASC) USING BTREE,
   INDEX `idx_user_status`(`user_status` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '系统用户表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '系统用户表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of auction_user
 -- ----------------------------
-INSERT INTO `auction_user` VALUES (1, 'superadmin', 'e10adc3949ba59abbe56e057f20f883e', '芊芊', '芊芊', '17713356500', '1709348112@qq.com', '', '0', '4', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-01-21 16:16:58', '2026-01-21 14:54:06', '2026-01-21 16:16:58', 0);
-INSERT INTO `auction_user` VALUES (2, 'admin', 'e10adc3949ba59abbe56e057f20f883e', 'admin', '管理员', '17034570777', '1709348112@qq.com', '', '0', '3', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-01-21 16:35:47', '2026-01-21 15:50:21', '2026-01-21 16:35:47', 0);
-INSERT INTO `auction_user` VALUES (3, 'buyuser', 'e10adc3949ba59abbe56e057f20f883e', 'buyuser', '买方用户', '19234532287', '1709348112@qq.com', '', '0', '1', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-01-21 16:18:33', '2026-01-21 16:17:43', '2026-01-21 16:18:33', 0);
+INSERT INTO `auction_user` VALUES (1, 'superadmin', 'e10adc3949ba59abbe56e057f20f883e', '芊芊', '芊芊', '17713356500', '1709348112@qq.com', '', '0', '4', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-01-28 13:59:15', '2026-01-21 14:54:06', '2026-01-28 13:59:15', 0);
+INSERT INTO `auction_user` VALUES (2, 'admin', 'e10adc3949ba59abbe56e057f20f883e', 'admin', '管理员', '17034570777', '1709348112@qq.com', '', '0', '3', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-01-23 10:21:17', '2026-01-21 15:50:21', '2026-01-23 10:21:17', 0);
+INSERT INTO `auction_user` VALUES (3, 'buyuser', 'e10adc3949ba59abbe56e057f20f883e', 'buyuser', '买方用户', '19234532287', '1709348112@qq.com', '', '0', '1', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-01-23 10:14:44', '2026-01-21 16:17:43', '2026-01-23 10:14:44', 0);
 INSERT INTO `auction_user` VALUES (4, 'selluser', 'e10adc3949ba59abbe56e057f20f883e', 'selluser', '卖方用户', '18766753345', '1709348112@qq.com', '', '0', '2', 0, NULL, NULL, NULL, NULL, NULL, 0, '', NULL, '2026-01-21 16:18:22', '2026-01-21 16:18:22', 0);
 
 SET FOREIGN_KEY_CHECKS = 1;

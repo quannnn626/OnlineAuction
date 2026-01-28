@@ -17,8 +17,9 @@ public interface IAuctionUserService extends IService<AuctionUser> {
 
     /**
      * 分页查询用户列表
+     * @param currentUserId 当前登录用户ID，用于权限过滤
      */
-    PageInfo<AuctionUser> getUserPage(Integer current, Integer size, String userName, Integer userRole, Integer userStatus);
+    PageInfo<AuctionUser> getUserPage(Integer current, Integer size, String userName, Integer userRole, Integer userStatus, Long currentUserId);
 
     /**
      * 根据ID查询用户详情（不返回密码）

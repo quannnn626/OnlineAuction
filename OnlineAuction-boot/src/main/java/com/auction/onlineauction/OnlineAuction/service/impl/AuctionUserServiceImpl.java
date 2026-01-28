@@ -28,11 +28,42 @@ import java.util.stream.Collectors;
 public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, AuctionUser> implements IAuctionUserService {
 
     @Override
-    public PageInfo<AuctionUser> getUserPage(Integer current, Integer size, String userName, Integer userRole, Integer userStatus) {
+    public PageInfo<AuctionUser> getUserPage(Integer current, Integer size, String userName, Integer userRole, Integer userStatus, Long currentUserId) {
         PageHelper.startPage(current, size);
 
         QueryWrapper<AuctionUser> wrapper = new QueryWrapper<>();
         wrapper.eq("del_flag", 0);
+        
+        // 权限过滤：根据当前登录用户的角色过滤用户列表
+        if (currentUserId != null) {
+            AuctionUser currentUser = getById(currentUserId);
+            if (currentUser != null && currentUser.getDelFlag() == 0) {
+                String currentUserRole = currentUser.getUserRole();
+                boolean isSuperAdmin = currentUserRole != null && currentUserRole.contains("4");
+                boolean isAdmin = currentUserRole != null && currentUserRole.contains("3");
+                
+                if (isSuperAdmin) {
+                    // 超级管理员：可以查看所有用户，除了超级管理员自己
+                    wrapper.ne("id", currentUserId);
+                    // 排除所有超级管理员（user_role包含4的用户，但排除自己）
+                    // 使用正则表达式匹配：user_role不包含4，或者user_role包含4但id不等于currentUserId
+                    // 由于MyBatis-Plus不支持复杂的正则，我们使用notLike排除包含4的用户
+                    wrapper.notLike("user_role", "4");
+                } else if (isAdmin) {
+                    // 管理员：只能查看普通用户（买方和卖方），不能查看管理员和超级管理员
+                    // 只显示角色为1（买方）或2（卖方）的用户，且不包含3（管理员）或4（超级管理员）
+                    // 条件：必须包含1或2，且不能包含3，且不能包含4
+                    wrapper.and(w -> 
+                        (w.like("user_role", "1").or().like("user_role", "2"))
+                        .and(w2 -> w2.notLike("user_role", "3"))
+                        .and(w3 -> w3.notLike("user_role", "4"))
+                    );
+                } else {
+                    // 非管理员用户：不能查看用户列表（返回空列表）
+                    wrapper.eq("id", -1L); // 设置一个不可能存在的ID，确保返回空列表
+                }
+            }
+        }
         
         if (userName != null && !userName.trim().isEmpty()) {
             wrapper.like("user_name", userName);
