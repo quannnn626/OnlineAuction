@@ -3,6 +3,7 @@ package com.auction.onlineauction.OnlineAuction.controller;
 import com.auction.onlineauction.OnlineAuction.common.Result;
 import com.auction.onlineauction.OnlineAuction.dto.LoginDTO;
 import com.auction.onlineauction.OnlineAuction.service.IAuctionUserService;
+import com.auction.onlineauction.OnlineAuction.service.IAuctionFileService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,6 +26,9 @@ public class AuthController {
 
     @Autowired
     private IAuctionUserService userService;
+    
+    @Autowired
+    private IAuctionFileService fileService;
 
     /**
      * 用户登录
@@ -78,15 +82,51 @@ public class AuthController {
                 return Result.error("未登录");
             }
             
+            // 从数据库查询完整的用户信息
+            com.auction.onlineauction.OnlineAuction.entity.AuctionUser user = userService.getById(userId);
+            if (user == null || user.getDelFlag() == 1) {
+                return Result.error("用户不存在");
+            }
+            
             Map<String, Object> userInfo = new HashMap<>();
-            userInfo.put("userId", session.getAttribute("userId"));
-            userInfo.put("userName", session.getAttribute("userName"));
+            // Session中的基本信息
+            userInfo.put("userId", userId);
+            userInfo.put("userName", user.getUserName());
             userInfo.put("userRole", session.getAttribute("userRole"));
             userInfo.put("roles", session.getAttribute("roles"));
             userInfo.put("isAdmin", session.getAttribute("isAdmin"));
             userInfo.put("isSuperAdmin", session.getAttribute("isSuperAdmin"));
             userInfo.put("isBuyer", session.getAttribute("isBuyer"));
             userInfo.put("isSeller", session.getAttribute("isSeller"));
+            
+            // 用户详细信息
+            userInfo.put("nickName", user.getNickName());
+            userInfo.put("realName", user.getRealName());
+            userInfo.put("phone", user.getPhone());
+            userInfo.put("email", user.getEmail());
+            userInfo.put("sex", user.getSex() != null ? user.getSex() : "2");
+            
+            // 头像信息
+            if (user.getAvatarFileId() != null) {
+                // 如果有头像文件ID，查询文件信息获取路径
+                com.auction.onlineauction.OnlineAuction.entity.AuctionFile avatarFile = fileService.getById(user.getAvatarFileId());
+                if (avatarFile != null && avatarFile.getDelFlag() == 0) {
+                    userInfo.put("avatar", avatarFile.getFilePath());
+                    userInfo.put("avatarFileId", user.getAvatarFileId());
+                } else {
+                    // 文件不存在，使用旧的avatar字段
+                    userInfo.put("avatar", user.getAvatar());
+                    userInfo.put("avatarFileId", null);
+                }
+            } else if (user.getAvatar() != null && !user.getAvatar().isEmpty()) {
+                // 没有头像文件ID，但有旧的avatar字段
+                userInfo.put("avatar", user.getAvatar());
+                userInfo.put("avatarFileId", null);
+            } else {
+                // 都没有，设置为空
+                userInfo.put("avatar", null);
+                userInfo.put("avatarFileId", null);
+            }
             
             return Result.success("获取成功", userInfo);
         } catch (Exception e) {

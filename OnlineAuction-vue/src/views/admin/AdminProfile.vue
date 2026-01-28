@@ -296,7 +296,10 @@ export default {
     async loadUserInfo() {
       try {
         const userInfo = await getCurrentUser();
+        console.log("获取到的用户信息:", userInfo); // 调试日志
+        
         if (userInfo) {
+          // 回显表单数据
           this.profileForm.userName = userInfo.userName || "";
           this.profileForm.nickName = userInfo.nickName || "";
           this.profileForm.realName = userInfo.realName || "";
@@ -306,14 +309,23 @@ export default {
 
           // 加载头像
           if (userInfo.avatar) {
+            // avatar 已经是相对路径（如 /upload/profile/202601/xxx.png）
+            // 直接使用，前端代理会自动处理
             this.avatarUrl = userInfo.avatar;
+            console.log("头像路径:", this.avatarUrl); // 调试日志
+          } else {
+            this.avatarUrl = "";
           }
+          
           if (userInfo.avatarFileId) {
             this.avatarFileId = userInfo.avatarFileId;
+          } else {
+            this.avatarFileId = null;
           }
         }
       } catch (error) {
         console.error("加载用户信息失败:", error);
+        this.$message.error("加载用户信息失败：" + (error.message || "未知错误"));
       }
     },
     // 头像上传前验证
