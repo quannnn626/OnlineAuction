@@ -2,6 +2,12 @@ package com.auction.onlineauction.OnlineAuction.mapper;
 
 import com.auction.onlineauction.OnlineAuction.entity.AuctionRecord;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
+
+import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * <p>
@@ -13,4 +19,47 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
  */
 public interface AuctionRecordMapper extends BaseMapper<AuctionRecord> {
 
+    /**
+     * 使用悲观锁查询商品信息（SELECT FOR UPDATE）
+     * @param goodsId 商品ID
+     * @return 商品信息
+     */
+    com.auction.onlineauction.OnlineAuction.entity.AuctionGoods selectGoodsForUpdate(@Param("goodsId") Long goodsId);
+
+    /**
+     * 更新商品当前最高出价
+     * @param goodsId 商品ID
+     * @param currentHighestPrice 当前最高出价
+     * @return 更新行数
+     */
+    @Update("UPDATE auction_goods SET current_highest_price = #{currentHighestPrice}, bid_count = bid_count + 1 WHERE id = #{goodsId}")
+    int updateGoodsHighestPrice(@Param("goodsId") Long goodsId, @Param("currentHighestPrice") BigDecimal currentHighestPrice);
+
+    /**
+     * 将商品的所有竞拍记录的is_highest设置为0
+     * @param goodsId 商品ID
+     * @return 更新行数
+     */
+    @Update("UPDATE auction_record SET is_highest = 0 WHERE goods_id = #{goodsId} AND del_flag = 0")
+    int clearHighestFlag(@Param("goodsId") Long goodsId);
+
+    /**
+     * 查询商品的最高出价记录
+     * @param goodsId 商品ID
+     * @return 最高出价记录
+     */
+    @Select("SELECT * FROM auction_record WHERE goods_id = #{goodsId} AND del_flag = 0 AND is_highest = 1 ORDER BY bid_time DESC LIMIT 1")
+    AuctionRecord selectHighestRecord(@Param("goodsId") Long goodsId);
+
+    /**
+     * 查询商品的竞拍记录列表（按出价时间倒序）
+     * @param goodsId 商品ID
+     * @param limit 限制数量
+     * @return 竞拍记录列表
+     */
+    @Select("SELECT ar.*, u.nick_name as buyer_name FROM auction_record ar " +
+            "LEFT JOIN auction_user u ON ar.buyer_id = u.id " +
+            "WHERE ar.goods_id = #{goodsId} AND ar.del_flag = 0 " +
+            "ORDER BY ar.bid_time DESC LIMIT #{limit}")
+    List<AuctionRecord> selectRecordsByGoodsId(@Param("goodsId") Long goodsId, @Param("limit") Integer limit);
 }

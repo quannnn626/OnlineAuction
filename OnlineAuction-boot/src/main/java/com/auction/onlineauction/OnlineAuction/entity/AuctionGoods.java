@@ -77,6 +77,12 @@ public class AuctionGoods implements Serializable {
     private BigDecimal basePrice;
 
     /**
+     * 当前最高出价（实时更新，用于快速查询）
+     */
+    @TableField("current_highest_price")
+    private BigDecimal currentHighestPrice;
+
+    /**
      * 最小加价幅度
      */
     @TableField("add_price")

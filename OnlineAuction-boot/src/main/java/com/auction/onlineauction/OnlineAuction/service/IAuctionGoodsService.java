@@ -71,4 +71,20 @@ public interface IAuctionGoodsService extends IService<AuctionGoods> {
      * 获取我的商品列表（前端API）
      */
     PageInfo<AuctionGoods> getMyGoodsList(Integer current, Integer size, Long userId);
+
+    /**
+     * 根据时间自动更新商品状态
+     * 0=未开始 1=竞拍中 2=已成交 3=已流拍
+     */
+    void updateGoodsStatusByTime(AuctionGoods goods);
+
+    /**
+     * 自动下架超过结束时间的商品
+     */
+    void autoOfflineExpiredGoods();
+
+    /**
+     * 重新申请上架（将已下架商品改为待审核状态）
+     */
+    void reapplyGoods(Long id, Long userId);
 }

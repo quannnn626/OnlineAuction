@@ -169,7 +169,8 @@ export default {
           status: this.statusFilter,
         };
         const result = await getGoodsList(params);
-        this.goodsList = result.list || [];
+        // PageInfo结构：list(实际是records)和total
+        this.goodsList = result.list || result.records || [];
         this.pagination.total = result.total || 0;
       } catch (error) {
         console.error("加载商品列表失败:", error);

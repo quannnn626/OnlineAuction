@@ -47,7 +47,14 @@
             <span class="price">¥{{ scope.row.basePrice }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="goodsStatus" label="状态" width="100">
+        <el-table-column prop="auditStatus" label="审核状态" width="100">
+          <template slot-scope="scope">
+            <el-tag :type="getAuditStatusType(scope.row.auditStatus)">
+              {{ getAuditStatusText(scope.row.auditStatus) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="goodsStatus" label="商品状态" width="100">
           <template slot-scope="scope">
             <el-tag :type="getStatusType(scope.row.goodsStatus)">
               {{ getStatusText(scope.row.goodsStatus) }}
@@ -65,22 +72,30 @@
             {{ formatTime(scope.row.createTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="180" fixed="right">
+        <el-table-column label="操作" width="250" fixed="right">
           <template slot-scope="scope">
             <el-button
               size="mini"
               type="primary"
               icon="el-icon-edit"
-              @click="handleEdit(scope.row)">
+              @click="handleEdit(scope.row)"
+              :disabled="scope.row.auditStatus === 1 && (scope.row.goodsStatus === 1 || scope.row.goodsStatus === 0)">
               编辑
             </el-button>
             <el-button
-              v-if="scope.row.goodsStatus == 0"
+              v-if="scope.row.auditStatus === 3"
               size="mini"
-              type="danger"
-              icon="el-icon-delete"
-              @click="handleDelete(scope.row)">
-              下架
+              type="success"
+              icon="el-icon-upload2"
+              @click="handleReapply(scope.row)">
+              重新申请上架
+            </el-button>
+            <el-button
+              v-if="scope.row.auditStatus === 0"
+              size="mini"
+              type="info"
+              disabled>
+              审核中
             </el-button>
           </template>
         </el-table-column>
@@ -103,7 +118,7 @@
 </template>
 
 <script>
-import { getMyGoodsList, deleteGoods } from '@/api/goods'
+import { getMyGoodsList, deleteGoods, reapplyGoods } from '@/api/goods'
 
 export default {
   name: 'MyGoods',
@@ -200,6 +215,41 @@ export default {
         3: '已流拍'
       }
       return textMap[status] || '未知'
+    },
+    getAuditStatusType(status) {
+      const typeMap = {
+        0: 'warning', // 待审核
+        1: 'success', // 审核通过
+        2: 'danger',  // 审核驳回
+        3: 'info'     // 已下架
+      }
+      return typeMap[status] || 'info'
+    },
+    getAuditStatusText(status) {
+      const textMap = {
+        0: '待审核',
+        1: '审核通过',
+        2: '审核驳回',
+        3: '已下架'
+      }
+      return textMap[status] || '未知'
+    },
+    async handleReapply(goods) {
+      try {
+        await this.$confirm(`确定重新申请上架商品 "${goods.goodsName}" 吗？`, '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        })
+        await reapplyGoods(goods.id)
+        this.$message.success('重新申请上架成功，等待管理员审核')
+        this.loadData()
+      } catch (error) {
+        if (error !== 'cancel') {
+          console.error('重新申请上架失败:', error)
+          this.$message.error('重新申请上架失败，请重试')
+        }
+      }
     },
     formatTime(timeStr) {
       if (!timeStr) return ''

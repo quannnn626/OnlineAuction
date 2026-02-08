@@ -55,8 +55,9 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
 
         List<AuctionGoods> list = list(wrapper);
 
-        // 为每个商品加载文件信息
+        // 为每个商品加载文件信息和自动更新状态
         for (AuctionGoods goods : list) {
+            updateGoodsStatusByTime(goods);
             loadFilesForGoods(goods);
         }
 
@@ -84,6 +85,8 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
         if (goods == null || goods.getDelFlag() == 1) {
             throw new RuntimeException("商品不存在");
         }
+        // 自动更新商品状态
+        updateGoodsStatusByTime(goods);
         // 加载文件信息
         loadFilesForGoods(goods);
         return goods;
@@ -410,12 +413,15 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
         wrapper.eq("del_flag", 0);
         wrapper.eq("audit_status", 1); // 只显示审核通过的商品
         
+        // 只显示未开始和进行中的商品（0=未开始 1=竞拍中）
+        wrapper.in("goods_status", 0, 1);
+        
         // 关键词搜索
         if (keyword != null && !keyword.trim().isEmpty()) {
             wrapper.like("goods_name", keyword);
         }
         
-        // 状态筛选
+        // 状态筛选（如果指定了状态，则进一步筛选）
         if (status != null) {
             wrapper.eq("goods_status", status);
         }
@@ -423,6 +429,13 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
         wrapper.orderByDesc("create_time");
 
         List<AuctionGoods> list = list(wrapper);
+        
+        // 自动更新每个商品的状态
+        for (AuctionGoods goods : list) {
+            updateGoodsStatusByTime(goods);
+            loadFilesForGoods(goods);
+        }
+        
         return new PageInfo<>(list);
     }
 
@@ -434,6 +447,9 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
         wrapper.eq("del_flag", 0);
         wrapper.eq("audit_status", 1); // 只显示审核通过的商品
         
+        // 只显示未开始和进行中的商品（0=未开始 1=竞拍中）
+        wrapper.in("goods_status", 0, 1);
+        
         // 关键词搜索（商品名称或描述）
         if (keyword != null && !keyword.trim().isEmpty()) {
             wrapper.and(w -> w.like("goods_name", keyword).or().like("goods_desc", keyword));
@@ -442,6 +458,13 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
         wrapper.orderByDesc("create_time");
 
         List<AuctionGoods> list = list(wrapper);
+        
+        // 自动更新每个商品的状态
+        for (AuctionGoods goods : list) {
+            updateGoodsStatusByTime(goods);
+            loadFilesForGoods(goods);
+        }
+        
         return new PageInfo<>(list);
     }
 
@@ -456,6 +479,98 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
         wrapper.orderByDesc("create_time");
 
         List<AuctionGoods> list = list(wrapper);
+        
+        // 自动更新每个商品的状态
+        for (AuctionGoods goods : list) {
+            updateGoodsStatusByTime(goods);
+            loadFilesForGoods(goods);
+        }
+        
         return new PageInfo<>(list);
+    }
+
+    @Override
+    public void updateGoodsStatusByTime(AuctionGoods goods) {
+        if (goods == null || goods.getStartTime() == null || goods.getEndTime() == null) {
+            return;
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        Integer currentStatus = goods.getGoodsStatus();
+        Integer newStatus = null;
+
+        // 根据时间计算应该的状态
+        if (now.isBefore(goods.getStartTime())) {
+            // 当前时间在开始时间之前 -> 未开始
+            newStatus = 0;
+        } else if (now.isAfter(goods.getEndTime())) {
+            // 当前时间在结束时间之后 -> 已结束（需要判断是已成交还是已流拍）
+            // 这里暂时设置为已流拍（3），后续可以根据是否有订单来判断是否已成交（2）
+            newStatus = 3;
+        } else {
+            // 当前时间在开始时间和结束时间之间 -> 竞拍中
+            newStatus = 1;
+        }
+
+        // 如果状态发生变化，更新数据库
+        if (newStatus != null && !newStatus.equals(currentStatus)) {
+            goods.setGoodsStatus(newStatus);
+            goods.setUpdateTime(LocalDateTime.now());
+            updateById(goods);
+        }
+    }
+
+    @Override
+    public void autoOfflineExpiredGoods() {
+        LocalDateTime now = LocalDateTime.now();
+        
+        QueryWrapper<AuctionGoods> wrapper = new QueryWrapper<>();
+        wrapper.eq("del_flag", 0);
+        wrapper.eq("audit_status", 1); // 只处理审核通过的商品
+        wrapper.le("end_time", now); // 结束时间小于等于当前时间
+        wrapper.in("goods_status", 0, 1); // 只处理未开始或竞拍中的商品
+        
+        List<AuctionGoods> expiredGoods = list(wrapper);
+        
+        for (AuctionGoods goods : expiredGoods) {
+            // 先更新商品状态
+            updateGoodsStatusByTime(goods);
+            
+            // 然后自动下架（设置auditStatus=3）
+            goods.setAuditStatus(3); // 已下架
+            goods.setUpdateTime(LocalDateTime.now());
+            updateById(goods);
+        }
+    }
+
+    @Override
+    public void reapplyGoods(Long id, Long userId) {
+        AuctionGoods goods = getById(id);
+        if (goods == null || goods.getDelFlag() == 1) {
+            throw new RuntimeException("商品不存在");
+        }
+        
+        // 验证是否为商品所有者
+        if (!goods.getSellerId().equals(userId)) {
+            throw new RuntimeException("无权操作此商品");
+        }
+        
+        // 验证商品是否已下架
+        if (goods.getAuditStatus() != 3) {
+            throw new RuntimeException("只有已下架的商品才能重新申请上架");
+        }
+        
+        // 重新设置为待审核状态
+        goods.setAuditStatus(0); // 待审核
+        goods.setAuditRemark(null); // 清空之前的审核备注
+        goods.setUpdateTime(LocalDateTime.now());
+        
+        // 根据时间重新计算商品状态
+        updateGoodsStatusByTime(goods);
+        
+        boolean success = updateById(goods);
+        if (!success) {
+            throw new RuntimeException("重新申请上架失败");
+        }
     }
 }

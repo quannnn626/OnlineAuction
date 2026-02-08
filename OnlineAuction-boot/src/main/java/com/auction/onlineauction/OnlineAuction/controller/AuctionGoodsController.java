@@ -7,6 +7,8 @@ import com.github.pagehelper.PageInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import java.util.List;
 import java.util.Map;
 
@@ -132,6 +134,27 @@ public class AuctionGoodsController {
             return Result.success("审核成功", null);
         } catch (Exception e) {
             return Result.error("审核失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 重新申请上架（卖家操作）
+     */
+    @PutMapping("/reapply/{id}")
+    public Result<Void> reapplyGoods(@PathVariable Long id, HttpServletRequest request) {
+        try {
+            HttpSession session = request.getSession(false);
+            if (session == null) {
+                return Result.error("未登录");
+            }
+            Long userId = (Long) session.getAttribute("userId");
+            if (userId == null) {
+                return Result.error("未登录");
+            }
+            goodsService.reapplyGoods(id, userId);
+            return Result.success("重新申请上架成功，等待管理员审核", null);
+        } catch (Exception e) {
+            return Result.error("重新申请上架失败：" + e.getMessage());
         }
     }
 }

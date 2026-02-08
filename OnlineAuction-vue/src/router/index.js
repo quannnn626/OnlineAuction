@@ -191,11 +191,32 @@ router.beforeEach((to, from, next) => {
   
   // 留言板页面权限检查（仅买方和卖方可以访问）
   if (to.path === "/message-board") {
-    if (!user.isBuyer && !user.isSeller) {
-      // 非买方和卖方用户访问留言板，跳转到首页
+    console.log("访问留言板，检查用户权限:", {
+      isBuyer: user.isBuyer,
+      isSeller: user.isSeller,
+      userRole: user.userRole,
+      user: user
+    });
+    
+    // 检查用户是否有买方或卖方角色
+    // 优先使用 isBuyer 和 isSeller 属性
+    let hasPermission = false;
+    if (user.isBuyer === true || user.isSeller === true) {
+      hasPermission = true;
+    } else if (user.userRole) {
+      // 如果 isBuyer/isSeller 未设置，根据 userRole 判断
+      // userRole 格式可能是 "1" 或 "1,2" 等（逗号分隔）
+      const roles = String(user.userRole).split(",").map(r => r.trim());
+      hasPermission = roles.includes("1") || roles.includes("2");
+    }
+    
+    if (!hasPermission) {
+      // 没有权限，跳转到首页
+      console.log("用户无权限访问留言板，跳转到首页");
       next("/home");
       return;
     }
+    console.log("允许访问留言板");
   }
   
   next();

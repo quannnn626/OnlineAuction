@@ -81,5 +81,10 @@ public class AuctionRecord implements Serializable {
     @TableField("del_flag")
     private Integer delFlag;
 
+    /**
+     * 买家昵称（非数据库字段，用于查询结果）
+     */
+    @TableField(exist = false)
+    private String buyerName;
 
 }

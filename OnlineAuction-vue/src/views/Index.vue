@@ -105,7 +105,26 @@ export default {
         // 不传all参数，让后端根据当前登录用户的角色自动过滤菜单
         const data = await getMenuTree(false);
         console.log("菜单数据:", data);
-        this.menuTree = data || [];
+        
+        // 前端双重保护：如果是超级管理员，过滤掉留言板菜单
+        let menuTree = data || [];
+        const userInfo = localStorage.getItem("userInfo");
+        if (userInfo) {
+          try {
+            const user = JSON.parse(userInfo);
+            if (user.isSuperAdmin) {
+              // 过滤掉留言板菜单（ID=8 或路径为 /message-board）
+              menuTree = this.filterMenu(menuTree, (menu) => {
+                return menu.id !== 8 && menu.menuPath !== "/message-board";
+              });
+              console.log("超级管理员：已过滤留言板菜单");
+            }
+          } catch (e) {
+            console.error("解析用户信息失败:", e);
+          }
+        }
+        
+        this.menuTree = menuTree;
         this.buildMenuMap(this.menuTree);
         console.log("菜单加载成功，菜单数量:", this.menuTree.length);
       } catch (error) {
@@ -117,6 +136,20 @@ export default {
       } finally {
         this.loading = false;
       }
+    },
+    // 递归过滤菜单
+    filterMenu(menus, filterFn) {
+      if (!menus || menus.length === 0) {
+        return [];
+      }
+      return menus
+        .filter(filterFn)
+        .map((menu) => {
+          if (menu.children && menu.children.length > 0) {
+            menu.children = this.filterMenu(menu.children, filterFn);
+          }
+          return menu;
+        });
     },
     buildMenuMap(menus) {
       this.menuMap = {}; // 重置菜单映射

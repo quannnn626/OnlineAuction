@@ -73,3 +73,13 @@ export function getGoodsDetail(id) {
     method: "get",
   });
 }
+
+/**
+ * 重新申请上架（卖家操作）
+ */
+export function reapplyGoods(id) {
+  return request({
+    url: `/OnlineAuction/auctionGoods/reapply/${id}`,
+    method: "put",
+  });
+}

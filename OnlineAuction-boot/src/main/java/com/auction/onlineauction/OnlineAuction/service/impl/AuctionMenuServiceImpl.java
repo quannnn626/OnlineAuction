@@ -35,9 +35,14 @@ public class AuctionMenuServiceImpl extends ServiceImpl<AuctionMenuMapper, Aucti
             return new ArrayList<>();
         }
         
-        // 如果包含超级管理员（4），返回所有菜单
+        // 如果包含超级管理员（4），返回所有菜单，但排除留言板菜单（ID=8）
         if (roleTypes.contains(4)) {
-            return getAllMenuTree();
+            List<AuctionMenu> allMenus = baseMapper.selectAllMenus();
+            // 过滤掉留言板菜单（ID=8，路径为 /message-board）
+            allMenus = allMenus.stream()
+                    .filter(menu -> menu.getId() != 8 && !"/message-board".equals(menu.getMenuPath()))
+                    .collect(Collectors.toList());
+            return buildMenuTree(allMenus, 0L);
         }
         
         // 合并所有角色的菜单（去重）

@@ -13,6 +13,44 @@
         <result column="bid_time" property="bidTime" />
         <result column="is_highest" property="isHighest" />
         <result column="del_flag" property="delFlag" />
+        <result column="buyerName" property="buyerName" />
     </resultMap>
+
+    <!-- 使用悲观锁查询商品信息（SELECT FOR UPDATE） -->
+    <select id="selectGoodsForUpdate" resultType="com.auction.onlineauction.OnlineAuction.entity.AuctionGoods">
+        SELECT * FROM auction_goods WHERE id = #{goodsId} AND del_flag = 0 FOR UPDATE
+    </select>
+
+    <!-- 更新商品当前最高出价 -->
+    <update id="updateGoodsHighestPrice">
+        UPDATE auction_goods 
+        SET current_highest_price = #{currentHighestPrice}, bid_count = bid_count + 1 
+        WHERE id = #{goodsId}
+    </update>
+
+    <!-- 将商品的所有竞拍记录的is_highest设置为0 -->
+    <update id="clearHighestFlag">
+        UPDATE auction_record 
+        SET is_highest = 0 
+        WHERE goods_id = #{goodsId} AND del_flag = 0
+    </update>
+
+    <!-- 查询商品的最高出价记录 -->
+    <select id="selectHighestRecord" resultMap="BaseResultMap">
+        SELECT * FROM auction_record 
+        WHERE goods_id = #{goodsId} AND del_flag = 0 AND is_highest = 1 
+        ORDER BY bid_time DESC 
+        LIMIT 1
+    </select>
+
+    <!-- 查询商品的竞拍记录列表（包含买家昵称） -->
+    <select id="selectRecordsByGoodsId" resultMap="BaseResultMap">
+        SELECT ar.*, u.nick_name as buyerName
+        FROM auction_record ar
+        LEFT JOIN auction_user u ON ar.buyer_id = u.id
+        WHERE ar.goods_id = #{goodsId} AND ar.del_flag = 0
+        ORDER BY ar.bid_time DESC
+        LIMIT #{limit}
+    </select>
 
 </mapper>
