@@ -75,12 +75,24 @@ export function batchDeleteCategory(ids) {
 }
 
 /**
- * 获取商品分类列表（用于首页展示，调用API接口）
+ * 获取商品分类列表（用于首页展示，调用API接口，无需管理员权限）
  */
 export function getCategoryListForHome() {
   return request({
     url: "/category/list",
     method: "get",
+  });
+}
+
+/**
+ * 获取商品分类树形结构，用于首页展示
+ * @param {Boolean} includeDisabled 是否包含禁用的分类，默认 false
+ */
+export function getCategoryTreeForHome(includeDisabled = false) {
+  return request({
+    url: "/category/tree",
+    method: "get",
+    params: { includeDisabled },
   });
 }
 

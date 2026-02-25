@@ -192,7 +192,7 @@
 </template>
 
 <script>
-import { getCategoryTree } from "@/api/category";
+import { getCategoryTreeForHome } from "@/api/category";
 
 export default {
   name: "Home",
@@ -248,7 +248,7 @@ export default {
     async loadCategories() {
       this.categoryLoading = true;
       try {
-        const data = await getCategoryTree(false); // 只获取启用的分类
+        const data = await getCategoryTreeForHome(false); // 只获取启用的分类（公开接口，无需管理员权限）
         this.categoryTree = data || [];
         // 提取一级分类
         this.level1Categories = this.categoryTree.filter(
