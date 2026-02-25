@@ -260,8 +260,14 @@ export default {
         deposit: "/profile/deposit",
         message: "/profile/message",
       };
-      if (routeMap[tab.name]) {
-        this.$router.push(routeMap[tab.name]);
+      const targetPath = routeMap[tab.name];
+      if (targetPath && this.$route.path !== targetPath) {
+        this.$router.push(targetPath).catch((err) => {
+          // 忽略重复导航错误（如已在同一路由时再次点击）
+          if (err.name !== "NavigationDuplicated") {
+            return Promise.reject(err);
+          }
+        });
       }
     },
     // 加载用户信息
