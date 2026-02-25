@@ -173,7 +173,6 @@ export default {
         this.goodsList = result.list || result.records || [];
         this.pagination.total = result.total || 0;
       } catch (error) {
-        console.error("加载商品列表失败:", error);
         this.$message.error("加载失败，请重试");
       } finally {
         this.loading = false;

@@ -296,8 +296,6 @@ export default {
     async loadUserInfo() {
       try {
         const userInfo = await getCurrentUser();
-        console.log("获取到的用户信息:", userInfo); // 调试日志
-        
         if (userInfo) {
           // 回显表单数据
           this.profileForm.userName = userInfo.userName || "";
@@ -312,7 +310,6 @@ export default {
             // avatar 已经是相对路径（如 /upload/profile/202601/xxx.png）
             // 直接使用，前端代理会自动处理
             this.avatarUrl = userInfo.avatar;
-            console.log("头像路径:", this.avatarUrl); // 调试日志
           } else {
             this.avatarUrl = "";
           }
@@ -324,7 +321,6 @@ export default {
           }
         }
       } catch (error) {
-        console.error("加载用户信息失败:", error);
         this.$message.error("加载用户信息失败：" + (error.message || "未知错误"));
       }
     },
@@ -370,8 +366,6 @@ export default {
       const reader = new FileReader();
       reader.onload = (e) => {
         this.cropImageUrl = e.target.result;
-        console.log("图片读取成功，cropImageUrl已设置");
-        // 等待DOM更新后再初始化裁剪
         this.$nextTick(() => {
           const img = this.$refs.cropImage;
           if (img) {
@@ -381,7 +375,6 @@ export default {
             } else {
               // 等待图片加载完成
               img.onload = () => {
-                console.log("图片加载完成，开始初始化裁剪");
                 this.initCrop();
               };
               img.onerror = () => {
@@ -464,7 +457,7 @@ export default {
       try {
         ctx.drawImage(img, sx, sy, sw, sh, 0, 0, 200, 200);
       } catch (error) {
-        console.error("绘制预览失败:", error);
+        // 忽略
       }
     },
     // 开始拖拽
@@ -547,8 +540,6 @@ export default {
               formData
             );
 
-            console.log("上传响应:", response); // 调试日志
-
             // this.$http 的响应拦截器返回的是 res（包含 code, message, data）
             // 如果 code !== 200，拦截器会 reject，所以这里 response 一定是成功的
             if (response && response.data) {
@@ -579,17 +570,12 @@ export default {
                 userInfo.avatarFileId = fileId;
                 localStorage.setItem("userInfo", JSON.stringify(userInfo));
               } else {
-                console.error("响应数据格式错误:", response);
                 this.$message.error("头像上传失败：未获取到文件ID，响应数据：" + JSON.stringify(response));
               }
             } else {
-              console.error("上传失败，响应为空:", response);
               this.$message.error("头像上传失败：服务器返回数据格式错误");
             }
           } catch (error) {
-            console.error("上传裁剪后的头像失败:", error);
-            console.error("错误详情:", error.response || error);
-            
             // 详细错误信息
             let errorMsg = "未知错误";
             if (error.response) {
@@ -605,7 +591,6 @@ export default {
           }
         }, "image/png");
       } catch (error) {
-        console.error("裁剪头像失败:", error);
         this.$message.error("裁剪失败：" + (error.message || "未知错误"));
         this.avatarUploading = false;
       }
@@ -644,7 +629,6 @@ export default {
             Object.assign(userInfo, this.profileForm);
             localStorage.setItem("userInfo", JSON.stringify(userInfo));
           } catch (error) {
-            console.error("保存失败:", error);
             this.$message.error("保存失败：" + (error.message || "未知错误"));
           } finally {
             this.profileLoading = false;
@@ -677,7 +661,6 @@ export default {
               this.handleLogout();
             }, 1500);
           } catch (error) {
-            console.error("修改密码失败:", error);
             this.$message.error("修改密码失败：" + (error.message || "未知错误"));
           } finally {
             this.passwordLoading = false;
@@ -709,9 +692,7 @@ export default {
               // 跳转到登录页
               this.$router.push("/login");
             })
-            .catch((error) => {
-              console.error("登出失败:", error);
-              // 即使登出失败，也清除本地存储并跳转
+            .catch(() => {
               localStorage.clear();
               this.$router.push("/login");
             });

@@ -97,7 +97,6 @@ export default {
             })
             .catch((error) => {
               this.loading = false;
-              console.error("登录失败:", error);
             });
         }
       });

@@ -18,15 +18,12 @@ new Vue({
         // 加载菜单数据
         loadMenus() {
             const self = this;
-            console.log('开始加载菜单，角色类型：', this.roleType);
             // 请求所有菜单，不区分角色权限
             CommonUtils.ajax('/api/menu/tree?all=true', {
                 method: 'GET',
                 success: function(result) {
-                    console.log('菜单API返回结果：', result);
                     if (result.code === 200) {
                         self.menuTree = result.data || [];
-                        console.log('菜单树数据：', self.menuTree);
                         if (self.menuTree.length === 0) {
                             self.$message.warning('当前角色没有可用菜单，请检查数据库权限配置');
                             return;
@@ -43,11 +40,9 @@ new Vue({
                         }
                     } else {
                         self.$message.error(result.message || '获取菜单失败');
-                        console.error('获取菜单失败：', result);
                     }
                 },
                 error: function(err) {
-                    console.error('菜单API请求失败：', err);
                     self.$message.error('获取菜单失败：' + (err.message || '网络错误'));
                     // 如果API失败，显示提示信息
                     self.$message.warning('无法连接到服务器，请检查后端服务是否启动');

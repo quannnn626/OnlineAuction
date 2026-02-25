@@ -84,7 +84,6 @@ public class MenuApiController {
             
             return Result.success("获取成功", menuTree);
         } catch (Exception e) {
-            e.printStackTrace();
             return Result.error("获取失败：" + e.getMessage());
         }
     }

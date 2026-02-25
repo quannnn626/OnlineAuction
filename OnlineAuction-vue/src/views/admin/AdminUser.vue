@@ -448,7 +448,6 @@ export default {
           this.pagination.total = 0;
         }
       } catch (error) {
-        console.error("加载用户列表失败:", error);
         this.$message.error("加载失败");
       } finally {
         this.loading = false;
@@ -526,7 +525,6 @@ export default {
           this.dialogVisible = true;
         }
       } catch (error) {
-        console.error("获取用户详情失败:", error);
         this.$message.error("获取用户详情失败");
       }
     },
@@ -549,7 +547,6 @@ export default {
         this.loadData();
       } catch (error) {
         if (error !== "cancel") {
-          console.error(`${action}用户失败:`, error);
           this.$message.error(`${action}失败`);
         }
       }
@@ -583,7 +580,6 @@ export default {
         this.auditDialogVisible = false;
         this.loadData();
       } catch (error) {
-        console.error("审核失败:", error);
         this.$message.error("审核失败");
       } finally {
         this.auditLoading = false;
@@ -602,7 +598,6 @@ export default {
         this.loadData();
       } catch (error) {
         if (error !== "cancel") {
-          console.error("删除用户失败:", error);
           this.$message.error("删除失败");
         }
       }
@@ -643,7 +638,6 @@ export default {
           this.dialogVisible = false;
           this.loadData();
         } catch (error) {
-          console.error("提交失败:", error);
           const errorMessage = error.response?.data?.message || error.message || "提交失败";
           this.$message.error(errorMessage);
         } finally {

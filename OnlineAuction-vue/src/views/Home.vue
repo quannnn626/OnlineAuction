@@ -255,7 +255,6 @@ export default {
           (cat) => cat.level === 1
         );
       } catch (error) {
-        console.error("加载商品分类失败:", error);
         this.categoryTree = [];
         this.level1Categories = [];
       } finally {

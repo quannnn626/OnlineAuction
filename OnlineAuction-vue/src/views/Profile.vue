@@ -291,7 +291,6 @@ export default {
           }
         }
       } catch (error) {
-        console.error("加载用户信息失败:", error);
       }
     },
     // 头像上传前验证
@@ -356,7 +355,6 @@ export default {
             userInfo.avatarFileId = fileId;
             localStorage.setItem("userInfo", JSON.stringify(userInfo));
           } catch (error) {
-            console.error("更新头像失败:", error);
             this.$message.error("头像更新失败：" + (error.message || "未知错误"));
             // 上传失败，恢复原来的头像
             if (this.avatarFileId) {
@@ -373,7 +371,6 @@ export default {
     // 头像上传失败
     handleAvatarError(error, file) {
       this.avatarUploading = false; // 重置上传状态
-      console.error("头像上传失败:", error);
       this.$message.error("头像上传失败，请重试");
     },
     // 保存个人信息
@@ -390,7 +387,6 @@ export default {
             Object.assign(userInfo, this.profileForm);
             localStorage.setItem("userInfo", JSON.stringify(userInfo));
           } catch (error) {
-            console.error("保存失败:", error);
             this.$message.error("保存失败：" + (error.message || "未知错误"));
           } finally {
             this.profileLoading = false;
@@ -423,7 +419,6 @@ export default {
               this.$router.push("/login");
             }, 1500);
           } catch (error) {
-            console.error("修改密码失败:", error);
             this.$message.error("修改密码失败：" + (error.message || "未知错误"));
           } finally {
             this.passwordLoading = false;

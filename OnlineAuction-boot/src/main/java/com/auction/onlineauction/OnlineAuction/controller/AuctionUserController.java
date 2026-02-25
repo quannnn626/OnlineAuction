@@ -81,42 +81,16 @@ public class AuctionUserController {
             // 先尝试获取现有Session，如果不存在则创建新Session（用于调试）
             HttpSession session = request.getSession(false);
             if (session == null) {
-                System.out.println("DEBUG: Session is null, trying to create new session");
                 session = request.getSession(true);
-                System.out.println("DEBUG: Created new session: " + session.getId());
             }
             
-            // 检查Session中是否有userId
             Long currentUserId = (Long) session.getAttribute("userId");
             if (currentUserId == null) {
-                System.out.println("DEBUG: userId is null in session");
-                System.out.println("DEBUG: Session ID: " + session.getId());
-                System.out.println("DEBUG: Request cookies: " + java.util.Arrays.toString(request.getCookies()));
-                
-                // 尝试从Cookie中获取Session ID
-                javax.servlet.http.Cookie[] cookies = request.getCookies();
-                if (cookies != null) {
-                    for (javax.servlet.http.Cookie cookie : cookies) {
-                        System.out.println("DEBUG: Cookie name: " + cookie.getName() + ", value: " + cookie.getValue());
-                    }
-                }
-                
-                // 列出所有Session属性
-                java.util.Enumeration<String> attrNames = session.getAttributeNames();
-                java.util.List<String> attrs = new java.util.ArrayList<>();
-                while (attrNames.hasMoreElements()) {
-                    attrs.add(attrNames.nextElement());
-                }
-                System.out.println("DEBUG: Session attributes: " + attrs);
-                
                 return Result.error(401, "未登录，无法创建用户，请重新登录");
             }
-            
-            System.out.println("DEBUG: Current user ID: " + currentUserId);
             AuctionUser createdUser = userService.createUser(user, currentUserId);
             return Result.success("创建成功", createdUser);
         } catch (Exception e) {
-            e.printStackTrace();
             return Result.error("创建失败：" + e.getMessage());
         }
     }

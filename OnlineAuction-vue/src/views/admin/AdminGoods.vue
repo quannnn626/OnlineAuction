@@ -527,7 +527,6 @@ export default {
         this.tableData = result.list || [];
         this.pagination.total = result.total || 0;
       } catch (error) {
-        console.error("加载商品列表失败:", error);
         this.$message.error("加载失败");
       } finally {
         this.loading = false;
@@ -541,7 +540,6 @@ export default {
         // 构建分类映射表，方便快速查找分类名称
         this.buildCategoryMap(this.categoryTreeData);
       } catch (error) {
-        console.error("加载分类树失败:", error);
         this.$message.error("加载分类列表失败");
       }
     },
@@ -708,7 +706,6 @@ export default {
         this.$message.success(status === 1 ? "审核通过" : "审核驳回");
         this.loadData();
       } catch (error) {
-        console.error("审核失败:", error);
         this.$message.error("审核失败");
       }
     },
@@ -741,7 +738,6 @@ export default {
         this.loadData();
       } catch (error) {
         if (error !== "cancel") {
-          console.error("删除商品失败:", error);
           this.$message.error("删除失败");
         }
       }
@@ -778,7 +774,6 @@ export default {
           this.dialogVisible = false;
           this.loadData();
         } catch (error) {
-          console.error("提交失败:", error);
           this.$message.error("提交失败");
         } finally {
           this.submitLoading = false;

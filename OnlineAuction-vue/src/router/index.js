@@ -191,13 +191,6 @@ router.beforeEach((to, from, next) => {
   
   // 留言板页面权限检查（仅买方和卖方可以访问）
   if (to.path === "/message-board") {
-    console.log("访问留言板，检查用户权限:", {
-      isBuyer: user.isBuyer,
-      isSeller: user.isSeller,
-      userRole: user.userRole,
-      user: user
-    });
-    
     // 检查用户是否有买方或卖方角色
     // 优先使用 isBuyer 和 isSeller 属性
     let hasPermission = false;
@@ -211,12 +204,9 @@ router.beforeEach((to, from, next) => {
     }
     
     if (!hasPermission) {
-      // 没有权限，跳转到首页
-      console.log("用户无权限访问留言板，跳转到首页");
       next("/home");
       return;
     }
-    console.log("允许访问留言板");
   }
   
   next();

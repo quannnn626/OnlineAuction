@@ -26,8 +26,7 @@ public class GoodsStatusScheduler {
         try {
             goodsService.autoOfflineExpiredGoods();
         } catch (Exception e) {
-            System.err.println("自动下架商品任务执行失败：" + e.getMessage());
-            e.printStackTrace();
+            // 任务执行失败，忽略
         }
     }
 }

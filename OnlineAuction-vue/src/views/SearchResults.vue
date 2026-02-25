@@ -92,7 +92,6 @@ export default {
         const result = await searchGoods(params);
         this.goodsList = result.records || result || [];
       } catch (error) {
-        console.error("搜索商品失败:", error);
         this.$message.error("搜索失败，请重试");
       } finally {
         this.loading = false;

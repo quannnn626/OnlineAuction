@@ -235,28 +235,18 @@ export default {
       try {
         // request.js 的响应拦截器已经返回了 res.data，所以这里 result 就是树形数据数组
         const result = await getCategoryTree(true); // 获取所有分类（包括禁用的）
-        console.log("API返回结果:", result);
-        console.log("result类型:", typeof result);
-        console.log("result是否为数组:", Array.isArray(result));
-        
         if (result && Array.isArray(result)) {
-          console.log("设置treeData，数据长度:", result.length);
-          console.log("treeData内容:", JSON.stringify(result, null, 2));
           this.treeData = result;
           // 同时加载用于级联选择器的数据（包含所有分类，不限制状态）
           await this.loadCategoryTreeOptions();
         } else {
-          console.warn("返回数据为空或格式不正确，result:", result);
           this.treeData = [];
         }
       } catch (error) {
-        console.error("加载数据失败:", error);
         this.$message.error("加载数据失败");
         this.treeData = [];
       } finally {
         this.loading = false;
-        console.log("最终treeData:", this.treeData);
-        console.log("treeData长度:", this.treeData?.length);
       }
     },
     // 加载用于级联选择器的分类树（包含所有分类，用于选择父分类）
@@ -270,7 +260,7 @@ export default {
           this.categoryTreeOptions = this.filterTreeForCascader(result);
         }
       } catch (error) {
-        console.error("加载分类树失败:", error);
+        // 忽略
       }
     },
     // 过滤树形数据，移除三级分类（因为三级分类不能再有子分类）
@@ -404,7 +394,6 @@ export default {
             this.$message.success("删除成功");
             this.loadData();
           } catch (error) {
-            console.error("删除失败:", error);
             this.$message.error(error.response?.data?.message || "删除失败");
           }
         })
@@ -437,7 +426,6 @@ export default {
           this.dialogVisible = false;
           this.loadData();
         } catch (error) {
-          console.error("操作失败:", error);
           this.$message.error(error.response?.data?.message || "操作失败");
         } finally {
           this.submitLoading = false;

@@ -145,8 +145,7 @@ public class AuctionFileServiceImpl extends ServiceImpl<AuctionFileMapper, Aucti
         if (physicalFile.exists()) {
             boolean deleted = physicalFile.delete();
             if (!deleted) {
-                // 如果物理文件删除失败，记录日志但不阻止逻辑删除
-                System.err.println("物理文件删除失败: " + filePath);
+                // 物理文件删除失败，不阻止逻辑删除
             }
         }
 

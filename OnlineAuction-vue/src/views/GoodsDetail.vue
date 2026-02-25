@@ -218,7 +218,6 @@ export default {
         // 初始化出价金额
         this.bidForm.bidPrice = this.minBidPrice;
       } catch (error) {
-        console.error("加载商品详情失败:", error);
         this.$message.error("加载商品详情失败");
       } finally {
         this.loading = false;
@@ -233,7 +232,6 @@ export default {
         const data = await getRecordsByGoodsId(goodsId, 20);
         this.bidRecords = data || [];
       } catch (error) {
-        console.error("加载竞拍记录失败:", error);
       } finally {
         this.recordsLoading = false;
       }
@@ -256,7 +254,6 @@ export default {
           // 更新出价金额为新的最低出价
           this.bidForm.bidPrice = this.minBidPrice;
         } catch (error) {
-          console.error("出价失败:", error);
           this.$message.error(error.message || "出价失败，请重试");
         } finally {
           this.bidding = false;
@@ -276,7 +273,6 @@ export default {
         // 加载分类名称
         this.loadCategoryNames();
       } catch (error) {
-        console.error("加载分类列表失败:", error);
       }
     },
     // 根据categoryId加载分类名称

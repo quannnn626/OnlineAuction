@@ -28,10 +28,9 @@ public class DataSourceConfig implements CommandLineRunner {
         // 应用启动时测试数据库连接
         try (Connection connection = dataSource.getConnection()) {
             if (connection != null && !connection.isClosed()) {
-                System.out.println("数据库连接初始化成功！");
+                // 连接成功
             }
         } catch (SQLException e) {
-            System.err.println("数据库连接初始化失败：" + e.getMessage());
             throw new RuntimeException("数据库连接失败，请检查数据库配置和MySQL服务是否启动", e);
         }
     }

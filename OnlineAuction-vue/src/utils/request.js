@@ -17,7 +17,6 @@ service.interceptors.request.use(
     return config;
   },
   (error) => {
-    console.error("请求错误:", error);
     return Promise.reject(error);
   }
 );
@@ -26,7 +25,6 @@ service.interceptors.request.use(
 service.interceptors.response.use(
   (response) => {
     const res = response.data;
-    console.log("API响应:", res); // 调试日志
     // 如果返回的状态码不是 200，则视为错误
     if (res.code !== 200) {
       const errorMessage = res.message || "请求失败";
@@ -55,7 +53,6 @@ service.interceptors.response.use(
     return res.data;
   },
   (error) => {
-    console.error("响应错误:", error);
     // 会话失效（如后端重启导致 Session 丢失）：清除本地存储并跳转登录页
     const msg = error.response?.data?.message || error.message || "";
     if (msg.indexOf("未登录") !== -1) {

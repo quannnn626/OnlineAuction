@@ -148,7 +148,6 @@ export default {
         this.goodsList = result.records || []
         this.pagination.total = result.total || 0
       } catch (error) {
-        console.error('加载我的商品失败:', error)
         this.$message.error('加载失败，请重试')
       } finally {
         this.loading = false
@@ -177,7 +176,6 @@ export default {
         this.loadData()
       } catch (error) {
         if (error !== 'cancel') {
-          console.error('下架商品失败:', error)
           this.$message.error('下架失败，请重试')
         }
       }
@@ -246,7 +244,6 @@ export default {
         this.loadData()
       } catch (error) {
         if (error !== 'cancel') {
-          console.error('重新申请上架失败:', error)
           this.$message.error('重新申请上架失败，请重试')
         }
       }

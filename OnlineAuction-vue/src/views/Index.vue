@@ -101,11 +101,7 @@ export default {
     async loadMenus() {
       this.loading = true;
       try {
-        console.log("开始加载菜单...");
-        // 不传all参数，让后端根据当前登录用户的角色自动过滤菜单
         const data = await getMenuTree(false);
-        console.log("菜单数据:", data);
-        
         // 前端双重保护：如果是超级管理员，过滤掉留言板菜单
         let menuTree = data || [];
         const userInfo = localStorage.getItem("userInfo");
@@ -117,20 +113,15 @@ export default {
               menuTree = this.filterMenu(menuTree, (menu) => {
                 return menu.id !== 8 && menu.menuPath !== "/message-board";
               });
-              console.log("超级管理员：已过滤留言板菜单");
             }
           } catch (e) {
-            console.error("解析用户信息失败:", e);
+            // 忽略解析错误
           }
         }
         
         this.menuTree = menuTree;
         this.buildMenuMap(this.menuTree);
-        console.log("菜单加载成功，菜单数量:", this.menuTree.length);
       } catch (error) {
-        console.error("加载菜单失败:", error);
-        console.error("错误详情:", error.response || error.message);
-        // 即使加载失败，也显示空菜单，让页面可以正常显示
         this.menuTree = [];
         this.$message.warning("菜单加载失败，请检查后端服务是否正常运行");
       } finally {
@@ -157,13 +148,11 @@ export default {
         if (menu.menuPath) {
           const path = this.getMenuPath(menu);
           this.menuMap[path] = menu;
-          console.log("菜单映射:", path, "->", menu.menuName);
         }
         if (menu.children && menu.children.length > 0) {
           this.buildMenuMap(menu.children);
         }
       });
-      console.log("菜单映射表:", Object.keys(this.menuMap));
       // 构建完成后，更新当前激活菜单
       this.setActiveMenu();
     },
@@ -178,26 +167,18 @@ export default {
         : "/" + menu.menuPath;
     },
     setActiveMenu() {
-      // 设置当前激活的菜单项
       const currentPath = this.$route.path;
-      console.log("设置激活菜单，当前路径:", currentPath);
-      // 先尝试精确匹配
       if (this.menuMap[currentPath]) {
         this.activeMenu = currentPath;
-        console.log("精确匹配成功:", currentPath);
         return;
       }
-      // 如果精确匹配失败，尝试匹配父路径（用于嵌套路由）
       for (const path in this.menuMap) {
         if (currentPath.startsWith(path) && path !== "/") {
           this.activeMenu = path;
-          console.log("父路径匹配成功:", path);
           return;
         }
       }
-      // 如果都匹配不上，使用当前路由路径
       this.activeMenu = currentPath;
-      console.log("使用当前路径作为激活菜单:", currentPath);
     },
     handleMenuSelect(path) {
       this.activeMenu = path;
@@ -240,7 +221,7 @@ export default {
           const user = JSON.parse(userInfo);
           this.userName = user.nickName || user.userName || "用户";
         } catch (e) {
-          console.error("解析用户信息失败:", e);
+          // 忽略
         }
       }
     },
@@ -274,9 +255,7 @@ export default {
               // 跳转到登录页
               this.$router.push("/login");
             })
-            .catch((error) => {
-              console.error("登出失败:", error);
-              // 即使登出失败，也清除本地存储并跳转
+            .catch(() => {
               localStorage.clear();
               this.$router.push("/login");
             });
