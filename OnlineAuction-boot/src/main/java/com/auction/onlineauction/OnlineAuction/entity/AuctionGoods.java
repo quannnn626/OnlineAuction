@@ -125,6 +125,13 @@ public class AuctionGoods implements Serializable {
     private Integer goodsStatus;
 
     /**
+     * 上架状态：0=下架 1=上架
+     * 与审核状态、拍卖进度解耦，运营只能修改该状态而不能物理删除
+     */
+    @TableField("shelf_status")
+    private Integer shelfStatus;
+
+    /**
      * 创建时间
      */
     @TableField("create_time")

@@ -1,6 +1,7 @@
 package com.auction.onlineauction.OnlineAuction.controller;
 
 import com.auction.onlineauction.OnlineAuction.common.Result;
+import com.auction.onlineauction.OnlineAuction.common.RoleCheckHelper;
 import com.auction.onlineauction.OnlineAuction.entity.AuctionGoods;
 import com.auction.onlineauction.OnlineAuction.service.IAuctionGoodsService;
 import com.github.pagehelper.PageInfo;
@@ -28,7 +29,7 @@ public class AuctionGoodsController {
     private IAuctionGoodsService goodsService;
 
     /**
-     * 分页查询商品列表
+     * 分页查询商品列表（后台，需管理员/运营/拍卖师/客服/财务角色）
      */
     @GetMapping("/page")
     public Result<PageInfo<AuctionGoods>> getGoodsPage(
@@ -37,8 +38,12 @@ public class AuctionGoodsController {
             @RequestParam(required = false) String goodsName,
             @RequestParam(required = false) String categoryId,
             @RequestParam(required = false) Integer auditStatus,
-            @RequestParam(required = false) Integer goodsStatus) {
+            @RequestParam(required = false) Integer goodsStatus,
+            HttpServletRequest request) {
         try {
+            if (!RoleCheckHelper.canAccessAdmin(request.getSession(false))) {
+                return Result.error("无权限访问");
+            }
             PageInfo<AuctionGoods> pageInfo = goodsService.getGoodsPage(current, size, goodsName, categoryId, auditStatus, goodsStatus);
             return Result.success("查询成功", pageInfo);
         } catch (Exception e) {
@@ -47,11 +52,14 @@ public class AuctionGoodsController {
     }
 
     /**
-     * 获取所有商品列表（不分页，用于下拉选择等）
+     * 获取所有商品列表（不分页，后台使用，需管理员/运营/拍卖师/客服/财务角色）
      */
     @GetMapping("/list")
-    public Result<List<AuctionGoods>> getGoodsList() {
+    public Result<List<AuctionGoods>> getGoodsList(HttpServletRequest request) {
         try {
+            if (!RoleCheckHelper.canAccessAdmin(request.getSession(false))) {
+                return Result.error("无权限访问");
+            }
             List<AuctionGoods> list = goodsService.getGoodsList();
             return Result.success("查询成功", list);
         } catch (Exception e) {
@@ -60,11 +68,14 @@ public class AuctionGoodsController {
     }
 
     /**
-     * 根据ID获取商品详情
+     * 根据ID获取商品详情（后台）
      */
     @GetMapping("/{id}")
-    public Result<AuctionGoods> getGoodsById(@PathVariable Long id) {
+    public Result<AuctionGoods> getGoodsById(@PathVariable Long id, HttpServletRequest request) {
         try {
+            if (!RoleCheckHelper.canAccessAdmin(request.getSession(false))) {
+                return Result.error("无权限访问");
+            }
             AuctionGoods goods = goodsService.getGoodsById(id);
             return Result.success("查询成功", goods);
         } catch (Exception e) {
@@ -86,11 +97,15 @@ public class AuctionGoodsController {
     }
 
     /**
-     * 更新商品
+     * 更新商品（需管理员/运营/拍卖师角色，或本人为卖家）
      */
     @PutMapping("/{id}")
-    public Result<AuctionGoods> updateGoods(@PathVariable Long id, @RequestBody Map<String, Object> requestData) {
+    public Result<AuctionGoods> updateGoods(@PathVariable Long id, @RequestBody Map<String, Object> requestData,
+                                           HttpServletRequest request) {
         try {
+            if (!RoleCheckHelper.hasAnyRole(request.getSession(false), 3, 4, 5, 8)) {
+                return Result.error("无权限编辑商品");
+            }
             AuctionGoods goods = goodsService.updateGoods(id, requestData);
             return Result.success("更新成功", goods);
         } catch (Exception e) {
@@ -99,11 +114,31 @@ public class AuctionGoodsController {
     }
 
     /**
-     * 删除商品（逻辑删除）
+     * 上架/下架商品（仅运营、管理员、超级管理员可操作）
+     */
+    @PutMapping("/shelf/{id}")
+    public Result<Void> updateShelfStatus(@PathVariable Long id, @RequestParam Integer shelfStatus,
+                                         HttpServletRequest request) {
+        try {
+            if (!RoleCheckHelper.canUpdateShelf(request.getSession(false))) {
+                return Result.error("无权限修改商品上架状态");
+            }
+            goodsService.updateShelfStatus(id, shelfStatus);
+            return Result.success(shelfStatus == 1 ? "已上架" : "已下架", null);
+        } catch (Exception e) {
+            return Result.error("操作失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 删除商品（逻辑删除，仅管理员、超级管理员可操作）
      */
     @DeleteMapping("/{id}")
-    public Result<Void> deleteGoods(@PathVariable Long id) {
+    public Result<Void> deleteGoods(@PathVariable Long id, HttpServletRequest request) {
         try {
+            if (!RoleCheckHelper.canDelete(request.getSession(false))) {
+                return Result.error("无权限删除商品");
+            }
             goodsService.deleteGoods(id);
             return Result.success("删除成功", null);
         } catch (Exception e) {
@@ -112,11 +147,14 @@ public class AuctionGoodsController {
     }
 
     /**
-     * 批量删除商品
+     * 批量删除商品（仅管理员、超级管理员可操作）
      */
     @DeleteMapping("/batch")
-    public Result<Void> batchDeleteGoods(@RequestBody List<Long> ids) {
+    public Result<Void> batchDeleteGoods(@RequestBody List<Long> ids, HttpServletRequest request) {
         try {
+            if (!RoleCheckHelper.canDelete(request.getSession(false))) {
+                return Result.error("无权限批量删除商品");
+            }
             goodsService.batchDeleteGoods(ids);
             return Result.success("批量删除成功", null);
         } catch (Exception e) {
@@ -125,11 +163,16 @@ public class AuctionGoodsController {
     }
 
     /**
-     * 审核商品
+     * 审核商品（管理员、超级管理员、拍卖师、运营可操作）
      */
     @PutMapping("/audit/{id}")
-    public Result<Void> auditGoods(@PathVariable Long id, @RequestParam Integer auditStatus, @RequestParam(required = false) String auditRemark) {
+    public Result<Void> auditGoods(@PathVariable Long id, @RequestParam Integer auditStatus,
+                                  @RequestParam(required = false) String auditRemark,
+                                  HttpServletRequest request) {
         try {
+            if (!RoleCheckHelper.canAuditGoods(request.getSession(false))) {
+                return Result.error("无权限审核商品");
+            }
             goodsService.auditGoods(id, auditStatus, auditRemark);
             return Result.success("审核成功", null);
         } catch (Exception e) {

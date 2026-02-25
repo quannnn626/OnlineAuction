@@ -85,9 +85,24 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
         if (goods == null || goods.getDelFlag() == 1) {
             throw new RuntimeException("商品不存在");
         }
-        // 自动更新商品状态
         updateGoodsStatusByTime(goods);
-        // 加载文件信息
+        loadFilesForGoods(goods);
+        return goods;
+    }
+
+    @Override
+    public AuctionGoods getGoodsByIdForPublic(Long id) {
+        AuctionGoods goods = getById(id);
+        if (goods == null || goods.getDelFlag() == 1) {
+            throw new RuntimeException("商品不存在");
+        }
+        if (goods.getAuditStatus() == null || goods.getAuditStatus() != 1) {
+            throw new RuntimeException("商品未通过审核");
+        }
+        if (goods.getShelfStatus() == null || goods.getShelfStatus() != 1) {
+            throw new RuntimeException("商品已下架");
+        }
+        updateGoodsStatusByTime(goods);
         loadFilesForGoods(goods);
         return goods;
     }
@@ -108,6 +123,9 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
         }
         if (goods.getGoodsStatus() == null) {
             goods.setGoodsStatus(0); // 未开始
+        }
+        if (goods.getShelfStatus() == null) {
+            goods.setShelfStatus(0); // 默认下架
         }
         goods.setSellerId(1L); // TODO: 从当前登录用户获取
         goods.setCreateTime(LocalDateTime.now());
@@ -153,6 +171,9 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
         if (goods.getGoodsStatus() == null) {
             goods.setGoodsStatus(existing.getGoodsStatus());
         }
+        if (goods.getShelfStatus() == null) {
+            goods.setShelfStatus(existing.getShelfStatus());
+        }
         if (goods.getSellerId() == null) {
             goods.setSellerId(existing.getSellerId());
         }
@@ -195,6 +216,23 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
                 goods.setUpdateTime(LocalDateTime.now());
                 updateById(goods);
             }
+        }
+    }
+
+    @Override
+    public void updateShelfStatus(Long id, Integer shelfStatus) {
+        if (shelfStatus == null || (shelfStatus != 0 && shelfStatus != 1)) {
+            throw new RuntimeException("上架状态值无效（0=下架，1=上架）");
+        }
+        AuctionGoods goods = getById(id);
+        if (goods == null || goods.getDelFlag() == 1) {
+            throw new RuntimeException("商品不存在");
+        }
+        goods.setShelfStatus(shelfStatus);
+        goods.setUpdateTime(LocalDateTime.now());
+        boolean success = updateById(goods);
+        if (!success) {
+            throw new RuntimeException("更新上架状态失败");
         }
     }
 
@@ -273,6 +311,9 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
         }
         if (requestData.get("fileIds") != null) {
             goods.setFileIds(requestData.get("fileIds").toString());
+        }
+        if (requestData.get("shelfStatus") != null) {
+            goods.setShelfStatus(Integer.parseInt(requestData.get("shelfStatus").toString()));
         }
         
         return goods;
@@ -412,6 +453,7 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
         QueryWrapper<AuctionGoods> wrapper = new QueryWrapper<>();
         wrapper.eq("del_flag", 0);
         wrapper.eq("audit_status", 1); // 只显示审核通过的商品
+        wrapper.eq("shelf_status", 1); // 只显示已上架的商品
         
         // 只显示未开始和进行中的商品（0=未开始 1=竞拍中）
         wrapper.in("goods_status", 0, 1);
@@ -446,6 +488,7 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
         QueryWrapper<AuctionGoods> wrapper = new QueryWrapper<>();
         wrapper.eq("del_flag", 0);
         wrapper.eq("audit_status", 1); // 只显示审核通过的商品
+        wrapper.eq("shelf_status", 1); // 只显示已上架的商品
         
         // 只显示未开始和进行中的商品（0=未开始 1=竞拍中）
         wrapper.in("goods_status", 0, 1);

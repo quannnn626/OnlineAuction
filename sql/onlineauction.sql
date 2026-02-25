@@ -11,7 +11,7 @@
  Target Server Version : 80019
  File Encoding         : 65001
 
- Date: 09/02/2026 00:10:28
+ Date: 25/02/2026 13:15:38
 */
 
 SET NAMES utf8mb4;
@@ -57,7 +57,7 @@ CREATE TABLE `auction_category`  (
   INDEX `idx_parent_id`(`parent_id` ASC) USING BTREE,
   INDEX `idx_level`(`level` ASC) USING BTREE,
   INDEX `idx_category_status`(`category_status` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 101316 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '拍卖商品类目表（支持多级分类）' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 101317 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '拍卖商品类目表（支持多级分类）' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of auction_category
@@ -400,7 +400,7 @@ CREATE TABLE `auction_file`  (
   `del_flag` tinyint NOT NULL DEFAULT 0 COMMENT '逻辑删除：0=未删除 1=已删除',
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `idx_file_type`(`file_type` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 28 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '通用文件表（可存储商品图片、用户头像等各类文件）' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 31 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '通用文件表（可存储商品图片、用户头像等各类文件）' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of auction_file
@@ -434,6 +434,7 @@ INSERT INTO `auction_file` VALUES (26, 'avatar.png', '/upload/profile/202601/5ee
 INSERT INTO `auction_file` VALUES (27, 'avatar.png', '/upload/profile/202601/cb9c560c229a4e6698348d669549b071.png', 'image', '2026-01-28 15:55:22', '2026-01-28 15:55:22', 0);
 INSERT INTO `auction_file` VALUES (28, 'avatar.png', '/upload/profile/202601/e6faa7c436164d3ab0701c4f79e385fc.png', 'image', '2026-01-28 15:57:08', '2026-01-28 15:57:07', 0);
 INSERT INTO `auction_file` VALUES (29, 'avatar.png', '/upload/profile/202602/cbb7bda35553405db352d52322f92be4.png', 'image', '2026-02-08 15:24:45', '2026-02-08 15:24:45', 0);
+INSERT INTO `auction_file` VALUES (30, 'avatar.png', '/upload/profile/202602/c70fc319f64544419c52c340e35dce74.png', 'image', '2026-02-24 10:19:30', '2026-02-24 10:19:29', 0);
 
 -- ----------------------------
 -- Table structure for auction_goods
@@ -455,6 +456,7 @@ CREATE TABLE `auction_goods`  (
   `audit_status` tinyint NOT NULL DEFAULT 0 COMMENT '审核状态：0=待审核 1=审核通过 2=审核驳回 3=已下架',
   `audit_remark` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '审核驳回原因',
   `goods_status` tinyint NOT NULL DEFAULT 0 COMMENT '商品状态：0=未开始 1=竞拍中 2=已成交 3=已流拍',
+  `shelf_status` tinyint(1) NOT NULL DEFAULT 0 COMMENT '上架状态：0=下架 1=上架',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   `del_flag` tinyint NOT NULL DEFAULT 0 COMMENT '逻辑删除：0=未删除 1=已删除',
@@ -469,25 +471,25 @@ CREATE TABLE `auction_goods`  (
   INDEX `idx_view_count`(`view_count` DESC) USING BTREE,
   INDEX `idx_collect_count`(`collect_count` DESC) USING BTREE,
   INDEX `idx_bid_count`(`bid_count` DESC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 14 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '拍卖商品表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 15 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '拍卖商品表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of auction_goods
 -- ----------------------------
-INSERT INTO `auction_goods` VALUES (1, '青眼白龙', '1,2', 1, '青眼白龙', NULL, 200.00, NULL, 20.00, 1000.00, '2025-12-31 16:00:00', '2026-01-30 16:00:00', 3, '', 3, '2026-01-07 16:42:23', '2026-02-08 23:49:52', 0, 0, 0, 0);
-INSERT INTO `auction_goods` VALUES (2, '夜明珠', '1,2', 1, '古玩类', NULL, 200.00, NULL, 20.00, 600.00, '2025-12-31 16:00:00', '2026-01-30 16:00:00', 3, '', 3, '2026-01-07 17:03:21', '2026-02-08 23:49:52', 0, 0, 0, 0);
-INSERT INTO `auction_goods` VALUES (3, '测试图片', '1,2', 1, '111', NULL, 100.00, NULL, 20.00, 500.00, '2025-12-31 16:00:00', '2026-01-30 16:00:00', 3, '', 3, '2026-01-07 17:07:06', '2026-02-08 23:49:52', 0, 0, 0, 0);
-INSERT INTO `auction_goods` VALUES (4, '测试视频', '2', 1, '视频', NULL, 200.00, NULL, 30.00, 500.00, '2025-12-31 16:00:00', '2026-01-30 16:00:00', 3, '', 3, '2026-01-07 17:08:26', '2026-02-08 23:49:52', 0, 0, 0, 0);
-INSERT INTO `auction_goods` VALUES (5, '测试文件', '1,2', 1, '文件', NULL, 200.00, NULL, 20.00, 1000.00, '2025-12-31 16:00:00', '2026-01-30 16:00:00', 3, '', 3, '2026-01-07 17:15:11', '2026-02-08 23:49:52', 0, 0, 0, 0);
-INSERT INTO `auction_goods` VALUES (6, '测试添加多个图片', '1,2', 1, '多个图片', NULL, 200.00, NULL, 50.00, 2000.00, '2025-12-31 16:00:00', '2026-01-30 16:00:00', 3, '', 3, '2026-01-07 17:18:05', '2026-02-08 23:49:52', 0, 0, 0, 0);
-INSERT INTO `auction_goods` VALUES (7, '测试图片', '1,2', 1, 'dcz', NULL, 5411.00, NULL, 85.00, 8745.00, '2025-12-31 16:00:00', '2026-01-30 16:00:00', 3, '', 3, '2026-01-07 17:23:19', '2026-02-08 23:49:52', 0, 0, 0, 0);
-INSERT INTO `auction_goods` VALUES (8, '测试文件上传', '1,2', 1, '图片', NULL, 0.00, NULL, 0.00, 0.00, '2025-12-31 16:00:00', '2026-01-30 16:00:00', 3, '', 3, '2026-01-07 17:38:43', '2026-02-08 23:49:52', 0, 0, 0, 0);
-INSERT INTO `auction_goods` VALUES (9, '测试视频', '2,1', 1, '123', NULL, 0.00, NULL, 0.00, 0.00, '2025-12-31 16:00:00', '2026-01-30 16:00:00', 3, '', 3, '2026-01-07 17:43:24', '2026-02-08 23:49:52', 0, 0, 0, 0);
-INSERT INTO `auction_goods` VALUES (10, '测试添加视频', '2,1', 1, '视频', NULL, 0.00, NULL, 0.00, 0.00, '2025-12-31 16:00:00', '2026-01-30 16:00:00', 3, '', 3, '2026-01-07 17:48:00', '2026-02-08 23:49:52', 0, 0, 0, 0);
-INSERT INTO `auction_goods` VALUES (11, '祝友志的苦茶', '1', 1, '商周的新鲜货', NULL, 10000.00, NULL, 500.00, 9000.00, '2026-01-05 16:00:00', '2026-01-27 16:00:00', 3, '', 3, '2026-01-07 17:51:22', '2026-02-08 23:49:52', 0, 0, 0, 0);
-INSERT INTO `auction_goods` VALUES (12, '测试添加多个分类', '11,111,112,113,114,115', 1, '分类', '9', 100000000.00, NULL, 200000.00, 104000000.00, '2025-12-31 16:00:00', '2026-01-21 01:50:27', 2, '测试驳回原因', 3, '2026-01-21 09:50:31', '2026-02-08 23:56:20', 0, 0, 0, 0);
-INSERT INTO `auction_goods` VALUES (13, '测试更新逻辑后的商品添加', '9,91,911,912,913,914,915,92,921,922,923,924,93,931,932,94,941,942,943,95,951,952', 1, '测试更新逻辑后的商品添加', '11', 2000.00, NULL, 100.00, 3000.00, '2025-12-31 16:00:00', '2026-01-30 16:00:00', 0, NULL, 3, '2026-01-28 14:47:20', '2026-02-08 23:56:20', 0, 0, 0, 0);
-INSERT INTO `auction_goods` VALUES (14, '第二次测试更新商品添加逻辑', '9,91,911,912,913,914,915,92,921,922,923,924,93,931,932,94,941,942,943,95,951,952', 1, '第二次测试更新商品添加逻辑', '12', 2000.00, 2000.00, 100.00, 3000.00, '2025-12-31 16:00:00', '2026-02-28 08:00:00', 1, '', 1, '2026-01-28 14:52:14', '2026-02-09 00:09:23', 0, 0, 0, 1);
+INSERT INTO `auction_goods` VALUES (1, '青眼白龙', '1,2', 1, '青眼白龙', NULL, 200.00, NULL, 20.00, 1000.00, '2025-12-31 16:00:00', '2026-01-30 16:00:00', 3, '', 3, 0, '2026-01-07 16:42:23', '2026-02-08 23:49:52', 0, 0, 0, 0);
+INSERT INTO `auction_goods` VALUES (2, '夜明珠', '1,2', 1, '古玩类', NULL, 200.00, NULL, 20.00, 600.00, '2025-12-31 16:00:00', '2026-01-30 16:00:00', 3, '', 3, 0, '2026-01-07 17:03:21', '2026-02-08 23:49:52', 0, 0, 0, 0);
+INSERT INTO `auction_goods` VALUES (3, '测试图片', '1,2', 1, '111', NULL, 100.00, NULL, 20.00, 500.00, '2025-12-31 16:00:00', '2026-01-30 16:00:00', 3, '', 3, 0, '2026-01-07 17:07:06', '2026-02-08 23:49:52', 0, 0, 0, 0);
+INSERT INTO `auction_goods` VALUES (4, '测试视频', '2', 1, '视频', NULL, 200.00, NULL, 30.00, 500.00, '2025-12-31 16:00:00', '2026-01-30 16:00:00', 3, '', 3, 0, '2026-01-07 17:08:26', '2026-02-08 23:49:52', 0, 0, 0, 0);
+INSERT INTO `auction_goods` VALUES (5, '测试文件', '1,2', 1, '文件', NULL, 200.00, NULL, 20.00, 1000.00, '2025-12-31 16:00:00', '2026-01-30 16:00:00', 3, '', 3, 0, '2026-01-07 17:15:11', '2026-02-08 23:49:52', 0, 0, 0, 0);
+INSERT INTO `auction_goods` VALUES (6, '测试添加多个图片', '1,2', 1, '多个图片', NULL, 200.00, NULL, 50.00, 2000.00, '2025-12-31 16:00:00', '2026-01-30 16:00:00', 3, '', 3, 0, '2026-01-07 17:18:05', '2026-02-08 23:49:52', 0, 0, 0, 0);
+INSERT INTO `auction_goods` VALUES (7, '测试图片', '1,2', 1, 'dcz', NULL, 5411.00, NULL, 85.00, 8745.00, '2025-12-31 16:00:00', '2026-01-30 16:00:00', 3, '', 3, 0, '2026-01-07 17:23:19', '2026-02-08 23:49:52', 0, 0, 0, 0);
+INSERT INTO `auction_goods` VALUES (8, '测试文件上传', '1,2', 1, '图片', NULL, 0.00, NULL, 0.00, 0.00, '2025-12-31 16:00:00', '2026-01-30 16:00:00', 3, '', 3, 0, '2026-01-07 17:38:43', '2026-02-08 23:49:52', 0, 0, 0, 0);
+INSERT INTO `auction_goods` VALUES (9, '测试视频', '2,1', 1, '123', NULL, 0.00, NULL, 0.00, 0.00, '2025-12-31 16:00:00', '2026-01-30 16:00:00', 3, '', 3, 0, '2026-01-07 17:43:24', '2026-02-08 23:49:52', 0, 0, 0, 0);
+INSERT INTO `auction_goods` VALUES (10, '测试添加视频', '2,1', 1, '视频', NULL, 0.00, NULL, 0.00, 0.00, '2025-12-31 16:00:00', '2026-01-30 16:00:00', 3, '', 3, 0, '2026-01-07 17:48:00', '2026-02-08 23:49:52', 0, 0, 0, 0);
+INSERT INTO `auction_goods` VALUES (11, '祝友志的苦茶', '1', 1, '商周的新鲜货', NULL, 10000.00, NULL, 500.00, 9000.00, '2026-01-05 16:00:00', '2026-01-27 16:00:00', 3, '', 3, 0, '2026-01-07 17:51:22', '2026-02-08 23:49:52', 0, 0, 0, 0);
+INSERT INTO `auction_goods` VALUES (12, '测试添加多个分类', '11,111,112,113,114,115', 1, '分类', '9', 100000000.00, NULL, 200000.00, 104000000.00, '2025-12-31 16:00:00', '2026-01-21 01:50:27', 2, '测试驳回原因', 3, 0, '2026-01-21 09:50:31', '2026-02-08 23:56:20', 0, 0, 0, 0);
+INSERT INTO `auction_goods` VALUES (13, '测试更新逻辑后的商品添加', '9,91,911,912,913,914,915,92,921,922,923,924,93,931,932,94,941,942,943,95,951,952', 1, '测试更新逻辑后的商品添加', '11', 2000.00, NULL, 100.00, 3000.00, '2025-12-31 16:00:00', '2026-01-30 16:00:00', 0, NULL, 3, 0, '2026-01-28 14:47:20', '2026-02-08 23:56:20', 0, 0, 0, 0);
+INSERT INTO `auction_goods` VALUES (14, '第二次测试更新商品添加逻辑', '9,91,911,912,913,914,915,92,921,922,923,924,93,931,932,94,941,942,943,95,951,952', 1, '第二次测试更新商品添加逻辑', '12', 2000.00, 2000.00, 100.00, 3000.00, '2025-12-31 16:00:00', '2026-02-28 08:00:00', 1, '', 1, 0, '2026-01-28 14:52:14', '2026-02-09 00:09:23', 0, 0, 0, 1);
 
 -- ----------------------------
 -- Table structure for auction_menu
@@ -511,7 +513,7 @@ CREATE TABLE `auction_menu`  (
   INDEX `idx_parent_id`(`parent_id` ASC) USING BTREE,
   INDEX `idx_menu_status`(`menu_status` ASC) USING BTREE,
   INDEX `idx_menu_sort`(`menu_sort` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 19 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '系统菜单表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 20 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '系统菜单表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of auction_menu
@@ -649,7 +651,7 @@ CREATE TABLE `auction_permission`  (
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `idx_permission_code`(`permission_code` ASC) USING BTREE,
   INDEX `idx_permission_status`(`permission_status` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 96 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '系统权限表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 97 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '系统权限表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of auction_permission
@@ -726,7 +728,7 @@ CREATE TABLE `auction_record`  (
   INDEX `idx_goods_id`(`goods_id` ASC) USING BTREE,
   INDEX `idx_buyer_id`(`buyer_id` ASC) USING BTREE,
   INDEX `idx_is_highest`(`is_highest` ASC) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '竞拍记录表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '竞拍记录表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of auction_record
@@ -739,14 +741,14 @@ INSERT INTO `auction_record` VALUES (1, 14, 3, 2000.00, 0, NULL, '2026-02-09 00:
 DROP TABLE IF EXISTS `auction_role_permission`;
 CREATE TABLE `auction_role_permission`  (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID，自增',
-  `role_type` tinyint NOT NULL COMMENT '角色类型：1=买方用户 2=卖方用户 3=管理员 4=超级管理员',
+  `role_type` tinyint NOT NULL COMMENT '角色类型：1=普通用户 2=（历史卖方，已合并至1） 3=管理员 4=超级管理员 5=拍卖师 6=客服 7=财务 8=运营',
   `permission_id` bigint NOT NULL COMMENT '权限ID（关联auction_permission.id）',
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `idx_role_permission`(`role_type` ASC, `permission_id` ASC) USING BTREE,
   INDEX `idx_role_type`(`role_type` ASC) USING BTREE,
   INDEX `idx_permission_id`(`permission_id` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 121 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '角色权限关联表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 124 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '角色权限关联表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of auction_role_permission
@@ -786,14 +788,6 @@ INSERT INTO `auction_role_permission` VALUES (32, 3, 22, '2026-01-21 16:14:50');
 INSERT INTO `auction_role_permission` VALUES (33, 3, 23, '2026-01-21 16:14:50');
 INSERT INTO `auction_role_permission` VALUES (34, 3, 24, '2026-01-21 16:14:50');
 INSERT INTO `auction_role_permission` VALUES (35, 3, 25, '2026-01-21 16:14:50');
-INSERT INTO `auction_role_permission` VALUES (36, 3, 30, '2026-01-21 16:14:50');
-INSERT INTO `auction_role_permission` VALUES (37, 3, 31, '2026-01-21 16:14:50');
-INSERT INTO `auction_role_permission` VALUES (38, 3, 32, '2026-01-21 16:14:50');
-INSERT INTO `auction_role_permission` VALUES (39, 3, 33, '2026-01-21 16:14:50');
-INSERT INTO `auction_role_permission` VALUES (40, 3, 40, '2026-01-21 16:14:50');
-INSERT INTO `auction_role_permission` VALUES (41, 3, 41, '2026-01-21 16:14:50');
-INSERT INTO `auction_role_permission` VALUES (42, 3, 42, '2026-01-21 16:14:50');
-INSERT INTO `auction_role_permission` VALUES (43, 3, 43, '2026-01-21 16:14:50');
 INSERT INTO `auction_role_permission` VALUES (44, 3, 50, '2026-01-21 16:14:50');
 INSERT INTO `auction_role_permission` VALUES (45, 3, 51, '2026-01-21 16:14:50');
 INSERT INTO `auction_role_permission` VALUES (46, 3, 52, '2026-01-21 16:14:50');
@@ -803,10 +797,6 @@ INSERT INTO `auction_role_permission` VALUES (49, 3, 62, '2026-01-21 16:14:50');
 INSERT INTO `auction_role_permission` VALUES (50, 3, 70, '2026-01-21 16:14:50');
 INSERT INTO `auction_role_permission` VALUES (51, 3, 71, '2026-01-21 16:14:50');
 INSERT INTO `auction_role_permission` VALUES (52, 3, 72, '2026-01-21 16:14:50');
-INSERT INTO `auction_role_permission` VALUES (53, 3, 80, '2026-01-21 16:14:50');
-INSERT INTO `auction_role_permission` VALUES (54, 3, 81, '2026-01-21 16:14:50');
-INSERT INTO `auction_role_permission` VALUES (55, 3, 82, '2026-01-21 16:14:50');
-INSERT INTO `auction_role_permission` VALUES (56, 3, 83, '2026-01-21 16:14:50');
 INSERT INTO `auction_role_permission` VALUES (57, 3, 90, '2026-01-21 16:14:50');
 INSERT INTO `auction_role_permission` VALUES (58, 3, 91, '2026-01-21 16:14:50');
 INSERT INTO `auction_role_permission` VALUES (59, 3, 92, '2026-01-21 16:14:50');
@@ -872,6 +862,44 @@ INSERT INTO `auction_role_permission` VALUES (118, 1, 19, '2026-01-21 16:14:50')
 INSERT INTO `auction_role_permission` VALUES (119, 1, 96, '2026-01-21 16:14:50');
 INSERT INTO `auction_role_permission` VALUES (120, 2, 19, '2026-01-21 16:14:50');
 INSERT INTO `auction_role_permission` VALUES (121, 2, 96, '2026-01-21 16:14:50');
+INSERT INTO `auction_role_permission` VALUES (124, 1, 6, '2026-02-25 11:37:45');
+INSERT INTO `auction_role_permission` VALUES (125, 1, 8, '2026-02-25 11:37:45');
+INSERT INTO `auction_role_permission` VALUES (126, 1, 7, '2026-02-25 11:37:45');
+INSERT INTO `auction_role_permission` VALUES (127, 5, 41, '2026-02-25 11:37:45');
+INSERT INTO `auction_role_permission` VALUES (128, 5, 40, '2026-02-25 11:37:45');
+INSERT INTO `auction_role_permission` VALUES (129, 5, 52, '2026-02-25 11:37:45');
+INSERT INTO `auction_role_permission` VALUES (130, 5, 50, '2026-02-25 11:37:45');
+INSERT INTO `auction_role_permission` VALUES (131, 5, 60, '2026-02-25 11:37:45');
+INSERT INTO `auction_role_permission` VALUES (132, 5, 5, '2026-02-25 11:37:45');
+INSERT INTO `auction_role_permission` VALUES (133, 5, 4, '2026-02-25 11:37:45');
+INSERT INTO `auction_role_permission` VALUES (134, 5, 3, '2026-02-25 11:37:45');
+INSERT INTO `auction_role_permission` VALUES (135, 5, 2, '2026-02-25 11:37:45');
+INSERT INTO `auction_role_permission` VALUES (142, 6, 71, '2026-02-25 11:37:45');
+INSERT INTO `auction_role_permission` VALUES (143, 6, 70, '2026-02-25 11:37:45');
+INSERT INTO `auction_role_permission` VALUES (144, 6, 60, '2026-02-25 11:37:45');
+INSERT INTO `auction_role_permission` VALUES (145, 6, 16, '2026-02-25 11:37:45');
+INSERT INTO `auction_role_permission` VALUES (146, 6, 18, '2026-02-25 11:37:45');
+INSERT INTO `auction_role_permission` VALUES (147, 6, 96, '2026-02-25 11:37:45');
+INSERT INTO `auction_role_permission` VALUES (148, 6, 19, '2026-02-25 11:37:45');
+INSERT INTO `auction_role_permission` VALUES (149, 6, 15, '2026-02-25 11:37:45');
+INSERT INTO `auction_role_permission` VALUES (157, 7, 52, '2026-02-25 11:37:45');
+INSERT INTO `auction_role_permission` VALUES (158, 7, 50, '2026-02-25 11:37:45');
+INSERT INTO `auction_role_permission` VALUES (159, 7, 61, '2026-02-25 11:37:45');
+INSERT INTO `auction_role_permission` VALUES (160, 7, 62, '2026-02-25 11:37:45');
+INSERT INTO `auction_role_permission` VALUES (161, 7, 60, '2026-02-25 11:37:45');
+INSERT INTO `auction_role_permission` VALUES (162, 7, 13, '2026-02-25 11:37:45');
+INSERT INTO `auction_role_permission` VALUES (163, 7, 14, '2026-02-25 11:37:45');
+INSERT INTO `auction_role_permission` VALUES (164, 7, 12, '2026-02-25 11:37:45');
+INSERT INTO `auction_role_permission` VALUES (172, 8, 31, '2026-02-25 11:37:45');
+INSERT INTO `auction_role_permission` VALUES (173, 8, 32, '2026-02-25 11:37:45');
+INSERT INTO `auction_role_permission` VALUES (174, 8, 30, '2026-02-25 11:37:45');
+INSERT INTO `auction_role_permission` VALUES (175, 8, 41, '2026-02-25 11:37:45');
+INSERT INTO `auction_role_permission` VALUES (176, 8, 42, '2026-02-25 11:37:45');
+INSERT INTO `auction_role_permission` VALUES (177, 8, 40, '2026-02-25 11:37:45');
+INSERT INTO `auction_role_permission` VALUES (178, 8, 81, '2026-02-25 11:37:45');
+INSERT INTO `auction_role_permission` VALUES (179, 8, 82, '2026-02-25 11:37:45');
+INSERT INTO `auction_role_permission` VALUES (180, 8, 80, '2026-02-25 11:37:45');
+INSERT INTO `auction_role_permission` VALUES (183, 6, 20, '2026-02-25 11:52:45');
 
 -- ----------------------------
 -- Table structure for auction_user
@@ -888,7 +916,7 @@ CREATE TABLE `auction_user`  (
   `avatar` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT '' COMMENT '用户头像地址',
   `avatar_file_id` bigint NULL DEFAULT NULL COMMENT '头像文件ID（关联auction_file.id）',
   `sex` char(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT '2' COMMENT '用户性别（0男 1女 2未知）',
-  `user_role` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT '1' COMMENT '用户角色（多个角色用逗号分隔）：1=买方用户 2=卖方用户 3=管理员 4=超级管理员，默认1（买方）',
+  `user_role` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT '1' COMMENT '用户角色（多个角色用逗号分隔）：1=普通用户 3=管理员 4=超级管理员 5=拍卖师 6=客服 7=财务 8=运营，默认1（普通用户）',
   `seller_audit_status` tinyint NULL DEFAULT 0 COMMENT '卖方资质审核状态：0=未提交 1=待审核 2=审核通过 3=审核驳回（买方默认为0）',
   `seller_audit_remark` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '卖方资质审核驳回原因',
   `seller_certificate_files` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '卖方资质证明材料（文件路径，多个文件用逗号分隔）',
@@ -906,14 +934,15 @@ CREATE TABLE `auction_user`  (
   UNIQUE INDEX `idx_user_name`(`user_name` ASC) USING BTREE,
   INDEX `idx_user_role`(`user_role` ASC) USING BTREE,
   INDEX `idx_user_status`(`user_status` ASC) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '系统用户表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 5 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '系统用户表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of auction_user
 -- ----------------------------
-INSERT INTO `auction_user` VALUES (1, 'superadmin', 'e10adc3949ba59abbe56e057f20f883e', '', '', '17713356500', '', '', 29, '2', '4', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-02-08 23:56:10', '2026-01-21 14:54:06', '2026-02-08 23:56:10', 0);
-INSERT INTO `auction_user` VALUES (2, 'admin', 'e10adc3949ba59abbe56e057f20f883e', 'admin', '管理员', '17034570777', '1709348112@qq.com', '', NULL, '0', '3', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-02-09 00:09:44', '2026-01-21 15:50:21', '2026-02-09 00:09:44', 0);
-INSERT INTO `auction_user` VALUES (3, 'buyuser', 'e10adc3949ba59abbe56e057f20f883e', 'buyuser', '买方用户', '19234532287', '1709348112@qq.com', '', NULL, '0', '1', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-02-09 00:09:09', '2026-01-21 16:17:43', '2026-02-09 00:09:09', 0);
-INSERT INTO `auction_user` VALUES (4, 'selluser', 'e10adc3949ba59abbe56e057f20f883e', 'selluser', '卖方用户', '18766753345', '1709348112@qq.com', '', NULL, '0', '2', 0, NULL, NULL, NULL, NULL, NULL, 0, '', NULL, '2026-01-21 16:18:22', '2026-01-21 16:18:22', 0);
+INSERT INTO `auction_user` VALUES (1, 'superadmin', 'e10adc3949ba59abbe56e057f20f883e', '', '', '17713356500', '', '', 30, '2', '4', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-02-25 13:11:55', '2026-01-21 14:54:06', '2026-02-25 13:11:55', 0);
+INSERT INTO `auction_user` VALUES (2, 'admin', 'e10adc3949ba59abbe56e057f20f883e', 'admin', '管理员', '17034570777', '1709348112@qq.com', '', NULL, '0', '3', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-02-24 20:52:28', '2026-01-21 15:50:21', '2026-02-24 20:52:28', 0);
+INSERT INTO `auction_user` VALUES (3, 'buyuser', 'e10adc3949ba59abbe56e057f20f883e', 'buyuser', '买方用户', '19234532287', '1709348112@qq.com', '', NULL, '0', '1', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-02-24 20:26:19', '2026-01-21 16:17:43', '2026-02-24 20:26:19', 0);
+INSERT INTO `auction_user` VALUES (4, 'selluser', 'e10adc3949ba59abbe56e057f20f883e', 'selluser', '卖方用户', '18766753345', '1709348112@qq.com', '', NULL, '0', '1', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-02-24 20:45:38', '2026-01-21 16:18:22', '2026-02-25 11:26:27', 0);
+INSERT INTO `auction_user` VALUES (5, 'paimaishi', 'e10adc3949ba59abbe56e057f20f883e', '拍卖师', '拍卖师', '13848553521', '', '', NULL, '2', '5', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-02-25 12:26:34', '2026-02-25 12:26:19', '2026-02-25 12:26:34', 0);
 
 SET FOREIGN_KEY_CHECKS = 1;

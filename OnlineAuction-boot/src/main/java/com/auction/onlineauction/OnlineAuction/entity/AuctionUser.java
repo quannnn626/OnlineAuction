@@ -87,8 +87,12 @@ public class AuctionUser implements Serializable {
     private String sex;
 
     /**
-     * 用户角色（多个角色用逗号分隔）：1=买方用户 2=卖方用户 3=管理员 4=超级管理员
-     * 例如："1" 表示只有买方身份，"1,2" 表示同时拥有买方和卖方身份
+     * 用户角色（多个角色用逗号分隔）：
+     * 1=普通用户（买家/潜在卖家统一为普通用户）
+     * 3=管理员 4=超级管理员
+     * 5=拍卖师 6=客服 7=财务 8=运营
+     *
+     * 是否具备卖家资格由 seller_audit_status 等字段决定，而非单独的“卖家角色”。
      */
     @TableField("user_role")
     private String userRole;

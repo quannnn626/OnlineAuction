@@ -72,12 +72,12 @@ public class GoodsApiController extends BaseApiController {
     }
 
     /**
-     * 获取商品详情
+     * 获取商品详情（仅已上架且审核通过的商品）
      */
     @GetMapping("/{id}")
     public Result<AuctionGoods> getGoodsById(@PathVariable Long id) {
         try {
-            AuctionGoods goods = goodsService.getGoodsById(id);
+            AuctionGoods goods = goodsService.getGoodsByIdForPublic(id);
             return Result.success("查询成功", goods);
         } catch (Exception e) {
             return Result.error("查询失败：" + e.getMessage());

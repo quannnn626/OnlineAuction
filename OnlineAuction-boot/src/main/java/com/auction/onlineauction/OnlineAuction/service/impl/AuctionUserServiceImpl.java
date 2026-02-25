@@ -42,21 +42,17 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
                 boolean isSuperAdmin = currentUserRole != null && currentUserRole.contains("4");
                 boolean isAdmin = currentUserRole != null && currentUserRole.contains("3");
                 
+                boolean isCustomerService = currentUserRole != null && currentUserRole.contains("6");
                 if (isSuperAdmin) {
-                    // 超级管理员：可以查看所有用户，除了超级管理员自己
-                    wrapper.ne("id", currentUserId);
-                    // 排除所有超级管理员（user_role包含4的用户，但排除自己）
-                    // 使用正则表达式匹配：user_role不包含4，或者user_role包含4但id不等于currentUserId
-                    // 由于MyBatis-Plus不支持复杂的正则，我们使用notLike排除包含4的用户
-                    wrapper.notLike("user_role", "4");
-                } else if (isAdmin) {
-                    // 管理员：只能查看普通用户（买方和卖方），不能查看管理员和超级管理员
-                    // 只显示角色为1（买方）或2（卖方）的用户，且不包含3（管理员）或4（超级管理员）
-                    // 条件：必须包含1或2，且不能包含3，且不能包含4
-                    wrapper.and(w -> 
-                        (w.like("user_role", "1").or().like("user_role", "2"))
-                        .and(w2 -> w2.notLike("user_role", "3"))
-                        .and(w3 -> w3.notLike("user_role", "4"))
+                    // 超级管理员：可以查看所有用户（包括其他管理员/超级管理员）
+                } else if (isAdmin || isCustomerService) {
+                    // 管理员/客服：只能查看普通用户及运营岗位角色（1,2,5,6,7,8），不包括管理员和超级管理员
+                    wrapper.and(w -> w
+                        .notLike("user_role", "3")
+                        .notLike("user_role", "4")
+                        .and(w2 -> w2.like("user_role", "1").or().like("user_role", "2")
+                            .or().like("user_role", "5").or().like("user_role", "6")
+                            .or().like("user_role", "7").or().like("user_role", "8"))
                     );
                 } else {
                     // 非管理员用户：不能查看用户列表（返回空列表）
@@ -105,7 +101,7 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
             throw new RuntimeException("手机号不能为空");
         }
         if (user.getUserRole() == null || user.getUserRole().trim().isEmpty()) {
-            // 默认设置为买方用户
+            // 默认设置为普通用户
             user.setUserRole("1");
         }
         
@@ -132,18 +128,18 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
         String[] roles = roleStr.split(",");
         for (String role : roles) {
             role = role.trim();
-            if (!role.equals("1") && !role.equals("2") && !role.equals("3") && !role.equals("4")) {
-                throw new RuntimeException("用户角色值无效（1=买方，2=卖方，3=管理员，4=超级管理员）");
+            if (!role.equals("1") && !role.equals("3") && !role.equals("4")
+                    && !role.equals("5") && !role.equals("6") && !role.equals("7") && !role.equals("8")) {
+                throw new RuntimeException("用户角色值无效（1=普通用户，3=管理员，4=超级管理员，5=拍卖师，6=客服，7=财务，8=运营）");
             }
         }
         
-        // 权限检查：管理员只能创建买方和卖方，超级管理员可以创建所有角色
+        // 权限检查：管理员只能创建普通用户及运营岗位角色，超级管理员可以创建所有角色（含管理员）
         if (!isSuperAdmin) {
-            // 管理员只能创建买方（1）和卖方（2）
             for (String role : roles) {
                 role = role.trim();
                 if (role.equals("3") || role.equals("4")) {
-                    throw new RuntimeException("管理员只能创建买方和卖方账号，无法创建管理员或超级管理员账号");
+                    throw new RuntimeException("管理员无法创建管理员或超级管理员账号");
                 }
             }
         }
@@ -231,18 +227,18 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
             String[] roles = roleStr.split(",");
             for (String role : roles) {
                 role = role.trim();
-                if (!role.equals("1") && !role.equals("2") && !role.equals("3") && !role.equals("4")) {
-                    throw new RuntimeException("用户角色值无效（1=买方，2=卖方，3=管理员，4=超级管理员）");
+                if (!role.equals("1") && !role.equals("3") && !role.equals("4")
+                        && !role.equals("5") && !role.equals("6") && !role.equals("7") && !role.equals("8")) {
+                    throw new RuntimeException("用户角色值无效（1=普通用户，3=管理员，4=超级管理员，5=拍卖师，6=客服，7=财务，8=运营）");
                 }
             }
             
-            // 权限检查：管理员只能设置买方和卖方角色，超级管理员可以设置所有角色
+            // 权限检查：管理员只能设置普通用户及运营岗位角色，超级管理员可以设置所有角色
             if (!isSuperAdmin) {
-                // 管理员只能设置买方（1）和卖方（2）角色
                 for (String role : roles) {
                     role = role.trim();
                     if (role.equals("3") || role.equals("4")) {
-                        throw new RuntimeException("管理员只能设置买方和卖方角色，无法设置管理员或超级管理员角色");
+                        throw new RuntimeException("管理员无法设置管理员或超级管理员角色");
                     }
                 }
             }
@@ -325,15 +321,10 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
             throw new RuntimeException("用户不存在");
         }
         
-        // 检查用户角色是否包含买方（1）
+        // 检查是否为普通用户（1），普通用户才具备申请卖家资质的基础条件
         String userRole = user.getUserRole();
         if (userRole == null || !userRole.contains("1")) {
-            throw new RuntimeException("只有买方用户可以申请成为卖方用户");
-        }
-        
-        // 检查是否已经是卖方用户
-        if (userRole.contains("2")) {
-            throw new RuntimeException("您已经是卖方用户，无需重复申请");
+            throw new RuntimeException("只有普通用户才能申请成为卖家");
         }
         
         // 检查是否已有待审核的申请
@@ -384,22 +375,8 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
             }
             user.setSellerAuditRemark(auditRemark);
         } else if (auditStatus == 2) {
-            // 审核通过：更新用户角色，添加卖方身份（2）
-            String currentRole = user.getUserRole();
-            if (currentRole == null || currentRole.trim().isEmpty()) {
-                currentRole = "1"; // 默认买方
-            }
-            
-            // 如果角色中不包含2（卖方），则添加
-            if (!currentRole.contains("2")) {
-                if (currentRole.equals("1")) {
-                    user.setUserRole("1,2"); // 买方+卖方
-                } else {
-                    user.setUserRole(currentRole + ",2");
-                }
-            }
-            
-            // 清空驳回原因
+            // 审核通过：仅通过资质审核，不再单独增加“卖方角色”
+            // 是否为卖家由 seller_audit_status==2 来判断
             user.setSellerAuditRemark(null);
         }
         
@@ -483,12 +460,17 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
             loginDTO.setRoles(roles);
             
             // 判断角色类型
-            loginDTO.setIsAdmin(roles.contains("3"));
-            loginDTO.setIsSuperAdmin(roles.contains("4"));
-            loginDTO.setIsBuyer(roles.contains("1"));
-            loginDTO.setIsSeller(roles.contains("2"));
+            boolean isAdmin = roles.contains("3");
+            boolean isSuperAdmin = roles.contains("4");
+            boolean isNormalUser = roles.contains("1");
+
+            loginDTO.setIsAdmin(isAdmin || isSuperAdmin); // 超管也视为具备管理员能力
+            loginDTO.setIsSuperAdmin(isSuperAdmin);
+            loginDTO.setIsBuyer(isNormalUser);
+            // 是否卖家由卖家资质审核状态决定
+            loginDTO.setIsSeller(isNormalUser && user.getSellerAuditStatus() != null && user.getSellerAuditStatus() == 2);
         } else {
-            loginDTO.setRoles(Arrays.asList("1")); // 默认买方
+            loginDTO.setRoles(Arrays.asList("1")); // 默认普通用户
             loginDTO.setIsAdmin(false);
             loginDTO.setIsSuperAdmin(false);
             loginDTO.setIsBuyer(true);

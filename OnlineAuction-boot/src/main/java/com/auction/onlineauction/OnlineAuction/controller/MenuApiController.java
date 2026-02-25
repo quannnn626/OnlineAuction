@@ -33,7 +33,7 @@ public class MenuApiController {
 
     /**
      * 根据当前登录用户的角色获取菜单树
-     * @param roleType 角色类型（可选，如果提供则使用该角色，否则从Session获取）：1=买方用户 2=卖方用户 3=管理员 4=超级管理员
+     * @param roleType 角色类型（可选）：1=普通用户 3=管理员 4=超级管理员 5=拍卖师 6=客服 7=财务 8=运营
      * @param all 是否返回所有菜单（true=返回所有，false=根据角色过滤，默认false）
      * @return 菜单树
      */

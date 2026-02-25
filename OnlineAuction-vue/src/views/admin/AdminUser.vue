@@ -39,6 +39,10 @@
             <el-option label="卖方用户" :value="2"></el-option>
             <el-option label="管理员" :value="3"></el-option>
             <el-option label="超级管理员" :value="4"></el-option>
+            <el-option label="拍卖师" :value="5"></el-option>
+            <el-option label="客服" :value="6"></el-option>
+            <el-option label="财务" :value="7"></el-option>
+            <el-option label="运营" :value="8"></el-option>
           </el-select>
         </el-col>
         <el-col :span="4">
@@ -194,14 +198,22 @@
           ></el-input>
         </el-form-item>
         <el-form-item label="用户角色" prop="userRole">
-          <el-radio-group v-model="formData.userRole">
-            <el-radio :label="1">买方用户</el-radio>
-            <el-radio :label="2">卖方用户</el-radio>
-            <el-radio v-if="isSuperAdmin" :label="3">管理员</el-radio>
-            <el-radio v-if="isSuperAdmin" :label="4">超级管理员</el-radio>
-          </el-radio-group>
+          <el-select
+            v-model="formData.userRole"
+            placeholder="请选择用户角色"
+            style="width: 100%"
+          >
+            <el-option label="买方用户" :value="1"></el-option>
+            <el-option label="卖方用户" :value="2"></el-option>
+            <el-option v-if="isSuperAdmin" label="管理员" :value="3"></el-option>
+            <el-option v-if="isSuperAdmin" label="超级管理员" :value="4"></el-option>
+            <el-option label="拍卖师" :value="5"></el-option>
+            <el-option label="客服" :value="6"></el-option>
+            <el-option label="财务" :value="7"></el-option>
+            <el-option label="运营" :value="8"></el-option>
+          </el-select>
           <div v-if="!isSuperAdmin" style="color: #909399; font-size: 12px; margin-top: 5px;">
-            提示：管理员只能{{ isEdit ? '修改为' : '创建' }}买方和卖方账号
+            提示：管理员只能{{ isEdit ? '修改为' : '创建' }}买方、卖方及运营岗位（拍卖师/客服/财务/运营）账号
           </div>
         </el-form-item>
         <el-form-item label="真实姓名" prop="realName">
@@ -491,11 +503,19 @@ export default {
               userRole = 3; // 管理员
             } else if (roles.includes("2")) {
               userRole = 2; // 卖方
+            } else if (roles.includes("8")) {
+              userRole = 8; // 运营
+            } else if (roles.includes("7")) {
+              userRole = 7; // 财务
+            } else if (roles.includes("6")) {
+              userRole = 6; // 客服
+            } else if (roles.includes("5")) {
+              userRole = 5; // 拍卖师
             } else {
-              userRole = parseInt(roles[0]); // 取第一个角色
+              userRole = parseInt(roles[0]) || 1; // 取第一个角色
             }
           } else if (typeof userRole === "string") {
-            userRole = parseInt(userRole);
+            userRole = parseInt(userRole) || 1;
           }
           
           this.formData = {
@@ -651,6 +671,10 @@ export default {
         "2": "卖方",
         "3": "管理员",
         "4": "超级管理员",
+        "5": "拍卖师",
+        "6": "客服",
+        "7": "财务",
+        "8": "运营",
       };
       if (roles.length === 0) return "未知";
       if (roles.length === 1) {
@@ -666,6 +690,10 @@ export default {
       if (roles.includes("3")) return "warning"; // 管理员
       if (roles.includes("2")) return "success"; // 卖方
       if (roles.includes("1")) return "primary"; // 买方
+      if (roles.includes("8")) return ""; // 运营
+      if (roles.includes("7")) return "info"; // 财务
+      if (roles.includes("6")) return "info"; // 客服
+      if (roles.includes("5")) return "info"; // 拍卖师
       return "info";
     },
     // 获取卖方审核状态文本

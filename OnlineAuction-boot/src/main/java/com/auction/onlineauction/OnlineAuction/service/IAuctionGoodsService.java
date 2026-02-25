@@ -33,6 +33,11 @@ public interface IAuctionGoodsService extends IService<AuctionGoods> {
     AuctionGoods getGoodsById(Long id);
 
     /**
+     * 根据ID获取商品详情（前台用，仅返回已上架且审核通过的商品）
+     */
+    AuctionGoods getGoodsByIdForPublic(Long id);
+
+    /**
      * 新增商品
      */
     AuctionGoods addGoods(Map<String, Object> requestData);
@@ -56,6 +61,12 @@ public interface IAuctionGoodsService extends IService<AuctionGoods> {
      * 审核商品
      */
     void auditGoods(Long id, Integer auditStatus, String auditRemark);
+
+    /**
+     * 上架/下架商品（仅修改 shelf_status）
+     * @param shelfStatus 0=下架 1=上架
+     */
+    void updateShelfStatus(Long id, Integer shelfStatus);
 
     /**
      * 获取商品列表（前端API，只显示审核通过的商品）
