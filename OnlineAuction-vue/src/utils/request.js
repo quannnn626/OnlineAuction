@@ -1,5 +1,6 @@
 import axios from "axios";
 import { Message } from "element-ui";
+import router from "@/router";
 
 // 创建 axios 实例
 const service = axios.create({
@@ -29,9 +30,25 @@ service.interceptors.response.use(
     // 如果返回的状态码不是 200，则视为错误
     if (res.code !== 200) {
       const errorMessage = res.message || "请求失败";
-      Message.error(errorMessage);
       const error = new Error(errorMessage);
-      error.response = response; // 保存完整的响应对象，方便前端获取详细信息
+      error.response = response; // 保存完整的响应对象
+      // 会话失效（如后端重启导致 Session 丢失）
+      if (errorMessage.indexOf("未登录") !== -1) {
+        localStorage.removeItem("userInfo");
+        localStorage.removeItem("userId");
+        localStorage.removeItem("userName");
+        localStorage.removeItem("userRole");
+        localStorage.removeItem("isAdmin");
+        localStorage.removeItem("isSuperAdmin");
+        localStorage.removeItem("isBuyer");
+        localStorage.removeItem("isSeller");
+        Message.warning("登录已过期，请重新登录");
+        if (router.currentRoute.path !== "/login") {
+          router.replace("/login");
+        }
+      } else {
+        Message.error(errorMessage);
+      }
       return Promise.reject(error);
     }
     // 返回数据部分
@@ -39,16 +56,30 @@ service.interceptors.response.use(
   },
   (error) => {
     console.error("响应错误:", error);
+    // 会话失效（如后端重启导致 Session 丢失）：清除本地存储并跳转登录页
+    const msg = error.response?.data?.message || error.message || "";
+    if (msg.indexOf("未登录") !== -1) {
+      localStorage.removeItem("userInfo");
+      localStorage.removeItem("userId");
+      localStorage.removeItem("userName");
+      localStorage.removeItem("userRole");
+      localStorage.removeItem("isAdmin");
+      localStorage.removeItem("isSuperAdmin");
+      localStorage.removeItem("isBuyer");
+      localStorage.removeItem("isSeller");
+      Message.warning("登录已过期，请重新登录");
+      if (router.currentRoute.path !== "/login") {
+        router.replace("/login");
+      }
+      return Promise.reject(error);
+    }
     // 更详细的错误信息
     let errorMessage = "网络错误";
     if (error.response) {
-      // 服务器返回了错误状态码
       errorMessage = `请求失败: ${error.response.status} ${error.response.statusText}`;
     } else if (error.request) {
-      // 请求已发出但没有收到响应
       errorMessage = "无法连接到服务器，请检查后端服务是否启动";
     } else {
-      // 其他错误
       errorMessage = error.message || "网络错误";
     }
     Message.error(errorMessage);
