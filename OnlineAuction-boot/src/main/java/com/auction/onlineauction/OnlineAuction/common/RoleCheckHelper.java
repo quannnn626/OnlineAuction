@@ -65,4 +65,26 @@ public final class RoleCheckHelper {
     public static boolean canAccessAdmin(HttpSession session) {
         return hasAnyRole(session, 3, 4, 5, 6, 7, 8);
     }
+
+    /**
+     * 可查看前台竞拍公告（买方、卖方、超级管理员）
+     * 拍卖师、客服、财务无 notice:view 权限，不能查看
+     */
+    public static boolean canViewPublicNotice(HttpSession session) {
+        return hasAnyRole(session, 1, 2, 4);
+    }
+
+    /**
+     * 可管理后台公告（增改查，管理员、超级管理员、运营）
+     */
+    public static boolean canManageNotice(HttpSession session) {
+        return hasAnyRole(session, 3, 4, 8);
+    }
+
+    /**
+     * 可删除公告（仅管理员、超级管理员）
+     */
+    public static boolean canDeleteNotice(HttpSession session) {
+        return hasAnyRole(session, 3, 4);
+    }
 }

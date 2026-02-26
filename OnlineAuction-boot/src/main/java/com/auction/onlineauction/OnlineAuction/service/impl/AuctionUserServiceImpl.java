@@ -459,12 +459,13 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
                     .collect(Collectors.toList());
             loginDTO.setRoles(roles);
             
-            // 判断角色类型
-            boolean isAdmin = roles.contains("3");
+            // 判断角色类型（3=管理员 4=超级管理员 5=拍卖师 6=客服 7=财务 8=运营 均可访问后台）
             boolean isSuperAdmin = roles.contains("4");
+            boolean canAccessAdmin = roles.contains("3") || roles.contains("4")
+                    || roles.contains("5") || roles.contains("6") || roles.contains("7") || roles.contains("8");
             boolean isNormalUser = roles.contains("1");
 
-            loginDTO.setIsAdmin(isAdmin || isSuperAdmin); // 超管也视为具备管理员能力
+            loginDTO.setIsAdmin(canAccessAdmin);
             loginDTO.setIsSuperAdmin(isSuperAdmin);
             loginDTO.setIsBuyer(isNormalUser);
             // 是否卖家由卖家资质审核状态决定

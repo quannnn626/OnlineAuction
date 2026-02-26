@@ -47,6 +47,7 @@ const routes = [
         path: "notice",
         name: "Notice",
         component: () => import("@/views/Notice.vue"),
+        meta: { noticeView: true },
       },
       {
         path: "message-board",
@@ -189,6 +190,19 @@ router.beforeEach((to, from, next) => {
     }
   }
   
+  // 竞拍公告页面权限检查（仅买方、卖方、超级管理员可查看）
+  if (to.path === "/notice" && to.meta?.noticeView) {
+    let canView = user.isBuyer === true || user.isSeller === true || user.isSuperAdmin === true;
+    if (!canView && user.userRole) {
+      const roles = String(user.userRole).split(",").map(r => r.trim());
+      canView = roles.includes("1") || roles.includes("2") || roles.includes("4");
+    }
+    if (!canView) {
+      next("/home");
+      return;
+    }
+  }
+
   // 留言板页面权限检查（仅买方和卖方可以访问）
   if (to.path === "/message-board") {
     // 检查用户是否有买方或卖方角色
