@@ -61,6 +61,21 @@ public final class RoleCheckHelper {
         return hasAnyRole(session, 3, 4, 8);
     }
 
+    /**
+     * 可查看轮播图管理列表（拍卖师、客服、财务仅查看，管理员、超级管理员、运营可查看）
+     * 即所有能访问后台且有 admin:banner:view 的角色
+     */
+    public static boolean canViewBanner(HttpSession session) {
+        return hasAnyRole(session, 3, 4, 5, 6, 7, 8);
+    }
+
+    /**
+     * 可管理轮播图（新增、编辑），管理员、超级管理员、运营
+     */
+    public static boolean canManageBanner(HttpSession session) {
+        return hasAnyRole(session, 3, 4, 8);
+    }
+
     /** 后台管理员/运营/拍卖师/客服/财务 可访问后台数据 */
     public static boolean canAccessAdmin(HttpSession session) {
         return hasAnyRole(session, 3, 4, 5, 6, 7, 8);

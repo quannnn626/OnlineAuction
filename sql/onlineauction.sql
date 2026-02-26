@@ -11,7 +11,7 @@
  Target Server Version : 80019
  File Encoding         : 65001
 
- Date: 26/02/2026 14:58:57
+ Date: 26/02/2026 15:53:54
 */
 
 SET NAMES utf8mb4;
@@ -38,6 +38,8 @@ CREATE TABLE `auction_banner`  (
 -- ----------------------------
 -- Records of auction_banner
 -- ----------------------------
+INSERT INTO `auction_banner` VALUES (1, '/upload/banner/202602/d3627db1824f407cbd03b8cb07c68253.png', NULL, 0, 0, '2026-02-26 15:52:56', '2026-02-26 15:52:56', 0);
+INSERT INTO `auction_banner` VALUES (2, '/upload/banner/202602/4ee15e77bef74dfdaa3eae6b6e0be01d.jpg', NULL, 1, 1, '2026-02-26 15:53:03', '2026-02-26 15:53:03', 0);
 
 -- ----------------------------
 -- Table structure for auction_category
@@ -437,6 +439,8 @@ INSERT INTO `auction_file` VALUES (29, 'avatar.png', '/upload/profile/202602/cbb
 INSERT INTO `auction_file` VALUES (30, 'avatar.png', '/upload/profile/202602/c70fc319f64544419c52c340e35dce74.png', 'image', '2026-02-24 10:19:30', '2026-02-24 10:19:29', 0);
 INSERT INTO `auction_file` VALUES (31, '微信图片_20250329220729.png', '/upload/avatar/202602/1a582b8261c841739f977f329eb75ab0.png', 'image', '2026-02-25 14:06:46', '2026-02-25 14:06:46', 0);
 INSERT INTO `auction_file` VALUES (32, 'QQ图片20230426170644.jpg', '/upload/avatar/202602/23cf3cf96a924d3e80db8b38fe24c047.jpg', 'image', '2026-02-25 14:22:58', '2026-02-25 14:22:58', 0);
+INSERT INTO `auction_file` VALUES (33, '微信图片_20250329220729.png', '/upload/banner/202602/d3627db1824f407cbd03b8cb07c68253.png', 'image', '2026-02-26 15:52:50', '2026-02-26 15:52:50', 0);
+INSERT INTO `auction_file` VALUES (34, 'QQ图片20230426170644.jpg', '/upload/banner/202602/4ee15e77bef74dfdaa3eae6b6e0be01d.jpg', 'image', '2026-02-26 15:53:02', '2026-02-26 15:53:02', 0);
 
 -- ----------------------------
 -- Table structure for auction_goods
@@ -585,6 +589,7 @@ CREATE TABLE `auction_notice`  (
 -- ----------------------------
 -- Records of auction_notice
 -- ----------------------------
+INSERT INTO `auction_notice` VALUES (1, '测试发布公告1', '测试发布公告1', 0, 2, '2026-02-26 15:29:49', '2026-02-26 15:29:45', '2026-02-26 15:29:45', 0);
 
 -- ----------------------------
 -- Table structure for auction_oper_log
@@ -907,6 +912,15 @@ INSERT INTO `auction_role_permission` VALUES (198, 8, 91, '2026-02-26 14:46:15')
 INSERT INTO `auction_role_permission` VALUES (199, 8, 92, '2026-02-26 14:46:15');
 INSERT INTO `auction_role_permission` VALUES (200, 8, 1, '2026-02-26 14:54:21');
 INSERT INTO `auction_role_permission` VALUES (201, 8, 95, '2026-02-26 14:58:05');
+INSERT INTO `auction_role_permission` VALUES (202, 3, 80, '2026-02-26 15:43:37');
+INSERT INTO `auction_role_permission` VALUES (203, 3, 81, '2026-02-26 15:43:37');
+INSERT INTO `auction_role_permission` VALUES (204, 3, 82, '2026-02-26 15:43:37');
+INSERT INTO `auction_role_permission` VALUES (205, 5, 95, '2026-02-26 15:43:37');
+INSERT INTO `auction_role_permission` VALUES (206, 5, 80, '2026-02-26 15:43:37');
+INSERT INTO `auction_role_permission` VALUES (207, 6, 95, '2026-02-26 15:43:37');
+INSERT INTO `auction_role_permission` VALUES (208, 6, 80, '2026-02-26 15:43:37');
+INSERT INTO `auction_role_permission` VALUES (209, 7, 95, '2026-02-26 15:43:37');
+INSERT INTO `auction_role_permission` VALUES (210, 7, 80, '2026-02-26 15:43:37');
 
 -- ----------------------------
 -- Table structure for auction_user
@@ -946,11 +960,11 @@ CREATE TABLE `auction_user`  (
 -- ----------------------------
 -- Records of auction_user
 -- ----------------------------
-INSERT INTO `auction_user` VALUES (1, 'superadmin', 'e10adc3949ba59abbe56e057f20f883e', '', '', '17713356500', '', '', 31, '2', '4', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-02-26 14:57:26', '2026-01-21 14:54:06', '2026-02-26 14:57:26', 0);
+INSERT INTO `auction_user` VALUES (1, 'superadmin', 'e10adc3949ba59abbe56e057f20f883e', '', '', '17713356500', '', '', 31, '2', '4', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-02-26 15:52:35', '2026-01-21 14:54:06', '2026-02-26 15:52:35', 0);
 INSERT INTO `auction_user` VALUES (2, 'admin', 'e10adc3949ba59abbe56e057f20f883e', 'admin', '管理员', '17034570777', '1709348112@qq.com', '', NULL, '0', '3', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-02-24 20:52:28', '2026-01-21 15:50:21', '2026-02-24 20:52:28', 0);
-INSERT INTO `auction_user` VALUES (3, 'buyuser', 'e10adc3949ba59abbe56e057f20f883e', 'buyuser', '买方用户', '19234532287', '1709348112@qq.com', '', NULL, '0', '1', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-02-24 20:26:19', '2026-01-21 16:17:43', '2026-02-24 20:26:19', 0);
+INSERT INTO `auction_user` VALUES (3, 'buyuser', 'e10adc3949ba59abbe56e057f20f883e', 'buyuser', '买方用户', '19234532287', '1709348112@qq.com', '', NULL, '0', '1', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-02-26 15:30:14', '2026-01-21 16:17:43', '2026-02-26 15:30:14', 0);
 INSERT INTO `auction_user` VALUES (4, 'selluser', 'e10adc3949ba59abbe56e057f20f883e', 'selluser', '卖方用户', '18766753345', '1709348112@qq.com', '', 32, '0', '1', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-02-25 14:27:24', '2026-01-21 16:18:22', '2026-02-25 14:27:24', 0);
 INSERT INTO `auction_user` VALUES (5, 'paimaishi', 'e10adc3949ba59abbe56e057f20f883e', '拍卖师', '拍卖师', '13848553521', '', '', NULL, '2', '5', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-02-25 12:26:34', '2026-02-25 12:26:19', '2026-02-25 12:26:34', 0);
-INSERT INTO `auction_user` VALUES (6, 'yunying', 'e10adc3949ba59abbe56e057f20f883e', '', '运营', '13348553521', '', '', NULL, '2', '8', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-02-26 14:58:15', '2026-02-26 14:47:27', '2026-02-26 14:58:15', 0);
+INSERT INTO `auction_user` VALUES (6, 'yunying', 'e10adc3949ba59abbe56e057f20f883e', '', '运营', '13348553521', '', '', NULL, '2', '8', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-02-26 15:53:23', '2026-02-26 14:47:27', '2026-02-26 15:53:23', 0);
 
 SET FOREIGN_KEY_CHECKS = 1;

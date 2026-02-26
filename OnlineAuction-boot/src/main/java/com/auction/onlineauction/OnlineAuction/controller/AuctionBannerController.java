@@ -12,8 +12,10 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 /**
- * 首页轮播图管理
- * 运营(8)、管理员(3)、超级管理员(4) 可增改；仅管理员/超管可删除
+ * 首页轮播图管理（后台）
+ * 查看：管理员(3)、超级管理员(4)、拍卖师(5)、客服(6)、财务(7)、运营(8)
+ * 增改：管理员(3)、超级管理员(4)、运营(8)
+ * 删除：仅管理员(3)、超级管理员(4)
  */
 @RestController
 @RequestMapping("/api/OnlineAuction/auctionBanner")
@@ -25,7 +27,7 @@ public class AuctionBannerController {
     @GetMapping("/list")
     public Result<List<AuctionBanner>> list(HttpServletRequest request) {
         try {
-            if (!RoleCheckHelper.canManageCategoryOrBanner(request.getSession(false))) {
+            if (!RoleCheckHelper.canViewBanner(request.getSession(false))) {
                 return Result.error("无权限查看轮播图");
             }
             QueryWrapper<AuctionBanner> q = new QueryWrapper<>();
@@ -39,7 +41,7 @@ public class AuctionBannerController {
     @GetMapping("/{id}")
     public Result<AuctionBanner> getById(@PathVariable Long id, HttpServletRequest request) {
         try {
-            if (!RoleCheckHelper.canManageCategoryOrBanner(request.getSession(false))) {
+            if (!RoleCheckHelper.canViewBanner(request.getSession(false))) {
                 return Result.error("无权限查看轮播图");
             }
             AuctionBanner b = bannerService.getById(id);
@@ -55,7 +57,7 @@ public class AuctionBannerController {
     @PostMapping
     public Result<AuctionBanner> add(@RequestBody AuctionBanner banner, HttpServletRequest request) {
         try {
-            if (!RoleCheckHelper.canManageCategoryOrBanner(request.getSession(false))) {
+            if (!RoleCheckHelper.canManageBanner(request.getSession(false))) {
                 return Result.error("无权限新增轮播图");
             }
             if (banner.getBannerStatus() == null) banner.setBannerStatus(0);
@@ -71,7 +73,7 @@ public class AuctionBannerController {
     public Result<AuctionBanner> update(@PathVariable Long id, @RequestBody AuctionBanner banner,
                                        HttpServletRequest request) {
         try {
-            if (!RoleCheckHelper.canManageCategoryOrBanner(request.getSession(false))) {
+            if (!RoleCheckHelper.canManageBanner(request.getSession(false))) {
                 return Result.error("无权限编辑轮播图");
             }
             AuctionBanner exist = bannerService.getById(id);

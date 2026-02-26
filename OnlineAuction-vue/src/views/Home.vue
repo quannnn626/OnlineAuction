@@ -50,7 +50,7 @@
               "
             >
               <h2 style="margin: 0 0 10px 0; color: #fff">
-                {{ banner.goodsName || "轮播图 " + (index + 1) }}
+                {{ banner.goodsId ? "点击查看商品" : "轮播图 " + (index + 1) }}
               </h2>
               <p style="margin: 0; font-size: 16px; color: #fff">
                 点击查看详情
@@ -193,32 +193,14 @@
 
 <script>
 import { getCategoryTreeForHome } from "@/api/category";
+import { getBannerList } from "@/api/banner";
 
 export default {
   name: "Home",
   data() {
     return {
       searchKeyword: "",
-      bannerList: [
-        {
-          id: 1,
-          bannerImg: "/images/banner-placeholder.svg",
-          goodsId: 1,
-          goodsName: "精品古董花瓶",
-        },
-        {
-          id: 2,
-          bannerImg: "/images/banner-placeholder.svg",
-          goodsId: 2,
-          goodsName: "限量版名表",
-        },
-        {
-          id: 3,
-          bannerImg: "/images/banner-placeholder.svg",
-          goodsId: 3,
-          goodsName: "名家字画",
-        },
-      ],
+      bannerList: [],
       categoryTree: [], // 完整的分类树数据
       level1Categories: [], // 一级分类列表
       selectedCategoryId: 0,
@@ -242,8 +224,17 @@ export default {
   },
   mounted() {
     this.loadCategories();
+    this.loadBanners();
   },
   methods: {
+    async loadBanners() {
+      try {
+        const data = await getBannerList();
+        this.bannerList = Array.isArray(data) ? data : [];
+      } catch (error) {
+        this.bannerList = [];
+      }
+    },
     // 加载商品分类树
     async loadCategories() {
       this.categoryLoading = true;
