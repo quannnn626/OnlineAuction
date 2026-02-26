@@ -102,4 +102,25 @@ public final class RoleCheckHelper {
     public static boolean canDeleteNotice(HttpSession session) {
         return hasAnyRole(session, 3, 4);
     }
+
+    /**
+     * 可查看/管理后台保证金（财务、管理员、超级管理员）
+     */
+    public static boolean canManageDepositAdmin(HttpSession session) {
+        return hasAnyRole(session, 3, 4, 7);
+    }
+
+    /**
+     * 可管理后台订单（查看、状态更新、结算）
+     */
+    public static boolean canManageOrderAdmin(HttpSession session) {
+        return hasAnyRole(session, 3, 4, 7);
+    }
+
+    /**
+     * 可处理退款（财务、管理员、超级管理员）
+     */
+    public static boolean canProcessRefund(HttpSession session) {
+        return hasAnyRole(session, 3, 4, 7);
+    }
 }

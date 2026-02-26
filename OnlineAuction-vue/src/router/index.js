@@ -112,6 +112,11 @@ const routes = [
         component: () => import("@/views/admin/AdminOrder.vue"),
       },
       {
+        path: "admin/deposit",
+        name: "AdminDeposit",
+        component: () => import("@/views/admin/AdminDeposit.vue"),
+      },
+      {
         path: "admin/message",
         name: "AdminMessage",
         component: () => import("@/views/admin/AdminMessage.vue"),
