@@ -6,6 +6,8 @@ import com.auction.onlineauction.OnlineAuction.mapper.AuctionRecordMapper;
 import com.auction.onlineauction.OnlineAuction.service.IAuctionGoodsService;
 import com.auction.onlineauction.OnlineAuction.service.IAuctionRecordService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -126,5 +129,41 @@ public class AuctionRecordServiceImpl extends ServiceImpl<AuctionRecordMapper, A
             limit = 10;
         }
         return recordMapper.selectRecordsByGoodsId(goodsId, limit);
+    }
+
+    @Override
+    public AuctionRecord getHighestRecordByGoodsId(Long goodsId) {
+        if (goodsId == null) {
+            return null;
+        }
+        return recordMapper.selectHighestRecord(goodsId);
+    }
+
+    @Override
+    public PageInfo<Map<String, Object>> getMyBidGoodsPage(Integer current, Integer size, Long buyerId, String keyword) {
+        PageHelper.startPage(current, size);
+        List<Map<String, Object>> rows = recordMapper.selectMyBidGoodsPage(buyerId, keyword);
+        return new PageInfo<>(rows);
+    }
+
+    @Override
+    public PageInfo<Map<String, Object>> getAdminBidGoodsPage(Integer current, Integer size, String keyword) {
+        PageHelper.startPage(current, size);
+        List<Map<String, Object>> rows = recordMapper.selectAdminBidGoodsPage(keyword);
+        return new PageInfo<>(rows);
+    }
+
+    @Override
+    public PageInfo<AuctionRecord> getBidRecordsByGoodsPage(Integer current, Integer size, Long goodsId) {
+        PageHelper.startPage(current, size);
+        List<AuctionRecord> records = recordMapper.selectRecordsPageByGoodsId(goodsId);
+        return new PageInfo<>(records);
+    }
+
+    @Override
+    public PageInfo<AuctionRecord> getMyBidRecordsByGoodsPage(Integer current, Integer size, Long goodsId, Long buyerId) {
+        PageHelper.startPage(current, size);
+        List<AuctionRecord> records = recordMapper.selectMyRecordsPageByGoodsId(goodsId, buyerId);
+        return new PageInfo<>(records);
     }
 }

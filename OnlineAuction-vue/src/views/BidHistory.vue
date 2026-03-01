@@ -1,7 +1,8 @@
 <template>
-  <div class="admin-history-page">
+  <div class="bid-history-page">
     <div class="page-header">
-      <h2>历史竞拍</h2>
+      <h2>历史竞拍管理</h2>
+      <el-button icon="el-icon-back" @click="$router.push('/goods')">返回拍卖商品</el-button>
     </div>
 
     <div class="filter-section">
@@ -26,8 +27,12 @@
       <el-table v-loading="loading" :data="tableData" stripe style="width: 100%">
         <el-table-column prop="goodsId" label="商品ID" width="90" />
         <el-table-column prop="goodsName" label="商品名称" min-width="220" />
-        <el-table-column prop="sellerName" label="卖家" width="120" />
-        <el-table-column prop="totalBidCount" label="出价次数" width="100" />
+        <el-table-column prop="myBidCount" label="我的出价次数" width="120" />
+        <el-table-column prop="myHighestBid" label="我的最高出价" width="140">
+          <template slot-scope="scope">
+            <span class="price">¥{{ scope.row.myHighestBid || "0.00" }}</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="currentHighestPrice" label="当前最高价" width="140">
           <template slot-scope="scope">
             <span class="price">¥{{ scope.row.currentHighestPrice || "0.00" }}</span>
@@ -56,7 +61,7 @@
       />
     </div>
 
-    <el-dialog :title="`竞拍详情 - ${detailGoodsName || ''}`" :visible.sync="detailVisible" width="860px">
+    <el-dialog :title="`我的竞价详情 - ${detailGoodsName || ''}`" :visible.sync="detailVisible" width="860px">
       <el-table v-loading="detailLoading" :data="detailData" stripe style="width: 100%">
         <el-table-column prop="buyerName" label="出价人" width="150" />
         <el-table-column prop="bidPrice" label="出价金额" width="150">
@@ -90,10 +95,10 @@
 </template>
 
 <script>
-import { getAdminBidGoodsPage, getAdminBidRecordsByGoodsPage } from "@/api/record";
+import { getMyBidGoodsPage, getMyBidRecordsByGoodsPage } from "@/api/record";
 
 export default {
-  name: "AdminHistory",
+  name: "BidHistory",
   data() {
     return {
       loading: false,
@@ -128,11 +133,11 @@ export default {
           size: this.pagination.size,
           keyword: this.keyword || undefined,
         };
-        const result = await getAdminBidGoodsPage(params);
+        const result = await getMyBidGoodsPage(params);
         this.tableData = result.list || [];
         this.pagination.total = result.total || 0;
       } catch (e) {
-        this.$message.error("加载历史竞拍数据失败");
+        this.$message.error("加载历史竞拍失败");
       } finally {
         this.loading = false;
       }
@@ -145,21 +150,14 @@ export default {
           current: this.detailPagination.current,
           size: this.detailPagination.size,
         };
-        const result = await getAdminBidRecordsByGoodsPage(this.detailGoodsId, params);
+        const result = await getMyBidRecordsByGoodsPage(this.detailGoodsId, params);
         this.detailData = result.list || [];
         this.detailPagination.total = result.total || 0;
       } catch (e) {
-        this.$message.error("加载竞拍详情失败");
+        this.$message.error("加载竞价详情失败");
       } finally {
         this.detailLoading = false;
       }
-    },
-    openDetail(row) {
-      this.detailGoodsId = row.goodsId;
-      this.detailGoodsName = row.goodsName;
-      this.detailPagination.current = 1;
-      this.detailVisible = true;
-      this.loadDetailData();
     },
     handleSearch() {
       this.pagination.current = 1;
@@ -178,6 +176,13 @@ export default {
     handleCurrentChange(current) {
       this.pagination.current = current;
       this.loadData();
+    },
+    openDetail(row) {
+      this.detailGoodsId = row.goodsId;
+      this.detailGoodsName = row.goodsName;
+      this.detailPagination.current = 1;
+      this.detailVisible = true;
+      this.loadDetailData();
     },
     handleDetailSizeChange(size) {
       this.detailPagination.size = size;
@@ -203,7 +208,7 @@ export default {
 </script>
 
 <style scoped>
-.admin-history-page {
+.bid-history-page {
   padding: 20px;
   background: #f5f5f5;
   min-height: 100vh;
@@ -221,6 +226,9 @@ export default {
 
 .page-header {
   padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .page-header h2 {
@@ -237,4 +245,3 @@ export default {
   font-weight: bold;
 }
 </style>
-

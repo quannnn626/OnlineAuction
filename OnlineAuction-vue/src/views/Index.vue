@@ -105,9 +105,10 @@ export default {
         // 前端双重保护：如果是超级管理员，过滤掉留言板菜单
         let menuTree = data || [];
         const userInfo = localStorage.getItem("userInfo");
+        let user = null;
         if (userInfo) {
           try {
-            const user = JSON.parse(userInfo);
+            user = JSON.parse(userInfo);
             if (user.isSuperAdmin) {
               // 过滤掉留言板菜单（ID=8 或路径为 /message-board）
               menuTree = this.filterMenu(menuTree, (menu) => {
@@ -117,6 +118,17 @@ export default {
           } catch (e) {
             // 忽略解析错误
           }
+        }
+
+        // 普通用户端兜底菜单：补充“历史竞拍”入口（避免后端菜单未配置导致看不到）
+        if (user && !user.isAdmin && !user.isSuperAdmin && !this.menuExists(menuTree, "/bid-history")) {
+          menuTree.push({
+            id: 99991,
+            menuName: "历史竞拍",
+            menuPath: "/bid-history",
+            menuIcon: "el-icon-time",
+            children: [],
+          });
         }
         
         this.menuTree = menuTree;
@@ -155,6 +167,17 @@ export default {
       });
       // 构建完成后，更新当前激活菜单
       this.setActiveMenu();
+    },
+    menuExists(menus, targetPath) {
+      if (!menus || menus.length === 0) return false;
+      for (const menu of menus) {
+        const path = this.getMenuPath(menu);
+        if (path === targetPath) return true;
+        if (menu.children && menu.children.length > 0) {
+          if (this.menuExists(menu.children, targetPath)) return true;
+        }
+      }
+      return false;
     },
     getMenuPath(menu) {
       if (!menu.menuPath) return "";

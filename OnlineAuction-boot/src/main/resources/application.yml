@@ -44,10 +44,10 @@ spring:
   # 文件上传配置
   servlet:
     multipart:
-      # 单个文件最大限制10MB
-      max-file-size: 10MB
+      # 单个文件最大限制100MB（视频上传）
+      max-file-size: 100MB
       # 总请求大小限制
-      max-request-size: 100MB
+      max-request-size: 500MB
 
 # MyBatis Plus 配置
 mybatis-plus:

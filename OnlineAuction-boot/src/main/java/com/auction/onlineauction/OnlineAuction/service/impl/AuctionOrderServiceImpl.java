@@ -2,6 +2,7 @@ package com.auction.onlineauction.OnlineAuction.service.impl;
 
 import com.auction.onlineauction.OnlineAuction.entity.AuctionDeposit;
 import com.auction.onlineauction.OnlineAuction.entity.AuctionOrder;
+import com.auction.onlineauction.OnlineAuction.entity.AuctionRecord;
 import com.auction.onlineauction.OnlineAuction.mapper.AuctionOrderMapper;
 import com.auction.onlineauction.OnlineAuction.service.IAuctionDepositService;
 import com.auction.onlineauction.OnlineAuction.service.IAuctionOrderService;
@@ -15,7 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * <p>
@@ -96,5 +99,61 @@ public class AuctionOrderServiceImpl extends ServiceImpl<AuctionOrderMapper, Auc
         order.setOrderStatus(5);
         order.setUpdateTime(LocalDateTime.now());
         updateById(order);
+    }
+
+    @Override
+    public boolean existsActiveOrderByGoodsId(Long goodsId) {
+        if (goodsId == null) {
+            return false;
+        }
+        QueryWrapper<AuctionOrder> q = new QueryWrapper<>();
+        q.eq("goods_id", goodsId).eq("del_flag", 0);
+        return count(q) > 0;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public AuctionOrder createWinningOrder(Long goodsId, Long sellerId, AuctionRecord highestRecord, LocalDateTime payDeadline) {
+        if (goodsId == null || sellerId == null || highestRecord == null) {
+            throw new RuntimeException("创建订单参数不完整");
+        }
+        if (existsActiveOrderByGoodsId(goodsId)) {
+            throw new RuntimeException("该商品已存在订单");
+        }
+
+        BigDecimal dealPrice = highestRecord.getBidPrice();
+        if (dealPrice == null || dealPrice.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("中标价格无效");
+        }
+
+        BigDecimal depositAmount = BigDecimal.ZERO;
+        BigDecimal remainAmount = dealPrice.subtract(depositAmount);
+
+        AuctionOrder order = new AuctionOrder();
+        order.setOrderNo(generateOrderNo());
+        order.setGoodsId(goodsId);
+        order.setBuyerId(highestRecord.getBuyerId());
+        order.setSellerId(sellerId);
+        order.setRecordId(highestRecord.getId());
+        order.setDealPrice(dealPrice);
+        order.setDepositAmount(depositAmount);
+        order.setRemainAmount(remainAmount);
+        order.setPayDeadline(payDeadline != null ? payDeadline : LocalDateTime.now().plusHours(24));
+        order.setOrderStatus(0);
+        order.setCreateTime(LocalDateTime.now());
+        order.setUpdateTime(LocalDateTime.now());
+        order.setDelFlag(0);
+
+        boolean saved = save(order);
+        if (!saved) {
+            throw new RuntimeException("创建中标订单失败");
+        }
+        return order;
+    }
+
+    private String generateOrderNo() {
+        String prefix = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        int suffix = ThreadLocalRandom.current().nextInt(10000000, 100000000);
+        return prefix + suffix;
     }
 }

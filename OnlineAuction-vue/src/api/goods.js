@@ -83,3 +83,14 @@ export function reapplyGoods(id) {
     method: "put",
   });
 }
+
+/**
+ * 上架/下架商品（后台）
+ */
+export function updateShelfStatus(id, shelfStatus) {
+  return request({
+    url: `/OnlineAuction/auctionGoods/shelf/${id}`,
+    method: "put",
+    params: { shelfStatus },
+  });
+}

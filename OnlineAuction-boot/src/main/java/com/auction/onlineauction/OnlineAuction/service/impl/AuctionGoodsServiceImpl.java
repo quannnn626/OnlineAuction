@@ -2,9 +2,12 @@ package com.auction.onlineauction.OnlineAuction.service.impl;
 
 import com.auction.onlineauction.OnlineAuction.entity.AuctionFile;
 import com.auction.onlineauction.OnlineAuction.entity.AuctionGoods;
+import com.auction.onlineauction.OnlineAuction.entity.AuctionRecord;
 import com.auction.onlineauction.OnlineAuction.mapper.AuctionGoodsMapper;
+import com.auction.onlineauction.OnlineAuction.mapper.AuctionRecordMapper;
 import com.auction.onlineauction.OnlineAuction.service.IAuctionFileService;
 import com.auction.onlineauction.OnlineAuction.service.IAuctionGoodsService;
+import com.auction.onlineauction.OnlineAuction.service.IAuctionOrderService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.pagehelper.PageHelper;
@@ -31,6 +34,12 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
 
     @Autowired
     private IAuctionFileService fileService;
+
+    @Autowired
+    private AuctionRecordMapper recordMapper;
+
+    @Autowired
+    private IAuctionOrderService orderService;
 
     @Override
     public PageInfo<AuctionGoods> getGoodsPage(Integer current, Integer size, String goodsName, String categoryId, Integer auditStatus, Integer goodsStatus) {
@@ -108,7 +117,7 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
     }
 
     @Override
-    public AuctionGoods addGoods(Map<String, Object> requestData) {
+    public AuctionGoods addGoods(Map<String, Object> requestData, Long sellerId) {
         // 将Map转换为AuctionGoods对象
         AuctionGoods goods = convertMapToGoods(requestData);
         
@@ -127,7 +136,10 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
         if (goods.getShelfStatus() == null) {
             goods.setShelfStatus(0); // 默认下架
         }
-        goods.setSellerId(1L); // TODO: 从当前登录用户获取
+        if (sellerId == null) {
+            throw new RuntimeException("发布用户不能为空");
+        }
+        goods.setSellerId(sellerId);
         goods.setCreateTime(LocalDateTime.now());
         goods.setUpdateTime(LocalDateTime.now());
         goods.setDelFlag(0);
@@ -243,6 +255,8 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
             throw new RuntimeException("商品不存在");
         }
         goods.setAuditStatus(auditStatus);
+        // 审核通过后自动上架；非通过状态默认下架，避免未通过商品出现在前台
+        goods.setShelfStatus(auditStatus != null && auditStatus == 1 ? 1 : 0);
         if (auditRemark != null) {
             goods.setAuditRemark(auditRemark);
         }
@@ -540,16 +554,15 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
 
         LocalDateTime now = LocalDateTime.now();
         Integer currentStatus = goods.getGoodsStatus();
-        Integer newStatus = null;
+        Integer newStatus;
 
         // 根据时间计算应该的状态
         if (now.isBefore(goods.getStartTime())) {
             // 当前时间在开始时间之前 -> 未开始
             newStatus = 0;
         } else if (now.isAfter(goods.getEndTime())) {
-            // 当前时间在结束时间之后 -> 已结束（需要判断是已成交还是已流拍）
-            // 这里暂时设置为已流拍（3），后续可以根据是否有订单来判断是否已成交（2）
-            newStatus = 3;
+            // 当前时间在结束时间之后 -> 结算竞拍结果（中标生成订单/流拍）
+            newStatus = settleAuctionResult(goods, now);
         } else {
             // 当前时间在开始时间和结束时间之间 -> 竞拍中
             newStatus = 1;
@@ -561,6 +574,30 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
             goods.setUpdateTime(LocalDateTime.now());
             updateById(goods);
         }
+    }
+
+    /**
+     * 竞拍结束后结算结果：
+     * - 有最高出价且未生成订单：生成中标订单，状态=已成交(2)
+     * - 无出价记录：状态=已流拍(3)
+     */
+    private Integer settleAuctionResult(AuctionGoods goods, LocalDateTime now) {
+        if (orderService.existsActiveOrderByGoodsId(goods.getId())) {
+            return 2;
+        }
+
+        AuctionRecord highestRecord = recordMapper.selectHighestRecord(goods.getId());
+        if (highestRecord == null) {
+            return 3;
+        }
+
+        orderService.createWinningOrder(
+                goods.getId(),
+                goods.getSellerId(),
+                highestRecord,
+                now.plusHours(24)
+        );
+        return 2;
     }
 
     @Override
@@ -598,13 +635,19 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
             throw new RuntimeException("无权操作此商品");
         }
         
-        // 验证商品是否已下架
-        if (goods.getAuditStatus() != 3) {
-            throw new RuntimeException("只有已下架的商品才能重新申请上架");
+        // 支持以下场景重新申请：
+        // 1) 审核驳回(auditStatus=2)
+        // 2) 已下架(auditStatus=3)
+        // 3) 已流拍(goodsStatus=3)
+        boolean canReapply = (goods.getAuditStatus() != null && (goods.getAuditStatus() == 2 || goods.getAuditStatus() == 3))
+                || (goods.getGoodsStatus() != null && goods.getGoodsStatus() == 3);
+        if (!canReapply) {
+            throw new RuntimeException("仅审核驳回、已下架或已流拍商品可重新申请");
         }
         
         // 重新设置为待审核状态
         goods.setAuditStatus(0); // 待审核
+        goods.setShelfStatus(0); // 待审核期间保持下架
         goods.setAuditRemark(null); // 清空之前的审核备注
         goods.setUpdateTime(LocalDateTime.now());
         

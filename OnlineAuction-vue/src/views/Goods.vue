@@ -7,6 +7,9 @@
         <el-button type="primary" icon="el-icon-plus" @click="handleAdd">
           上架商品
         </el-button>
+        <el-button type="warning" icon="el-icon-time" @click="handleBidHistory">
+          历史竞拍
+        </el-button>
         <el-button type="info" icon="el-icon-user" @click="handleMyGoods">
           我的商品
         </el-button>
@@ -198,6 +201,9 @@ export default {
     },
     handleView(goods) {
       this.$router.push({ path: "/goods-detail", query: { id: goods.id } });
+    },
+    handleBidHistory() {
+      this.$router.push("/bid-history");
     },
     handleMyGoods() {
       this.$router.push("/my-goods");

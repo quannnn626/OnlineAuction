@@ -123,4 +123,11 @@ public final class RoleCheckHelper {
     public static boolean canProcessRefund(HttpSession session) {
         return hasAnyRole(session, 3, 4, 7);
     }
+
+    /**
+     * 可查看后台历史竞拍管理（仅管理员、超级管理员）
+     */
+    public static boolean canViewAuctionHistoryAdmin(HttpSession session) {
+        return hasAnyRole(session, 3, 4);
+    }
 }

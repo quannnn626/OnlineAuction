@@ -1,35 +1,24 @@
 <template>
   <div class="goods-detail-page">
     <div class="container">
-      <!-- 商品图片展示区 -->
-      <div class="image-gallery">
+      <!-- 商品图片展示区（无图片则不展示） -->
+      <div class="image-gallery" v-if="displayImageList.length > 0">
         <div class="main-image">
           <img
-            src="https://via.placeholder.com/600x400?text=商品主图"
+            :src="currentMainImage"
             alt="商品主图"
             class="main-img"
           />
         </div>
         <div class="thumbnail-list">
           <img
-            src="https://via.placeholder.com/150x100?text=图片1"
-            alt="图片1"
+            v-for="(img, index) in displayImageList"
+            :key="img + '-' + index"
+            :src="img"
+            :alt="'商品图片' + (index + 1)"
             class="thumbnail"
-          />
-          <img
-            src="https://via.placeholder.com/150x100?text=图片2"
-            alt="图片2"
-            class="thumbnail"
-          />
-          <img
-            src="https://via.placeholder.com/150x100?text=图片3"
-            alt="图片3"
-            class="thumbnail"
-          />
-          <img
-            src="https://via.placeholder.com/150x100?text=图片4"
-            alt="图片4"
-            class="thumbnail"
+            :class="{ active: selectedImageIndex === index }"
+            @click="selectedImageIndex = index"
           />
         </div>
       </div>
@@ -123,14 +112,16 @@
         </el-table>
       </div>
 
-      <!-- 商品视频区 -->
-      <div class="video-section">
+      <!-- 商品视频区（无视频则不展示） -->
+      <div class="video-section" v-if="displayVideoList.length > 0">
         <h3>商品视频</h3>
-        <video controls class="product-video">
-          <source
-            src="https://www.w3schools.com/html/mov_bbb.mp4"
-            type="video/mp4"
-          />
+        <video
+          v-for="(video, index) in displayVideoList"
+          :key="video + '-' + index"
+          controls
+          class="product-video"
+        >
+          <source :src="video" type="video/mp4" />
           您的浏览器不支持视频播放。
         </video>
       </div>
@@ -157,6 +148,7 @@ export default {
       bidForm: {
         bidPrice: 0,
       },
+      selectedImageIndex: 0,
       bidRules: {
         bidPrice: [
           { required: true, message: "请输入出价金额", trigger: "blur" },
@@ -194,6 +186,37 @@ export default {
       }
       return parseFloat(this.goodsInfo.basePrice || 0);
     },
+    displayImageList() {
+      const files = Array.isArray(this.goodsInfo.files) ? this.goodsInfo.files : [];
+      const fromFiles = files
+        .filter((f) => f && f.filePath && this.isImageFile(f))
+        .map((f) => this.normalizeFileUrl(f.filePath));
+
+      if (fromFiles.length > 0) {
+        return fromFiles;
+      }
+      return this.parseLegacyMedia(this.goodsInfo.goodsImg, true);
+    },
+    displayVideoList() {
+      const files = Array.isArray(this.goodsInfo.files) ? this.goodsInfo.files : [];
+      const fromFiles = files
+        .filter((f) => f && f.filePath && this.isVideoFile(f))
+        .map((f) => this.normalizeFileUrl(f.filePath));
+
+      if (fromFiles.length > 0) {
+        return fromFiles;
+      }
+      return this.parseLegacyMedia(this.goodsInfo.goodsImg, false).filter((v) =>
+        this.isVideoFile({ filePath: v })
+      );
+    },
+    currentMainImage() {
+      if (!this.displayImageList.length) return "";
+      if (this.selectedImageIndex >= this.displayImageList.length) {
+        return this.displayImageList[0];
+      }
+      return this.displayImageList[this.selectedImageIndex];
+    },
   },
   mounted() {
     this.loadGoodsDetail();
@@ -211,6 +234,7 @@ export default {
       try {
         const data = await getGoodsDetail(goodsId);
         this.goodsInfo = data || {};
+        this.selectedImageIndex = 0;
         // 加载分类名称
         this.loadCategoryNames();
         // 加载竞拍记录
@@ -311,6 +335,39 @@ export default {
       };
       return statusMap[status] || "未知";
     },
+    isImageFile(file) {
+      const type = (file.fileType || "").toLowerCase();
+      if (type === "image") return true;
+      const ext = this.getFileExt(file.filePath || file.fileName || "");
+      return ["jpg", "jpeg", "png", "gif", "webp", "bmp"].includes(ext);
+    },
+    isVideoFile(file) {
+      const type = (file.fileType || "").toLowerCase();
+      if (type === "video") return true;
+      const ext = this.getFileExt(file.filePath || file.fileName || "");
+      return ["mp4", "webm", "ogg", "mov", "m4v"].includes(ext);
+    },
+    getFileExt(path) {
+      const clean = (path || "").split("?")[0];
+      const index = clean.lastIndexOf(".");
+      if (index < 0) return "";
+      return clean.substring(index + 1).toLowerCase();
+    },
+    normalizeFileUrl(url) {
+      if (!url) return "";
+      if (/^https?:\/\//i.test(url)) return url;
+      if (url.startsWith("/")) return url;
+      return `/${url}`;
+    },
+    parseLegacyMedia(goodsImg, onlyImage) {
+      if (!goodsImg) return [];
+      const list = goodsImg
+        .split(",")
+        .map((v) => this.normalizeFileUrl(v.trim()))
+        .filter((v) => !!v);
+      if (!onlyImage) return list;
+      return list.filter((v) => this.isImageFile({ filePath: v }));
+    },
   },
   watch: {
     "$route.query.id"() {
@@ -364,12 +421,17 @@ export default {
   height: 100px;
   object-fit: cover;
   border-radius: 4px;
+  border: 2px solid transparent;
   cursor: pointer;
   transition: transform 0.2s;
 }
 
 .thumbnail:hover {
   transform: scale(1.05);
+}
+
+.thumbnail.active {
+  border-color: #409eff;
 }
 
 .product-info {
@@ -474,6 +536,8 @@ export default {
 .product-video {
   width: 100%;
   max-width: 600px;
+  display: block;
+  margin-bottom: 16px;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }

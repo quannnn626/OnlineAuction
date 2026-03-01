@@ -44,6 +44,11 @@ const routes = [
         component: () => import("@/views/MyGoods.vue"),
       },
       {
+        path: "bid-history",
+        name: "BidHistory",
+        component: () => import("@/views/BidHistory.vue"),
+      },
+      {
         path: "notice",
         name: "Notice",
         component: () => import("@/views/Notice.vue"),

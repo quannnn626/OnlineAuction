@@ -87,9 +87,21 @@ public class AuctionGoodsController {
      * 新增商品
      */
     @PostMapping("/addGoods")
-    public Result<AuctionGoods> addGoods(@RequestBody Map<String, Object> requestData) {
+    public Result<AuctionGoods> addGoods(@RequestBody Map<String, Object> requestData, HttpServletRequest request) {
         try {
-            AuctionGoods goods = goodsService.addGoods(requestData);
+            HttpSession session = request.getSession(false);
+            if (session == null) {
+                return Result.error("未登录");
+            }
+            Long userId = (Long) session.getAttribute("userId");
+            if (userId == null) {
+                return Result.error("未登录");
+            }
+            // 运营(8)与普通用户(1)可发布；保留管理员/超管发布能力
+            if (!RoleCheckHelper.hasAnyRole(session, 1, 3, 4, 8)) {
+                return Result.error("无权限新增商品");
+            }
+            AuctionGoods goods = goodsService.addGoods(requestData, userId);
             return Result.success("新增成功", goods);
         } catch (Exception e) {
             return Result.error("新增失败：" + e.getMessage());
@@ -194,7 +206,17 @@ public class AuctionGoodsController {
             if (userId == null) {
                 return Result.error("未登录");
             }
-            goodsService.reapplyGoods(id, userId);
+
+            // 管理员/超级管理员/运营可在商品管理中代商品所有者发起重新申请
+            if (RoleCheckHelper.hasAnyRole(session, 3, 4, 8)) {
+                AuctionGoods goods = goodsService.getById(id);
+                if (goods == null || goods.getDelFlag() == 1) {
+                    return Result.error("商品不存在");
+                }
+                goodsService.reapplyGoods(id, goods.getSellerId());
+            } else {
+                goodsService.reapplyGoods(id, userId);
+            }
             return Result.success("重新申请上架成功，等待管理员审核", null);
         } catch (Exception e) {
             return Result.error("重新申请上架失败：" + e.getMessage());

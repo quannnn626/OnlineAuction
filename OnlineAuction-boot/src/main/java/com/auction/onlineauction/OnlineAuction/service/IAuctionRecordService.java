@@ -2,9 +2,11 @@ package com.auction.onlineauction.OnlineAuction.service;
 
 import com.auction.onlineauction.OnlineAuction.entity.AuctionRecord;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.github.pagehelper.PageInfo;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -32,4 +34,29 @@ public interface IAuctionRecordService extends IService<AuctionRecord> {
      * @return 竞拍记录列表
      */
     List<AuctionRecord> getRecordsByGoodsId(Long goodsId, Integer limit);
+
+    /**
+     * 查询指定商品当前最高价记录
+     */
+    AuctionRecord getHighestRecordByGoodsId(Long goodsId);
+
+    /**
+     * 用户历史竞拍商品（按商品聚合）
+     */
+    PageInfo<Map<String, Object>> getMyBidGoodsPage(Integer current, Integer size, Long buyerId, String keyword);
+
+    /**
+     * 后台历史竞拍商品列表（按商品聚合）
+     */
+    PageInfo<Map<String, Object>> getAdminBidGoodsPage(Integer current, Integer size, String keyword);
+
+    /**
+     * 后台查看某商品下的竞拍记录详情
+     */
+    PageInfo<AuctionRecord> getBidRecordsByGoodsPage(Integer current, Integer size, Long goodsId);
+
+    /**
+     * 用户查看自己在某商品下的竞拍记录详情
+     */
+    PageInfo<AuctionRecord> getMyBidRecordsByGoodsPage(Integer current, Integer size, Long goodsId, Long buyerId);
 }

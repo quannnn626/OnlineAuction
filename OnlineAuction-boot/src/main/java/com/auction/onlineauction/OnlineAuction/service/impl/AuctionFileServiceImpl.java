@@ -10,8 +10,11 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -24,6 +27,14 @@ import java.util.UUID;
  */
 @Service
 public class AuctionFileServiceImpl extends ServiceImpl<AuctionFileMapper, AuctionFile> implements IAuctionFileService {
+
+    private static final Set<String> IMAGE_EXTENSIONS = new HashSet<>(Arrays.asList(
+            "jpg", "jpeg", "png", "gif", "webp", "bmp"
+    ));
+
+    private static final Set<String> VIDEO_EXTENSIONS = new HashSet<>(Arrays.asList(
+            "mp4", "webm", "ogg", "mov", "m4v", "avi"
+    ));
 
     @Override
     public List<AuctionFile> uploadFiles(MultipartFile[] files, String fileCategory) {
@@ -46,19 +57,18 @@ public class AuctionFileServiceImpl extends ServiceImpl<AuctionFileMapper, Aucti
 
             // 检查文件类型
             String contentType = file.getContentType();
-            String fileType = "image";
-            if (contentType != null && contentType.startsWith("video/")) {
-                fileType = "video";
-            } else if (contentType != null && !contentType.startsWith("image/")) {
-                throw new RuntimeException("只支持上传图片和视频文件");
+            String originalFilename = file.getOriginalFilename();
+            String extension = getExtension(originalFilename);
+            String fileType = detectFileType(contentType, extension);
+            if (fileType == null) {
+                throw new RuntimeException("只支持上传图片和视频文件：" + originalFilename);
             }
 
             // 生成文件名
-            String originalFilename = file.getOriginalFilename();
             if (originalFilename == null || !originalFilename.contains(".")) {
                 throw new RuntimeException("文件名格式错误");
             }
-            String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            extension = originalFilename.substring(originalFilename.lastIndexOf("."));
             String fileName = UUID.randomUUID().toString().replace("-", "") + extension;
 
             // 根据文件分类确定上传目录
@@ -99,6 +109,31 @@ public class AuctionFileServiceImpl extends ServiceImpl<AuctionFileMapper, Aucti
         }
 
         return uploadedFiles;
+    }
+
+    private String detectFileType(String contentType, String extension) {
+        if (contentType != null) {
+            if (contentType.startsWith("image/")) {
+                return "image";
+            }
+            if (contentType.startsWith("video/")) {
+                return "video";
+            }
+        }
+        if (IMAGE_EXTENSIONS.contains(extension)) {
+            return "image";
+        }
+        if (VIDEO_EXTENSIONS.contains(extension)) {
+            return "video";
+        }
+        return null;
+    }
+
+    private String getExtension(String fileName) {
+        if (fileName == null || !fileName.contains(".")) {
+            return "";
+        }
+        return fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
     }
 
     @Override

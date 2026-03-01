@@ -8,6 +8,7 @@ import org.apache.ibatis.annotations.Update;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -62,4 +63,47 @@ public interface AuctionRecordMapper extends BaseMapper<AuctionRecord> {
             "WHERE ar.goods_id = #{goodsId} AND ar.del_flag = 0 " +
             "ORDER BY ar.bid_time DESC LIMIT #{limit}")
     List<AuctionRecord> selectRecordsByGoodsId(@Param("goodsId") Long goodsId, @Param("limit") Integer limit);
+
+    @Select("<script>" +
+            "SELECT g.id AS goodsId, g.goods_name AS goodsName, g.current_highest_price AS currentHighestPrice, " +
+            "g.start_time AS startTime, g.end_time AS endTime, g.goods_status AS goodsStatus, " +
+            "COUNT(r.id) AS myBidCount, MAX(r.bid_time) AS latestBidTime, MAX(r.bid_price) AS myHighestBid " +
+            "FROM auction_record r " +
+            "INNER JOIN auction_goods g ON r.goods_id = g.id " +
+            "WHERE r.del_flag = 0 AND g.del_flag = 0 AND r.buyer_id = #{buyerId} " +
+            "<if test='keyword != null and keyword != \"\"'> " +
+            "AND g.goods_name LIKE CONCAT('%', #{keyword}, '%') " +
+            "</if> " +
+            "GROUP BY g.id, g.goods_name, g.current_highest_price, g.start_time, g.end_time, g.goods_status " +
+            "ORDER BY latestBidTime DESC" +
+            "</script>")
+    List<Map<String, Object>> selectMyBidGoodsPage(@Param("buyerId") Long buyerId, @Param("keyword") String keyword);
+
+    @Select("<script>" +
+            "SELECT g.id AS goodsId, g.goods_name AS goodsName, g.current_highest_price AS currentHighestPrice, " +
+            "g.start_time AS startTime, g.end_time AS endTime, g.goods_status AS goodsStatus, " +
+            "u.nick_name AS sellerName, COUNT(r.id) AS totalBidCount, MAX(r.bid_time) AS latestBidTime " +
+            "FROM auction_goods g " +
+            "INNER JOIN auction_record r ON r.goods_id = g.id AND r.del_flag = 0 " +
+            "LEFT JOIN auction_user u ON g.seller_id = u.id " +
+            "WHERE g.del_flag = 0 " +
+            "<if test='keyword != null and keyword != \"\"'> " +
+            "AND g.goods_name LIKE CONCAT('%', #{keyword}, '%') " +
+            "</if> " +
+            "GROUP BY g.id, g.goods_name, g.current_highest_price, g.start_time, g.end_time, g.goods_status, u.nick_name " +
+            "ORDER BY latestBidTime DESC" +
+            "</script>")
+    List<Map<String, Object>> selectAdminBidGoodsPage(@Param("keyword") String keyword);
+
+    @Select("SELECT ar.*, u.nick_name as buyer_name FROM auction_record ar " +
+            "LEFT JOIN auction_user u ON ar.buyer_id = u.id " +
+            "WHERE ar.goods_id = #{goodsId} AND ar.del_flag = 0 " +
+            "ORDER BY ar.bid_time DESC")
+    List<AuctionRecord> selectRecordsPageByGoodsId(@Param("goodsId") Long goodsId);
+
+    @Select("SELECT ar.*, u.nick_name as buyer_name FROM auction_record ar " +
+            "LEFT JOIN auction_user u ON ar.buyer_id = u.id " +
+            "WHERE ar.goods_id = #{goodsId} AND ar.buyer_id = #{buyerId} AND ar.del_flag = 0 " +
+            "ORDER BY ar.bid_time DESC")
+    List<AuctionRecord> selectMyRecordsPageByGoodsId(@Param("goodsId") Long goodsId, @Param("buyerId") Long buyerId);
 }

@@ -1,8 +1,11 @@
 package com.auction.onlineauction.OnlineAuction.service;
 
 import com.auction.onlineauction.OnlineAuction.entity.AuctionOrder;
+import com.auction.onlineauction.OnlineAuction.entity.AuctionRecord;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.github.pagehelper.PageInfo;
+
+import java.time.LocalDateTime;
 
 /**
  * <p>
@@ -23,4 +26,10 @@ public interface IAuctionOrderService extends IService<AuctionOrder> {
 
     /** 处理退款：订单状态改为已退款，解冻买方保证金 */
     void processRefund(Long orderId, String remark);
+
+    /** 指定商品是否已存在有效订单 */
+    boolean existsActiveOrderByGoodsId(Long goodsId);
+
+    /** 根据中标记录创建订单 */
+    AuctionOrder createWinningOrder(Long goodsId, Long sellerId, AuctionRecord highestRecord, LocalDateTime payDeadline);
 }

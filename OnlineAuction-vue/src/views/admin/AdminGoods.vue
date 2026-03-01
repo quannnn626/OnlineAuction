@@ -128,7 +128,7 @@
             {{ formatDateTime(scope.row.createTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="250" fixed="right">
+        <el-table-column label="操作" width="330" fixed="right">
           <template slot-scope="scope">
             <el-button
               size="mini"
@@ -157,12 +157,30 @@
               驳回
             </el-button>
             <el-button
+              v-if="canReapply(scope.row)"
+              size="mini"
+              type="success"
+              icon="el-icon-refresh"
+              @click="handleReapply(scope.row)"
+            >
+              重新申请
+            </el-button>
+            <el-button
               size="mini"
               type="primary"
               icon="el-icon-edit"
               @click="handleEdit(scope.row)"
             >
               编辑
+            </el-button>
+            <el-button
+              v-if="canOffline(scope.row)"
+              size="mini"
+              type="warning"
+              icon="el-icon-bottom"
+              @click="handleOffline(scope.row)"
+            >
+              下架
             </el-button>
             <el-button
               size="mini"
@@ -285,10 +303,11 @@
         <el-form-item label="商品图片/视频" prop="fileIds">
           <el-upload
             ref="upload"
-            :auto-upload="false"
-            :on-change="handleUploadChange"
+            :auto-upload="true"
             :action="uploadAction"
             :on-success="handleUploadSuccess"
+            :on-error="handleUploadError"
+            :before-upload="beforeUpload"
             :on-remove="handleUploadRemove"
             :file-list="fileList"
             list-type="picture-card"
@@ -296,12 +315,21 @@
             multiple
             accept="image/*,video/*"
             name="files"
+            :data="{ fileCategory: 'goods' }"
           >
             <i class="el-icon-plus"></i>
             <div slot="tip" class="el-upload__tip">
-              支持上传图片和视频，最多20个文件，单文件最大10MB
+              支持上传图片和视频，最多20个文件，单文件最大100MB
             </div>
           </el-upload>
+          <div v-if="fileList && fileList.length" class="upload-status-list">
+            <div v-for="f in fileList" :key="f.uid || f.id || f.name" class="upload-status-item">
+              <span class="upload-file-name">{{ f.name }}</span>
+              <el-tag size="mini" :type="getUploadStatusType(f.status)">
+                {{ getUploadStatusText(f.status) }}
+              </el-tag>
+            </div>
+          </div>
         </el-form-item>
         <el-form-item label="起拍价" prop="basePrice">
           <el-input-number
@@ -399,6 +427,8 @@ import {
   updateGoods,
   deleteGoods,
   auditGoods,
+  reapplyGoods,
+  updateShelfStatus,
 } from "@/api/goods";
 import { getCategoryTree } from "@/api/category";
 
@@ -725,6 +755,44 @@ export default {
         this.auditLoading = false;
       }
     },
+    // 重新申请（流拍/驳回/已下架）
+    async handleReapply(goods) {
+      try {
+        await this.$confirm(
+          `确定将商品 "${goods.goodsName}" 重新申请上架吗？`,
+          "提示",
+          {
+            confirmButtonText: "确定",
+            cancelButtonText: "取消",
+            type: "warning",
+          }
+        );
+        await reapplyGoods(goods.id);
+        this.$message.success("重新申请成功，等待审核");
+        this.loadData();
+      } catch (error) {
+        if (error !== "cancel") {
+          this.$message.error("重新申请失败");
+        }
+      }
+    },
+    // 下架（仅已上架商品）
+    async handleOffline(goods) {
+      try {
+        await this.$confirm(`确定下架商品 "${goods.goodsName}" 吗？`, "提示", {
+          confirmButtonText: "确定",
+          cancelButtonText: "取消",
+          type: "warning",
+        });
+        await updateShelfStatus(goods.id, 0);
+        this.$message.success("下架成功");
+        this.loadData();
+      } catch (error) {
+        if (error !== "cancel") {
+          this.$message.error("下架失败");
+        }
+      }
+    },
     // 删除
     async handleDelete(goods) {
       try {
@@ -757,6 +825,16 @@ export default {
     async handleSubmit() {
       this.$refs.form.validate(async (valid) => {
         if (!valid) return;
+        const uploading = (this.fileList || []).some((f) => f.status === "uploading");
+        if (uploading) {
+          this.$message.warning("文件还在上传中，请稍后再提交");
+          return;
+        }
+        const failed = (this.fileList || []).some((f) => f.status === "fail");
+        if (failed) {
+          this.$message.error("存在上传失败文件，请重新上传后再提交");
+          return;
+        }
         this.submitLoading = true;
         try {
           const data = {
@@ -779,6 +857,29 @@ export default {
           this.submitLoading = false;
         }
       });
+    },
+    beforeUpload(file) {
+      const isImage = file.type && file.type.startsWith("image/");
+      const isVideo = file.type && file.type.startsWith("video/");
+      const fileName = (file.name || "").toLowerCase();
+      const ext = fileName.includes(".") ? fileName.substring(fileName.lastIndexOf(".") + 1) : "";
+      const imageExt = ["jpg", "jpeg", "png", "gif", "webp", "bmp"];
+      const videoExt = ["mp4", "webm", "ogg", "mov", "m4v", "avi"];
+      const typeOk = isImage || isVideo || imageExt.includes(ext) || videoExt.includes(ext);
+      if (!typeOk) {
+        this.$message.error(`不支持的文件类型：${file.name}`);
+        return false;
+      }
+      const isLt100MB = file.size / 1024 / 1024 < 100;
+      if (!isLt100MB) {
+        this.$message.error(`文件过大（>${100}MB）：${file.name}`);
+        return false;
+      }
+      return true;
+    },
+    handleUploadError(error, file) {
+      const name = file && file.name ? file.name : "文件";
+      this.$message.error(`${name} 上传失败，请检查格式或大小限制`);
     },
     // 上传成功
     handleUploadSuccess(response, file, fileList) {
@@ -955,6 +1056,32 @@ export default {
       };
       return textMap[status] || "未知";
     },
+    getUploadStatusText(status) {
+      const map = {
+        ready: "待上传",
+        uploading: "上传中",
+        success: "成功",
+        fail: "失败",
+      };
+      return map[status] || "未知";
+    },
+    getUploadStatusType(status) {
+      const map = {
+        ready: "info",
+        uploading: "warning",
+        success: "success",
+        fail: "danger",
+      };
+      return map[status] || "info";
+    },
+    canReapply(row) {
+      if (!row) return false;
+      return row.auditStatus === 2 || row.auditStatus === 3 || row.goodsStatus === 3;
+    },
+    canOffline(row) {
+      if (!row) return false;
+      return row.shelfStatus === 1;
+    },
     // 格式化日期时间
     formatDateTime(timeStr) {
       if (!timeStr) return "";
@@ -1077,5 +1204,36 @@ export default {
 
 .el-tree-node__content:hover {
   background-color: #f5f7fa;
+}
+
+.upload-status-list {
+  margin-top: 8px;
+  max-height: 140px;
+  overflow-y: auto;
+  border: 1px solid #ebeef5;
+  border-radius: 4px;
+  padding: 8px;
+  background: #fafafa;
+}
+
+.upload-status-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.upload-status-item:last-child {
+  margin-bottom: 0;
+}
+
+.upload-file-name {
+  max-width: 460px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #606266;
+  font-size: 12px;
 }
 </style>

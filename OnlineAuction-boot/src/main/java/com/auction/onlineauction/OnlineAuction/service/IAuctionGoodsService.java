@@ -40,7 +40,7 @@ public interface IAuctionGoodsService extends IService<AuctionGoods> {
     /**
      * 新增商品
      */
-    AuctionGoods addGoods(Map<String, Object> requestData);
+    AuctionGoods addGoods(Map<String, Object> requestData, Long sellerId);
 
     /**
      * 更新商品

@@ -83,7 +83,7 @@
               编辑
             </el-button>
             <el-button
-              v-if="scope.row.auditStatus === 3"
+              v-if="scope.row.auditStatus === 2 || scope.row.auditStatus === 3 || scope.row.goodsStatus === 3"
               size="mini"
               type="success"
               icon="el-icon-upload2"
