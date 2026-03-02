@@ -115,6 +115,13 @@
 </template>
 
 <script>
+import {
+  getMessagePage,
+  addMessage,
+  updateMessage,
+  deleteMessage,
+} from "@/api/message";
+
 export default {
   name: "MessageBoard",
   data() {
@@ -146,7 +153,7 @@ export default {
   },
   mounted() {
     this.loadCurrentUser();
-    // this.loadMessages(); // 功能暂未实现
+    this.loadMessages();
   },
   methods: {
     // 加载当前用户信息
@@ -154,16 +161,24 @@ export default {
       const userInfo = localStorage.getItem("userInfo");
       if (userInfo) {
         const user = JSON.parse(userInfo);
-        this.currentUserId = user.id;
+        this.currentUserId = user.id || user.userId || null;
       }
     },
-    // 加载留言列表（功能暂未实现）
-    loadMessages() {
+    async loadMessages() {
       this.loading = true;
-      // TODO: 调用API加载留言列表
-      setTimeout(() => {
+      try {
+        const res = await getMessagePage({
+          current: this.pagination.current,
+          size: this.pagination.size,
+        });
+        this.messageList = (res && res.list) ? res.list : [];
+        this.pagination.total = (res && res.total) ? res.total : 0;
+      } catch (e) {
+        this.messageList = [];
+        this.pagination.total = 0;
+      } finally {
         this.loading = false;
-      }, 500);
+      }
     },
     // 判断是否是自己的留言
     isMyMessage(message) {
@@ -196,10 +211,10 @@ export default {
         cancelButtonText: "取消",
         type: "warning",
       })
-        .then(() => {
-          // TODO: 调用API删除留言
+        .then(async () => {
+          await deleteMessage(message.id);
           this.$message.success("删除成功");
-          // this.loadMessages();
+          this.loadMessages();
         })
         .catch(() => {
           // 用户取消
@@ -210,34 +225,48 @@ export default {
       this.$refs.messageForm.validate((valid) => {
         if (!valid) return;
         this.submitLoading = true;
-        // TODO: 调用API提交留言
-        setTimeout(() => {
-          this.submitLoading = false;
-          this.$message.success(this.isEdit ? "修改成功" : "发布成功");
-          this.dialogVisible = false;
-          // this.loadMessages();
-        }, 500);
+        const req = this.isEdit
+          ? updateMessage(this.formData.id, { messageContent: this.formData.messageContent })
+          : addMessage({ messageContent: this.formData.messageContent });
+        req
+          .then(() => {
+            this.$message.success(this.isEdit ? "修改成功" : "发布成功");
+            this.dialogVisible = false;
+            this.loadMessages();
+          })
+          .catch(() => {})
+          .finally(() => {
+            this.submitLoading = false;
+          });
       });
     },
     // 对话框关闭
     handleDialogClose() {
-      this.$refs.messageForm.resetFields();
+      if (this.$refs.messageForm) {
+        this.$refs.messageForm.resetFields();
+      }
+      this.formData = {
+        id: null,
+        messageContent: "",
+      };
+      this.isEdit = false;
     },
     // 分页大小变化
     handleSizeChange(size) {
       this.pagination.size = size;
       this.pagination.current = 1;
-      // this.loadMessages();
+      this.loadMessages();
     },
     // 当前页变化
     handleCurrentChange(current) {
       this.pagination.current = current;
-      // this.loadMessages();
+      this.loadMessages();
     },
     // 格式化日期时间
     formatDateTime(timeStr) {
       if (!timeStr) return "";
       const date = new Date(timeStr);
+      if (isNaN(date.getTime())) return timeStr;
       const year = date.getFullYear();
       const month = (date.getMonth() + 1).toString().padStart(2, "0");
       const day = date.getDate().toString().padStart(2, "0");

@@ -1,9 +1,6 @@
 package com.auction.onlineauction.OnlineAuction.common;
 
 import javax.servlet.http.HttpSession;
-import java.util.Arrays;
-import java.util.List;
-
 /**
  * 角色校验工具
  * 角色：1=普通用户 3=管理员 4=超级管理员 5=拍卖师 6=客服 7=财务 8=运营
@@ -122,6 +119,55 @@ public final class RoleCheckHelper {
      */
     public static boolean canProcessRefund(HttpSession session) {
         return hasAnyRole(session, 3, 4, 7);
+    }
+
+    /**
+     * 前台留言板可查看（买方、卖方）
+     */
+    public static boolean canViewMessageBoard(HttpSession session) {
+        return hasAnyRole(session, 1, 2);
+    }
+
+    /**
+     * 前台留言板可发布（买方、卖方）
+     */
+    public static boolean canAddMessageBoard(HttpSession session) {
+        return hasAnyRole(session, 1, 2);
+    }
+
+    /**
+     * 前台留言板可编辑自己的留言（买方、卖方）
+     */
+    public static boolean canEditMessageBoard(HttpSession session) {
+        return hasAnyRole(session, 1, 2);
+    }
+
+    /**
+     * 前台留言板可删除自己的留言（买方、卖方）
+     */
+    public static boolean canDeleteMessageBoard(HttpSession session) {
+        return hasAnyRole(session, 1, 2);
+    }
+
+    /**
+     * 后台留言管理可查看（管理员、超级管理员、客服）
+     */
+    public static boolean canViewMessageAdmin(HttpSession session) {
+        return hasAnyRole(session, 3, 4, 6);
+    }
+
+    /**
+     * 后台留言管理可回复（管理员、超级管理员、客服）
+     */
+    public static boolean canReplyMessageAdmin(HttpSession session) {
+        return hasAnyRole(session, 3, 4, 6);
+    }
+
+    /**
+     * 后台留言管理可删除（管理员、超级管理员）
+     */
+    public static boolean canDeleteMessageAdmin(HttpSession session) {
+        return hasAnyRole(session, 3, 4);
     }
 
     /**
