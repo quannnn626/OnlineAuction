@@ -62,6 +62,12 @@
           </ul>
         </div>
 
+        <div class="product-actions" v-if="canUseMessageCenter">
+          <el-button type="primary" plain icon="el-icon-chat-dot-round" @click="goToConsult">
+            咨询客服
+          </el-button>
+        </div>
+
         <!-- 竞拍区域 -->
         <div class="bid-section" v-if="canBid">
           <h3>参与竞拍</h3>
@@ -131,7 +137,7 @@
 
 <script>
 import { getGoodsDetail } from "@/api/goods";
-import { getCategoryList } from "@/api/category";
+import { getCategoryListForHome } from "@/api/category";
 import { submitBid, getRecordsByGoodsId } from "@/api/record";
 
 export default {
@@ -217,6 +223,18 @@ export default {
       }
       return this.displayImageList[this.selectedImageIndex];
     },
+    // 是否可使用消息中心（买方、卖方、超级管理员、客服）
+    canUseMessageCenter() {
+      const userInfo = localStorage.getItem("userInfo");
+      if (!userInfo) return false;
+      try {
+        const user = JSON.parse(userInfo);
+        const roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
+        return roles.some((r) => ["1", "2", "4", "6"].includes(r));
+      } catch (e) {
+        return false;
+      }
+    },
   },
   mounted() {
     this.loadGoodsDetail();
@@ -289,10 +307,19 @@ export default {
       this.bidForm.bidPrice = this.minBidPrice;
       this.handleSubmitBid();
     },
-    // 加载分类列表
+    // 跳转咨询客服
+    goToConsult() {
+      const goodsId = this.$route.query.id || this.goodsInfo.id;
+      if (!goodsId) {
+        this.$message.warning("商品信息异常");
+        return;
+      }
+      this.$router.push({ path: "/message", query: { goodsId } });
+    },
+    // 加载分类列表（使用公开接口，普通用户无需管理员权限）
     async loadCategoryList() {
       try {
-        const data = await getCategoryList();
+        const data = await getCategoryListForHome();
         this.categoryList = data || [];
         // 加载分类名称
         this.loadCategoryNames();
@@ -503,6 +530,10 @@ export default {
   padding: 5px 0;
   border-bottom: 1px solid #eee;
   color: #666;
+}
+
+.product-actions {
+  margin-bottom: 20px;
 }
 
 .product-category {

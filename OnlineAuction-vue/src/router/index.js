@@ -75,12 +75,13 @@ const routes = [
             name: "ProfileDeposit",
             component: () => import("@/views/ProfileDeposit.vue"),
           },
-          {
-            path: "message",
-            name: "ProfileMessage",
-            component: () => import("@/views/ProfileMessage.vue"),
-          },
         ],
+      },
+      {
+        path: "message",
+        name: "MessageCenter",
+        component: () => import("@/views/MessageCenter.vue"),
+        meta: { messageCenter: true },
       },
       {
         path: "admin",
@@ -213,21 +214,20 @@ router.beforeEach((to, from, next) => {
     }
   }
 
-  // 留言板页面权限检查（仅买方和卖方可以访问）
-  if (to.path === "/message-board") {
-    // 检查用户是否有买方或卖方角色
-    // 优先使用 isBuyer 和 isSeller 属性
-    let hasPermission = false;
-    if (user.isBuyer === true || user.isSeller === true) {
-      hasPermission = true;
-    } else if (user.userRole) {
-      // 如果 isBuyer/isSeller 未设置，根据 userRole 判断
-      // userRole 格式可能是 "1" 或 "1,2" 等（逗号分隔）
-      const roles = String(user.userRole).split(",").map(r => r.trim());
-      hasPermission = roles.includes("1") || roles.includes("2");
+  // 消息中心权限检查（买方、卖方、客服、超级管理员）
+  if (to.path === "/message" && to.meta?.messageCenter) {
+    const roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
+    const canAccess = roles.includes("1") || roles.includes("2") || roles.includes("4") || roles.includes("6");
+    if (!canAccess) {
+      next("/home");
+      return;
     }
-    
-    if (!hasPermission) {
+  }
+
+  // 留言板页面权限检查（仅普通用户 role=1 可以访问）
+  if (to.path === "/message-board") {
+    const roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
+    if (!roles.includes("1")) {
       next("/home");
       return;
     }

@@ -21,6 +21,13 @@ public interface IAuctionOrderService extends IService<AuctionOrder> {
     PageInfo<AuctionOrder> getOrderPage(Integer current, Integer size, Integer orderStatus,
                                         Long buyerId, Long sellerId, String orderNo);
 
+    /** 客服查看：仅展示咨询过该客服的用户订单，按创建时间倒序 */
+    PageInfo<AuctionOrder> getOrderPageForConsultedUsers(Long serviceId, Integer current, Integer size,
+                                                        Integer orderStatus, String orderNo);
+
+    /** 客服是否有权查看该订单（订单买方或卖方曾向该客服咨询过） */
+    boolean canServiceViewOrder(Long orderId, Long serviceId);
+
     /** 更新订单状态（结算：待付款->待发货；确认收货：待收货->已完成） */
     void updateOrderStatus(Long orderId, Integer newStatus);
 

@@ -1,8 +1,10 @@
 package com.auction.onlineauction.OnlineAuction.service.impl;
 
 import com.auction.onlineauction.OnlineAuction.entity.AuctionDeposit;
+import com.auction.onlineauction.OnlineAuction.entity.AuctionMessageSession;
 import com.auction.onlineauction.OnlineAuction.entity.AuctionOrder;
 import com.auction.onlineauction.OnlineAuction.entity.AuctionRecord;
+import com.auction.onlineauction.OnlineAuction.mapper.AuctionMessageSessionMapper;
 import com.auction.onlineauction.OnlineAuction.mapper.AuctionOrderMapper;
 import com.auction.onlineauction.OnlineAuction.service.IAuctionDepositService;
 import com.auction.onlineauction.OnlineAuction.service.IAuctionOrderService;
@@ -17,7 +19,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -33,6 +38,8 @@ public class AuctionOrderServiceImpl extends ServiceImpl<AuctionOrderMapper, Auc
 
     @Autowired
     private IAuctionDepositService depositService;
+    @Autowired
+    private AuctionMessageSessionMapper messageSessionMapper;
 
     @Override
     public PageInfo<AuctionOrder> getOrderPage(Integer current, Integer size, Integer orderStatus,
@@ -47,6 +54,43 @@ public class AuctionOrderServiceImpl extends ServiceImpl<AuctionOrderMapper, Auc
         q.orderByDesc("create_time");
         List<AuctionOrder> list = list(q);
         return new PageInfo<>(list);
+    }
+
+    @Override
+    public PageInfo<AuctionOrder> getOrderPageForConsultedUsers(Long serviceId, Integer current, Integer size,
+                                                               Integer orderStatus, String orderNo) {
+        if (serviceId == null) {
+            return new PageInfo<>(Collections.emptyList());
+        }
+        com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<AuctionMessageSession> sw = new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<>();
+        sw.eq("service_id", serviceId).eq("del_flag", 0).select("user_id");
+        List<AuctionMessageSession> sessions = messageSessionMapper.selectList(sw);
+        Set<Long> userIds = sessions.stream().map(AuctionMessageSession::getUserId).filter(java.util.Objects::nonNull).collect(Collectors.toSet());
+        if (userIds.isEmpty()) {
+            return new PageInfo<>(Collections.emptyList());
+        }
+        PageHelper.startPage(current, size);
+        QueryWrapper<AuctionOrder> q = new QueryWrapper<>();
+        q.eq("del_flag", 0).and(w -> w.in("buyer_id", userIds).or().in("seller_id", userIds));
+        if (orderStatus != null) q.eq("order_status", orderStatus);
+        if (orderNo != null && !orderNo.trim().isEmpty()) q.like("order_no", orderNo.trim());
+        q.orderByDesc("create_time");
+        List<AuctionOrder> list = list(q);
+        return new PageInfo<>(list);
+    }
+
+    @Override
+    public boolean canServiceViewOrder(Long orderId, Long serviceId) {
+        if (orderId == null || serviceId == null) return false;
+        AuctionOrder order = getById(orderId);
+        if (order == null || order.getDelFlag() == 1) return false;
+        java.util.Set<Long> partyIds = new java.util.HashSet<>();
+        if (order.getBuyerId() != null) partyIds.add(order.getBuyerId());
+        if (order.getSellerId() != null) partyIds.add(order.getSellerId());
+        if (partyIds.isEmpty()) return false;
+        com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<AuctionMessageSession> sw = new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<>();
+        sw.eq("service_id", serviceId).eq("del_flag", 0).in("user_id", partyIds);
+        return messageSessionMapper.selectCount(sw) > 0;
     }
 
     @Override

@@ -9,10 +9,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import java.util.Map;
 
 /**
- * 竞拍订单管理（后台）
+ * 竞拍订单（后台）
  * 财务、管理员、超级管理员可操作
  */
 @RestController
@@ -32,10 +33,22 @@ public class AuctionOrderController {
             @RequestParam(required = false) String orderNo,
             HttpServletRequest request) {
         try {
-            if (!RoleCheckHelper.canManageOrderAdmin(request.getSession(false))) {
+            HttpSession session = request.getSession(false);
+            if (session == null) {
+                return Result.error("未登录");
+            }
+            PageInfo<AuctionOrder> page;
+            if (RoleCheckHelper.canManageOrderAdmin(session)) {
+                page = orderService.getOrderPage(current, size, orderStatus, buyerId, sellerId, orderNo);
+            } else if (RoleCheckHelper.isCustomerService(session)) {
+                Long serviceId = (Long) session.getAttribute("userId");
+                if (serviceId == null) {
+                    return Result.error("未登录");
+                }
+                page = orderService.getOrderPageForConsultedUsers(serviceId, current, size, orderStatus, orderNo != null ? orderNo : "");
+            } else {
                 return Result.error("无权限查看订单");
             }
-            PageInfo<AuctionOrder> page = orderService.getOrderPage(current, size, orderStatus, buyerId, sellerId, orderNo);
             return Result.success("查询成功", page);
         } catch (Exception e) {
             return Result.error("查询失败：" + e.getMessage());
@@ -45,14 +58,24 @@ public class AuctionOrderController {
     @GetMapping("/{id}")
     public Result<AuctionOrder> getById(@PathVariable Long id, HttpServletRequest request) {
         try {
-            if (!RoleCheckHelper.canManageOrderAdmin(request.getSession(false))) {
-                return Result.error("无权限查看订单");
+            HttpSession session = request.getSession(false);
+            if (session == null) {
+                return Result.error("未登录");
             }
             AuctionOrder order = orderService.getById(id);
             if (order == null || order.getDelFlag() == 1) {
                 return Result.error("订单不存在");
             }
-            return Result.success("查询成功", order);
+            if (RoleCheckHelper.canManageOrderAdmin(session)) {
+                return Result.success("查询成功", order);
+            }
+            if (RoleCheckHelper.isCustomerService(session)) {
+                Long serviceId = (Long) session.getAttribute("userId");
+                if (serviceId != null && orderService.canServiceViewOrder(id, serviceId)) {
+                    return Result.success("查询成功", order);
+                }
+            }
+            return Result.error("无权限查看订单");
         } catch (Exception e) {
             return Result.error("查询失败：" + e.getMessage());
         }

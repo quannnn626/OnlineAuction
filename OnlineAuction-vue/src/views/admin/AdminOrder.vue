@@ -1,7 +1,7 @@
 <template>
   <div class="admin-order-page">
     <div class="page-header">
-      <h2>竞拍订单管理</h2>
+      <h2>竞拍订单</h2>
     </div>
     <div class="filter-section">
       <el-form :inline="true" :model="searchForm" class="search-form">
@@ -18,10 +18,10 @@
             <el-option label="已退款" :value="5"></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="买方ID">
+        <el-form-item v-if="canManageOrder" label="买方ID">
           <el-input v-model="searchForm.buyerId" placeholder="买方用户ID" clearable style="width: 120px"></el-input>
         </el-form-item>
-        <el-form-item label="卖方ID">
+        <el-form-item v-if="canManageOrder" label="卖方ID">
           <el-input v-model="searchForm.sellerId" placeholder="卖方用户ID" clearable style="width: 120px"></el-input>
         </el-form-item>
         <el-form-item>
@@ -53,14 +53,14 @@
         </el-table-column>
         <el-table-column label="操作" width="240" fixed="right">
           <template slot-scope="scope">
-            <el-button v-if="scope.row.orderStatus === 0" size="mini" type="success" icon="el-icon-check" @click="handleSettle(scope.row)">
+            <el-button v-if="canManageOrder && scope.row.orderStatus === 0" size="mini" type="success" icon="el-icon-check" @click="handleSettle(scope.row)">
               确认结算
             </el-button>
-            <el-button v-if="scope.row.orderStatus === 2" size="mini" type="primary" icon="el-icon-check" @click="handleConfirmReceipt(scope.row)">
+            <el-button v-if="canManageOrder && scope.row.orderStatus === 2" size="mini" type="primary" icon="el-icon-check" @click="handleConfirmReceipt(scope.row)">
               确认收货
             </el-button>
             <el-button
-              v-if="canRefund(scope.row)"
+              v-if="canManageOrder && canRefund(scope.row)"
               size="mini"
               type="warning"
               icon="el-icon-refresh-left"
@@ -68,6 +68,9 @@
             >
               退款
             </el-button>
+            <template v-if="!canManageOrder">
+              <span class="text-muted">仅查看</span>
+            </template>
           </template>
         </el-table-column>
       </el-table>
@@ -114,6 +117,20 @@ import {
 
 export default {
   name: "AdminOrder",
+  computed: {
+    // 财务、管理员、超级管理员可操作订单；客服仅查看
+    canManageOrder() {
+      const userInfo = localStorage.getItem("userInfo");
+      if (!userInfo) return false;
+      try {
+        const user = JSON.parse(userInfo);
+        const roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
+        return roles.some((r) => ["3", "4", "7"].includes(r));
+      } catch (e) {
+        return false;
+      }
+    },
+  },
   data() {
     return {
       loading: false,
@@ -250,4 +267,5 @@ export default {
 .filter-section { margin-bottom: 20px; }
 .table-section { background: #fff; padding: 20px; border-radius: 4px; }
 .pagination-section { margin-top: 20px; text-align: right; }
+.text-muted { color: #909399; font-size: 12px; }
 </style>

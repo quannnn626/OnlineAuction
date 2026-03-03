@@ -1,0 +1,398 @@
+<template>
+  <div class="message-center-page">
+    <div class="page-header">
+      <h2>消息中心</h2>
+      <p class="page-desc">以商品为核心的客服咨询，买方/卖方可就某商品向客服发起咨询</p>
+    </div>
+
+    <div class="content-layout">
+      <!-- 左侧：会话列表 -->
+      <div class="session-list">
+        <div class="session-list-header">
+          <span>我的会话</span>
+          <el-button type="text" size="small" @click="loadSessions" :loading="sessionsLoading">
+            <i class="el-icon-refresh"></i> 刷新
+          </el-button>
+        </div>
+        <div v-loading="sessionsLoading" class="session-items">
+          <div
+            v-for="s in sessionList"
+            :key="s.id"
+            class="session-item"
+            :class="{ active: currentSessionId === s.id }"
+            @click="selectSession(s)"
+          >
+            <div class="session-goods">{{ s.goodsName || "商品" }}</div>
+            <div class="session-meta">
+              <span v-if="s.serviceName">客服: {{ s.serviceName }}</span>
+              <span v-else class="text-warning">待分配</span>
+              <el-tag v-if="s.sessionStatus === 1" type="info" size="mini">已关闭</el-tag>
+            </div>
+          </div>
+          <el-empty v-if="!sessionsLoading && sessionList.length === 0" description="暂无会话"></el-empty>
+        </div>
+      </div>
+
+      <!-- 右侧：消息区域 -->
+      <div class="message-area">
+        <template v-if="currentSessionId">
+          <div class="message-header">
+            <span>{{ currentSessionDetail.goodsName || "会话" }}</span>
+            <el-button
+              v-if="isSuperAdmin && currentSessionDetail.sessionStatus !== 1"
+              type="text"
+              size="small"
+              @click="handleCloseSession"
+            >
+              关闭会话
+            </el-button>
+          </div>
+          <div class="message-list" ref="messageListRef">
+            <div
+              v-for="m in messageList"
+              :key="m.id"
+              class="message-item"
+              :class="{ 'is-mine': m.senderId === currentUserId }"
+            >
+              <div class="msg-meta">
+                <span class="sender">{{ m.senderName }}</span>
+                <span class="time">{{ formatTime(m.createTime) }}</span>
+              </div>
+              <div class="msg-body">
+                <template v-if="m.contentType === 1">
+                  <p class="msg-text">{{ m.content }}</p>
+                </template>
+                <template v-else-if="m.contentType === 2">
+                  <p class="msg-order">订单信息: {{ m.content }}</p>
+                </template>
+                <template v-else-if="m.contentType === 3 && m.filePath">
+                  <img v-if="m.fileType === 'image'" :src="getFileUrl(m.filePath)" class="msg-file" />
+                  <video v-else-if="m.fileType === 'video'" :src="getFileUrl(m.filePath)" controls class="msg-video"></video>
+                  <a v-else :href="getFileUrl(m.filePath)" target="_blank">{{ m.fileName || "附件" }}</a>
+                </template>
+              </div>
+            </div>
+          </div>
+          <div v-if="currentSessionDetail.sessionStatus !== 1" class="message-input">
+            <el-input
+              v-model="inputContent"
+              type="textarea"
+              :rows="3"
+              placeholder="输入消息内容..."
+              maxlength="500"
+              show-word-limit
+              @keydown.enter.ctrl="sendText"
+            ></el-input>
+            <div class="input-actions">
+              <el-upload
+                :action="uploadUrl"
+                :show-file-list="false"
+                :on-success="handleFileSuccess"
+                :before-upload="beforeFileUpload"
+              >
+                <el-button size="small" icon="el-icon-paperclip">附件</el-button>
+              </el-upload>
+              <el-button type="primary" size="small" @click="sendText" :loading="sendLoading">
+                发送
+              </el-button>
+            </div>
+          </div>
+        </template>
+        <div v-else class="message-empty">
+          <el-empty description="请从左侧选择会话，或从商品详情页点击「咨询客服」发起咨询"></el-empty>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import {
+  getOrCreateSession,
+  getSessions,
+  getSessionDetail,
+  getSessionMessages,
+  sendMessage,
+  closeSession,
+} from "@/api/messageCenter";
+
+export default {
+  name: "MessageCenter",
+  data() {
+    return {
+      sessionList: [],
+      sessionsLoading: false,
+      currentSessionId: null,
+      currentSessionDetail: {},
+      messageList: [],
+      messageLoading: false,
+      inputContent: "",
+      sendLoading: false,
+      currentUserId: null,
+      isSuperAdmin: false,
+      uploadUrl: "/api/OnlineAuction/auctionFile/upload?fileCategory=message",
+      pollTimer: null,
+    };
+  },
+  mounted() {
+    const user = JSON.parse(localStorage.getItem("userInfo") || "{}");
+    this.currentUserId = user.id || user.userId;
+    this.isSuperAdmin = user.isSuperAdmin === true || (user.userRole && String(user.userRole).includes("4"));
+    this.loadSessions();
+    const goodsId = this.$route.query.goodsId;
+    if (goodsId) {
+      getOrCreateSession(Number(goodsId))
+        .then((session) => {
+          this.loadSessions();
+          if (session && session.id) {
+            this.selectSession(session);
+          }
+        })
+        .catch(() => {});
+    }
+  },
+  beforeDestroy() {
+    if (this.pollTimer) clearInterval(this.pollTimer);
+  },
+  methods: {
+    async loadSessions() {
+      this.sessionsLoading = true;
+      try {
+        const res = await getSessions({ current: 1, size: 50 });
+        this.sessionList = (res && res.list) ? res.list : [];
+      } catch (e) {
+        this.sessionList = [];
+      } finally {
+        this.sessionsLoading = false;
+      }
+    },
+    async selectSession(s) {
+      this.currentSessionId = s.id;
+      this.currentSessionDetail = s;
+      try {
+        const detail = await getSessionDetail(s.id);
+        this.currentSessionDetail = detail || s;
+      } catch (e) {}
+      this.loadMessages();
+      if (this.pollTimer) clearInterval(this.pollTimer);
+      this.pollTimer = setInterval(() => this.loadMessages(), 5000);
+    },
+    async loadMessages() {
+      if (!this.currentSessionId) return;
+      this.messageLoading = true;
+      try {
+        const list = await getSessionMessages(this.currentSessionId);
+        this.messageList = list || [];
+        this.$nextTick(() => this.scrollToBottom());
+      } catch (e) {
+        this.messageList = [];
+      } finally {
+        this.messageLoading = false;
+      }
+    },
+    scrollToBottom() {
+      const el = this.$refs.messageListRef;
+      if (el) el.scrollTop = el.scrollHeight;
+    },
+    async sendText() {
+      const content = (this.inputContent || "").trim();
+      if (!content) return;
+      this.sendLoading = true;
+      try {
+        await sendMessage({
+          sessionId: this.currentSessionId,
+          contentType: 1,
+          content,
+        });
+        this.inputContent = "";
+        this.loadMessages();
+      } catch (e) {
+        this.$message.error(e.message || "发送失败");
+      } finally {
+        this.sendLoading = false;
+      }
+    },
+    handleFileSuccess(res, file) {
+      if (res && res.code === 200 && res.data) {
+        const fileId = Array.isArray(res.data) ? res.data[0]?.id : res.data?.id;
+        if (fileId) {
+          sendMessage({
+            sessionId: this.currentSessionId,
+            contentType: 3,
+            fileId,
+            content: "",
+          }).then(() => this.loadMessages()).catch(() => {});
+        }
+      }
+    },
+    beforeFileUpload(file) {
+      const isImage = file.type.startsWith("image/");
+      const isVideo = file.type.startsWith("video/");
+      if (!isImage && !isVideo) {
+        this.$message.error("仅支持图片或视频");
+        return false;
+      }
+      if (file.size > 20 * 1024 * 1024) {
+        this.$message.error("文件大小不能超过 20MB");
+        return false;
+      }
+      return true;
+    },
+    async handleCloseSession() {
+      try {
+        await this.$confirm("确定关闭该会话？", "提示", { type: "warning" });
+        await closeSession(this.currentSessionId);
+        this.$message.success("已关闭");
+        this.currentSessionId = null;
+        this.loadSessions();
+      } catch (e) {}
+    },
+    formatTime(t) {
+      if (!t) return "";
+      const d = new Date(t);
+      return isNaN(d.getTime()) ? t : d.toLocaleString("zh-CN", { hour12: false });
+    },
+    getFileUrl(path) {
+      if (!path) return "";
+      if (path.startsWith("http")) return path;
+      return (process.env.VUE_APP_BASE_API || "/api") + path;
+    },
+  },
+};
+</script>
+
+<style scoped>
+.message-center-page {
+  padding: 20px;
+  min-height: calc(100vh - 120px);
+}
+.page-header {
+  margin-bottom: 16px;
+}
+.page-desc {
+  color: #909399;
+  font-size: 13px;
+  margin: 4px 0 0;
+}
+.content-layout {
+  display: flex;
+  gap: 16px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  min-height: 500px;
+}
+.session-list {
+  width: 280px;
+  border-right: 1px solid #ebeef5;
+  display: flex;
+  flex-direction: column;
+}
+.session-list-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid #ebeef5;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.session-items {
+  flex: 1;
+  overflow-y: auto;
+}
+.session-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f5f7fa;
+  cursor: pointer;
+}
+.session-item:hover {
+  background: #f5f7fa;
+}
+.session-item.active {
+  background: #ecf5ff;
+  border-left: 3px solid #409eff;
+}
+.session-goods {
+  font-weight: 500;
+  color: #303133;
+}
+.session-meta {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 4px;
+}
+.text-warning {
+  color: #e6a23c;
+}
+.message-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.message-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid #ebeef5;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.message-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  max-height: 360px;
+}
+.message-item {
+  margin-bottom: 16px;
+}
+.message-item.is-mine .msg-body {
+  background: #ecf5ff;
+  margin-left: 40px;
+  margin-right: 0;
+}
+.msg-meta {
+  font-size: 12px;
+  color: #909399;
+  margin-bottom: 4px;
+}
+.msg-body {
+  background: #f5f7fa;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-right: 40px;
+  display: inline-block;
+}
+.msg-text,
+.msg-order {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.msg-file {
+  max-width: 200px;
+  max-height: 200px;
+  border-radius: 4px;
+}
+.msg-video {
+  max-width: 300px;
+  max-height: 200px;
+  border-radius: 4px;
+}
+.message-input {
+  padding: 12px 16px;
+  border-top: 1px solid #ebeef5;
+}
+.input-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+.message-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+</style>

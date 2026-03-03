@@ -102,15 +102,17 @@ export default {
       this.loading = true;
       try {
         const data = await getMenuTree(false);
-        // 前端双重保护：如果是超级管理员，过滤掉留言板菜单
+        // 前端双重保护：仅普通用户(role=1)可看到留言板，其他角色一律隐藏
         let menuTree = data || [];
         const userInfo = localStorage.getItem("userInfo");
         let user = null;
         if (userInfo) {
           try {
             user = JSON.parse(userInfo);
-            if (user.isSuperAdmin) {
-              // 过滤掉留言板菜单（ID=8 或路径为 /message-board）
+            const roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
+            const isOrdinaryUser = roles.includes("1");
+            if (!isOrdinaryUser) {
+              // 非普通用户：过滤掉留言板菜单
               menuTree = this.filterMenu(menuTree, (menu) => {
                 return menu.id !== 8 && menu.menuPath !== "/message-board";
               });

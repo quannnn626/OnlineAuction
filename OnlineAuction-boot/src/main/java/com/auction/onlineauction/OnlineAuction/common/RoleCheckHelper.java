@@ -122,31 +122,31 @@ public final class RoleCheckHelper {
     }
 
     /**
-     * 前台留言板可查看（买方、卖方）
+     * 前台留言板可查看（仅普通用户 role=1）
      */
     public static boolean canViewMessageBoard(HttpSession session) {
-        return hasAnyRole(session, 1, 2);
+        return hasAnyRole(session, 1);
     }
 
     /**
-     * 前台留言板可发布（买方、卖方）
+     * 前台留言板可发布（仅普通用户 role=1）
      */
     public static boolean canAddMessageBoard(HttpSession session) {
-        return hasAnyRole(session, 1, 2);
+        return hasAnyRole(session, 1);
     }
 
     /**
-     * 前台留言板可编辑自己的留言（买方、卖方）
+     * 前台留言板可编辑自己的留言（仅普通用户 role=1）
      */
     public static boolean canEditMessageBoard(HttpSession session) {
-        return hasAnyRole(session, 1, 2);
+        return hasAnyRole(session, 1);
     }
 
     /**
-     * 前台留言板可删除自己的留言（买方、卖方）
+     * 前台留言板可删除自己的留言（仅普通用户 role=1）
      */
     public static boolean canDeleteMessageBoard(HttpSession session) {
-        return hasAnyRole(session, 1, 2);
+        return hasAnyRole(session, 1);
     }
 
     /**
@@ -175,5 +175,20 @@ public final class RoleCheckHelper {
      */
     public static boolean canViewAuctionHistoryAdmin(HttpSession session) {
         return hasAnyRole(session, 3, 4);
+    }
+
+    /** 消息中心：买方、卖方、客服可查看和发送 */
+    public static boolean canUseMessageCenter(HttpSession session) {
+        return hasAnyRole(session, 1, 2, 4, 6);
+    }
+
+    /** 消息中心：超级管理员可查看所有（监管） */
+    public static boolean canViewAllMessageCenter(HttpSession session) {
+        return hasAnyRole(session, 4);
+    }
+
+    /** 是否为客服角色（用于分配会话） */
+    public static boolean isCustomerService(HttpSession session) {
+        return hasAnyRole(session, 6);
     }
 }
