@@ -34,10 +34,13 @@
     <!-- 树形控件区域 -->
     <div class="tree-section">
       <el-tree
-        :data="treeData"
+        ref="categoryTree"
+        :key="treeKey"
+        :data="displayTreeData"
         :props="treeProps"
         node-key="id"
         :expand-on-click-node="false"
+        :default-expanded-keys="expandedKeys"
         v-loading="loading"
         class="category-tree"
       >
@@ -182,6 +185,9 @@ export default {
       loading: false,
       submitLoading: false,
       treeData: [],
+      displayTreeData: [], // 展示的树数据（搜索时可能过滤）
+      expandedKeys: [], // 搜索后需展开的节点 ID 列表
+      treeKey: 0,
       treeProps: {
         children: "children",
         label: "categoryName",
@@ -233,21 +239,81 @@ export default {
     async loadData() {
       this.loading = true;
       try {
-        // request.js 的响应拦截器已经返回了 res.data，所以这里 result 就是树形数据数组
-        const result = await getCategoryTree(true); // 获取所有分类（包括禁用的）
+        const result = await getCategoryTree(true);
         if (result && Array.isArray(result)) {
           this.treeData = result;
-          // 同时加载用于级联选择器的数据（包含所有分类，不限制状态）
           await this.loadCategoryTreeOptions();
+          this.applySearchFilter();
         } else {
           this.treeData = [];
+          this.displayTreeData = [];
         }
       } catch (error) {
         this.$message.error("加载数据失败");
         this.treeData = [];
+        this.displayTreeData = [];
       } finally {
         this.loading = false;
       }
+    },
+    // 根据搜索关键词过滤树并计算需展开的节点
+    applySearchFilter() {
+      const keyword = (this.searchForm.categoryName || "").trim();
+      if (!keyword) {
+        this.displayTreeData = this.treeData;
+        this.expandedKeys = [];
+        this.treeKey += 1;
+        return;
+      }
+      const kw = keyword.toLowerCase();
+      const matchIds = [];
+      const findMatches = (nodes) => {
+        if (!nodes || !nodes.length) return;
+        for (const node of nodes) {
+          if (node.categoryName && node.categoryName.toLowerCase().includes(kw)) {
+            matchIds.push(node.id);
+          }
+          findMatches(node.children);
+        }
+      };
+      findMatches(this.treeData);
+
+      const ancestorIds = new Set();
+      const getAncestors = (nodes, targetId, path = []) => {
+        if (!nodes || !nodes.length) return false;
+        for (const node of nodes) {
+          if (node.id === targetId) {
+            path.forEach((id) => ancestorIds.add(id));
+            return true;
+          }
+          if (getAncestors(node.children || [], targetId, [...path, node.id])) {
+            return true;
+          }
+        }
+        return false;
+      };
+      matchIds.forEach((id) => getAncestors(this.treeData, id));
+      matchIds.forEach((id) => ancestorIds.add(id));
+
+      const filterByKeyword = (nodes) => {
+        if (!nodes || !nodes.length) return [];
+        return nodes
+          .map((node) => {
+            const isMatch = node.categoryName && node.categoryName.toLowerCase().includes(kw);
+            const filteredChildren = filterByKeyword(node.children);
+            const hasMatchInChildren = filteredChildren.length > 0;
+            if (!isMatch && !hasMatchInChildren) return null;
+            const newNode = { ...node };
+            newNode.children = isMatch ? (node.children || []) : filteredChildren;
+            return newNode;
+          })
+          .filter(Boolean);
+      };
+
+      const filtered = filterByKeyword(this.treeData);
+      this.displayTreeData = filtered.length > 0 ? filtered : this.treeData;
+      this.expandedKeys = [...ancestorIds];
+      this.treeKey += 1;
     },
     // 加载用于级联选择器的分类树（包含所有分类，用于选择父分类）
     async loadCategoryTreeOptions() {
