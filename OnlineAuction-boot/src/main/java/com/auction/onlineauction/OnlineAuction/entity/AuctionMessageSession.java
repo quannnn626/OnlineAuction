@@ -25,6 +25,10 @@ public class AuctionMessageSession implements Serializable {
     @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
+    /** 1=客服咨询(普通用户↔客服) 2=管理沟通(管理员/超管↔其他角色) */
+    @TableField("session_type")
+    private Integer sessionType;
+
     @TableField("goods_id")
     private Long goodsId;
 

@@ -1,11 +1,20 @@
 import request from "@/utils/request";
 
-/** 获取或创建会话（针对某商品） */
+/** 获取或创建会话（普通用户针对某商品发起客服咨询） */
 export function getOrCreateSession(goodsId) {
   return request({
     url: "/message-center/session",
     method: "post",
     data: { goodsId },
+  });
+}
+
+/** 获取或创建管理沟通会话（管理员/超管与内部角色建立对话） */
+export function getOrCreateAdminSession(targetUserId) {
+  return request({
+    url: "/message-center/admin-session",
+    method: "post",
+    data: { targetUserId },
   });
 }
 

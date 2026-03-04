@@ -177,9 +177,9 @@ public final class RoleCheckHelper {
         return hasAnyRole(session, 3, 4);
     }
 
-    /** 消息中心：买方、卖方、客服可查看和发送 */
+    /** 消息中心：买方、卖方、管理员、超级管理员、客服、拍卖师、财务、运营可查看（权限细分在会话类型） */
     public static boolean canUseMessageCenter(HttpSession session) {
-        return hasAnyRole(session, 1, 2, 4, 6);
+        return hasAnyRole(session, 1, 2, 3, 4, 5, 6, 7, 8);
     }
 
     /** 消息中心：超级管理员可查看所有（监管） */
@@ -190,5 +190,15 @@ public final class RoleCheckHelper {
     /** 是否为客服角色（用于分配会话） */
     public static boolean isCustomerService(HttpSession session) {
         return hasAnyRole(session, 6);
+    }
+
+    /** 管理员或超级管理员（可与其他内部角色建立管理沟通） */
+    public static boolean isAdminOrSuperAdmin(HttpSession session) {
+        return hasAnyRole(session, 3, 4);
+    }
+
+    /** 是否为可被管理员沟通的内部角色（卖方、客服、拍卖师、财务、运营，不含普通用户） */
+    public static boolean isStaffRole(int roleType) {
+        return roleType == 2 || roleType == 5 || roleType == 6 || roleType == 7 || roleType == 8;
     }
 }

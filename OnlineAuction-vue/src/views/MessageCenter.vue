@@ -2,7 +2,7 @@
   <div class="message-center-page">
     <div class="page-header">
       <h2>消息中心</h2>
-      <p class="page-desc">以商品为核心的客服咨询，买方/卖方可就某商品向客服发起咨询</p>
+      <p class="page-desc">客服咨询：普通用户/卖方可就某商品向客服发起咨询；管理沟通：管理员/超管可与内部角色对话</p>
     </div>
 
     <div class="content-layout">
@@ -10,6 +10,9 @@
       <div class="session-list">
         <div class="session-list-header">
           <span>我的会话</span>
+          <el-button v-if="isAdminOrSuperAdmin" type="text" size="small" @click="adminSessionVisible = true">
+            <i class="el-icon-plus"></i> 发起管理沟通
+          </el-button>
           <el-button type="text" size="small" @click="loadSessions" :loading="sessionsLoading">
             <i class="el-icon-refresh"></i> 刷新
           </el-button>
@@ -22,10 +25,15 @@
             :class="{ active: currentSessionId === s.id }"
             @click="selectSession(s)"
           >
-            <div class="session-goods">{{ s.goodsName || "商品" }}</div>
+            <div class="session-goods">{{ s.goodsName || (s.sessionType === 2 ? "管理沟通" : "商品") }}</div>
             <div class="session-meta">
-              <span v-if="s.serviceName">客服: {{ s.serviceName }}</span>
-              <span v-else class="text-warning">待分配</span>
+              <template v-if="s.sessionType === 2">
+                <span>对方: {{ (s.userId === currentUserId ? s.serviceName : s.userName) || '-' }}</span>
+              </template>
+              <template v-else>
+                <span v-if="s.serviceName">客服: {{ s.serviceName }}</span>
+                <span v-else class="text-warning">待分配</span>
+              </template>
               <el-tag v-if="s.sessionStatus === 1" type="info" size="mini">已关闭</el-tag>
             </div>
           </div>
@@ -37,9 +45,9 @@
       <div class="message-area">
         <template v-if="currentSessionId">
           <div class="message-header">
-            <span>{{ currentSessionDetail.goodsName || "会话" }}</span>
+            <span>{{ currentSessionDetail.goodsName || (currentSessionDetail.sessionType === 2 ? "管理沟通" : "会话") }}</span>
             <el-button
-              v-if="isSuperAdmin && currentSessionDetail.sessionStatus !== 1"
+              v-if="canCloseSession"
               type="text"
               size="small"
               @click="handleCloseSession"
@@ -99,16 +107,30 @@
           </div>
         </template>
         <div v-else class="message-empty">
-          <el-empty description="请从左侧选择会话，或从商品详情页点击「咨询客服」发起咨询"></el-empty>
+          <el-empty :description="emptyHint"></el-empty>
         </div>
       </div>
     </div>
+
+    <el-dialog title="发起管理沟通" :visible.sync="adminSessionVisible" width="400px">
+      <p class="dialog-tip">与卖方、客服、拍卖师、财务、运营建立对话（不可与普通用户沟通）</p>
+      <el-form label-width="100px">
+        <el-form-item label="目标用户ID">
+          <el-input v-model.number="adminTargetUserId" placeholder="输入目标用户的ID" type="number"></el-input>
+        </el-form-item>
+      </el-form>
+      <span slot="footer">
+        <el-button @click="adminSessionVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleCreateAdminSession" :loading="adminSessionLoading">确定</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import {
   getOrCreateSession,
+  getOrCreateAdminSession,
   getSessions,
   getSessionDetail,
   getSessionMessages,
@@ -118,6 +140,18 @@ import {
 
 export default {
   name: "MessageCenter",
+  computed: {
+    canCloseSession() {
+      const d = this.currentSessionDetail;
+      const uid = this.currentUserId;
+      return uid && d && d.sessionStatus !== 1 && (d.userId === uid || d.serviceId === uid);
+    },
+    emptyHint() {
+      return this.isAdminOrSuperAdmin
+        ? "请从左侧选择会话，或点击「发起管理沟通」与内部角色对话"
+        : "请从左侧选择会话，或从商品详情页点击「咨询客服」发起咨询";
+    },
+  },
   data() {
     return {
       sessionList: [],
@@ -129,7 +163,10 @@ export default {
       inputContent: "",
       sendLoading: false,
       currentUserId: null,
-      isSuperAdmin: false,
+      isAdminOrSuperAdmin: false,
+      adminSessionVisible: false,
+      adminTargetUserId: null,
+      adminSessionLoading: false,
       uploadUrl: "/api/OnlineAuction/auctionFile/upload?fileCategory=message",
       pollTimer: null,
     };
@@ -137,7 +174,7 @@ export default {
   mounted() {
     const user = JSON.parse(localStorage.getItem("userInfo") || "{}");
     this.currentUserId = user.id || user.userId;
-    this.isSuperAdmin = user.isSuperAdmin === true || (user.userRole && String(user.userRole).includes("4"));
+    this.isAdminOrSuperAdmin = (user.userRole && (String(user.userRole).includes("3") || String(user.userRole).includes("4")));
     this.loadSessions();
     const goodsId = this.$route.query.goodsId;
     if (goodsId) {
@@ -238,6 +275,28 @@ export default {
       }
       return true;
     },
+    async handleCreateAdminSession() {
+      const targetId = this.adminTargetUserId;
+      if (!targetId) {
+        this.$message.warning("请输入目标用户ID");
+        return;
+      }
+      this.adminSessionLoading = true;
+      try {
+        const session = await getOrCreateAdminSession(targetId);
+        this.adminSessionVisible = false;
+        this.adminTargetUserId = null;
+        this.loadSessions();
+        if (session && session.id) {
+          this.selectSession(session);
+        }
+        this.$message.success("已发起沟通");
+      } catch (e) {
+        this.$message.error(e.message || "发起失败");
+      } finally {
+        this.adminSessionLoading = false;
+      }
+    },
     async handleCloseSession() {
       try {
         await this.$confirm("确定关闭该会话？", "提示", { type: "warning" });
@@ -282,6 +341,11 @@ export default {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   overflow: hidden;
   min-height: 500px;
+}
+.dialog-tip {
+  color: #909399;
+  font-size: 12px;
+  margin-bottom: 16px;
 }
 .session-list {
   width: 280px;

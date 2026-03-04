@@ -223,14 +223,14 @@ export default {
       }
       return this.displayImageList[this.selectedImageIndex];
     },
-    // 是否可使用消息中心（买方、卖方、超级管理员、客服）
+    // 是否可显示咨询客服（仅普通用户、卖方可从商品页发起客服咨询；管理员等从消息中心发起管理沟通）
     canUseMessageCenter() {
       const userInfo = localStorage.getItem("userInfo");
       if (!userInfo) return false;
       try {
         const user = JSON.parse(userInfo);
         const roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
-        return roles.some((r) => ["1", "2", "4", "6"].includes(r));
+        return roles.includes("1") || roles.includes("2");
       } catch (e) {
         return false;
       }

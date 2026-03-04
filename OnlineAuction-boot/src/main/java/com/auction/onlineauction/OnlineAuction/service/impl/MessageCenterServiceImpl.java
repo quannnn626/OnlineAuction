@@ -53,6 +53,7 @@ public class MessageCenterServiceImpl implements IMessageCenterService {
         }
         Long serviceId = assignRandomService();
         AuctionMessageSession session = new AuctionMessageSession();
+        session.setSessionType(1);
         session.setGoodsId(goodsId);
         session.setUserId(userId);
         session.setServiceId(serviceId);
@@ -62,6 +63,55 @@ public class MessageCenterServiceImpl implements IMessageCenterService {
         session.setUpdateTime(LocalDateTime.now());
         sessionMapper.insert(session);
         return session;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public AuctionMessageSession getOrCreateAdminSession(Long adminUserId, Long targetUserId) {
+        if (adminUserId == null || targetUserId == null) {
+            throw new RuntimeException("参数不能为空");
+        }
+        AuctionUser target = userService.getById(targetUserId);
+        if (target == null || target.getDelFlag() == 1) {
+            throw new RuntimeException("目标用户不存在");
+        }
+        int targetRole = parseFirstRole(target.getUserRole());
+        if (targetRole == 1) {
+            throw new RuntimeException("不允许与普通用户建立管理沟通");
+        }
+        if (targetRole != 2 && targetRole != 5 && targetRole != 6 && targetRole != 7 && targetRole != 8) {
+            throw new RuntimeException("仅可与卖方、客服、拍卖师、财务、运营建立管理沟通");
+        }
+        QueryWrapper<AuctionMessageSession> q = new QueryWrapper<>();
+        q.eq("session_type", 2).eq("user_id", adminUserId).eq("service_id", targetUserId).eq("del_flag", 0);
+        AuctionMessageSession exist = sessionMapper.selectOne(q);
+        if (exist != null) {
+            if (exist.getSessionStatus() == 1) {
+                throw new RuntimeException("该会话已关闭");
+            }
+            return exist;
+        }
+        AuctionMessageSession session = new AuctionMessageSession();
+        session.setSessionType(2);
+        session.setGoodsId(null);
+        session.setUserId(adminUserId);
+        session.setServiceId(targetUserId);
+        session.setSessionStatus(0);
+        session.setDelFlag(0);
+        session.setCreateTime(LocalDateTime.now());
+        session.setUpdateTime(LocalDateTime.now());
+        sessionMapper.insert(session);
+        return session;
+    }
+
+    private int parseFirstRole(String userRole) {
+        if (userRole == null || userRole.trim().isEmpty()) return 0;
+        String first = userRole.split(",")[0].trim();
+        try {
+            return Integer.parseInt(first);
+        } catch (Exception e) {
+            return 0;
+        }
     }
 
     private Long assignRandomService() {
@@ -106,7 +156,7 @@ public class MessageCenterServiceImpl implements IMessageCenterService {
     public PageInfo<Map<String, Object>> getMySessions(Long userId, Integer current, Integer size) {
         PageHelper.startPage(current, size);
         QueryWrapper<AuctionMessageSession> q = new QueryWrapper<>();
-        q.eq("user_id", userId).eq("del_flag", 0).orderByDesc("update_time");
+        q.eq("session_type", 1).eq("user_id", userId).eq("del_flag", 0).orderByDesc("update_time");
         List<AuctionMessageSession> list = sessionMapper.selectList(q);
         return toSessionPage(list);
     }
@@ -115,7 +165,20 @@ public class MessageCenterServiceImpl implements IMessageCenterService {
     public PageInfo<Map<String, Object>> getServiceSessions(Long serviceId, Integer current, Integer size) {
         PageHelper.startPage(current, size);
         QueryWrapper<AuctionMessageSession> q = new QueryWrapper<>();
-        q.eq("service_id", serviceId).eq("del_flag", 0).orderByDesc("update_time");
+        q.eq("service_id", serviceId).eq("del_flag", 0).in("session_type", 1, 2).orderByDesc("update_time");
+        List<AuctionMessageSession> list = sessionMapper.selectList(q);
+        return toSessionPage(list);
+    }
+
+    @Override
+    public PageInfo<Map<String, Object>> getAdminSessions(Long currentUserId, Integer current, Integer size, boolean isSuperAdmin) {
+        PageHelper.startPage(current, size);
+        QueryWrapper<AuctionMessageSession> q = new QueryWrapper<>();
+        q.eq("session_type", 2).eq("del_flag", 0);
+        if (!isSuperAdmin) {
+            q.and(w -> w.eq("user_id", currentUserId).or().eq("service_id", currentUserId));
+        }
+        q.orderByDesc("update_time");
         List<AuctionMessageSession> list = sessionMapper.selectList(q);
         return toSessionPage(list);
     }
@@ -143,7 +206,7 @@ public class MessageCenterServiceImpl implements IMessageCenterService {
             empty.setPageSize(base.getPageSize());
             return empty;
         }
-        Set<Long> goodsIds = list.stream().map(AuctionMessageSession::getGoodsId).collect(Collectors.toSet());
+        Set<Long> goodsIds = list.stream().map(AuctionMessageSession::getGoodsId).filter(Objects::nonNull).collect(Collectors.toSet());
         Set<Long> userIds = new HashSet<>();
         list.forEach(s -> {
             userIds.add(s.getUserId());
@@ -163,8 +226,9 @@ public class MessageCenterServiceImpl implements IMessageCenterService {
             row.put("sessionStatus", s.getSessionStatus());
             row.put("createTime", s.getCreateTime());
             row.put("updateTime", s.getUpdateTime());
-            AuctionGoods g = goodsMap.get(s.getGoodsId());
-            row.put("goodsName", g != null ? g.getGoodsName() : "-");
+            AuctionGoods g = s.getGoodsId() != null ? goodsMap.get(s.getGoodsId()) : null;
+            row.put("goodsName", g != null ? g.getGoodsName() : (s.getSessionType() != null && s.getSessionType() == 2 ? "管理沟通" : "-"));
+            row.put("sessionType", s.getSessionType() != null ? s.getSessionType() : 1);
             AuctionUser u = userMap.get(s.getUserId());
             row.put("userName", u != null ? (u.getNickName() != null && !u.getNickName().isEmpty() ? u.getNickName() : u.getUserName()) : "-");
             AuctionUser svc = s.getServiceId() != null ? userMap.get(s.getServiceId()) : null;
@@ -195,8 +259,9 @@ public class MessageCenterServiceImpl implements IMessageCenterService {
         detail.put("serviceId", s.getServiceId());
         detail.put("sessionStatus", s.getSessionStatus());
         detail.put("createTime", s.getCreateTime());
-        AuctionGoods g = goodsService.getById(s.getGoodsId());
-        detail.put("goodsName", g != null ? g.getGoodsName() : "-");
+        AuctionGoods g = s.getGoodsId() != null ? goodsService.getById(s.getGoodsId()) : null;
+        detail.put("goodsName", g != null ? g.getGoodsName() : (s.getSessionType() != null && s.getSessionType() == 2 ? "管理沟通" : "-"));
+        detail.put("sessionType", s.getSessionType() != null ? s.getSessionType() : 1);
         AuctionUser u = userService.getById(s.getUserId());
         detail.put("userName", u != null ? (u.getNickName() != null && !u.getNickName().isEmpty() ? u.getNickName() : u.getUserName()) : "-");
         AuctionUser svc = s.getServiceId() != null ? userService.getById(s.getServiceId()) : null;
@@ -273,9 +338,15 @@ public class MessageCenterServiceImpl implements IMessageCenterService {
     @Override
     public boolean canAccessSession(Long sessionId, Long userId, boolean isSuperAdmin) {
         if (userId == null) return false;
-        if (isSuperAdmin) return true;
         AuctionMessageSession s = sessionMapper.selectById(sessionId);
         if (s == null || s.getDelFlag() == 1) return false;
-        return s.getUserId().equals(userId) || (s.getServiceId() != null && s.getServiceId().equals(userId));
+        int type = s.getSessionType() != null ? s.getSessionType() : 1;
+        if (type == 1) {
+            if (isSuperAdmin) return false;
+            return s.getUserId().equals(userId) || (s.getServiceId() != null && s.getServiceId().equals(userId));
+        } else {
+            if (isSuperAdmin) return true;
+            return s.getUserId().equals(userId) || (s.getServiceId() != null && s.getServiceId().equals(userId));
+        }
     }
 }

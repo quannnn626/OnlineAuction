@@ -214,10 +214,10 @@ router.beforeEach((to, from, next) => {
     }
   }
 
-  // 消息中心权限检查（买方、卖方、客服、超级管理员）
+  // 消息中心：买方、卖方、管理员、超管、客服、拍卖师、财务、运营均可访问（会话可见性由后端控制）
   if (to.path === "/message" && to.meta?.messageCenter) {
     const roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
-    const canAccess = roles.includes("1") || roles.includes("2") || roles.includes("4") || roles.includes("6");
+    const canAccess = roles.some((r) => ["1","2","3","4","5","6","7","8"].includes(r));
     if (!canAccess) {
       next("/home");
       return;

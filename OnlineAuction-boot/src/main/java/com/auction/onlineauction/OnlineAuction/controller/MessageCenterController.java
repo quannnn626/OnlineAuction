@@ -26,7 +26,7 @@ public class MessageCenterController {
     private IMessageCenterService messageCenterService;
 
     /**
-     * 获取或创建会话：用户针对某商品发起咨询
+     * 获取或创建会话：普通用户针对某商品发起客服咨询
      */
     @PostMapping("/session")
     public Result<AuctionMessageSession> getOrCreateSession(@RequestBody Map<String, Object> body, HttpServletRequest request) {
@@ -41,6 +41,28 @@ public class MessageCenterController {
             Long goodsId = body.get("goodsId") != null ? Long.valueOf(body.get("goodsId").toString()) : null;
             if (goodsId == null) return Result.error("商品ID不能为空");
             AuctionMessageSession s = messageCenterService.getOrCreateSession(goodsId, userId);
+            return Result.success("成功", s);
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+    }
+
+    /**
+     * 获取或创建管理沟通会话：管理员/超管与内部角色（卖方、客服、拍卖师、财务、运营）建立对话
+     */
+    @PostMapping("/admin-session")
+    public Result<AuctionMessageSession> getOrCreateAdminSession(@RequestBody Map<String, Object> body, HttpServletRequest request) {
+        try {
+            HttpSession session = request.getSession(false);
+            if (session == null) return Result.error("请先登录");
+            if (!RoleCheckHelper.isAdminOrSuperAdmin(session)) {
+                return Result.error("无权限建立管理沟通");
+            }
+            Long adminId = (Long) session.getAttribute("userId");
+            if (adminId == null) return Result.error("请先登录");
+            Long targetId = body.get("targetUserId") != null ? Long.valueOf(body.get("targetUserId").toString()) : null;
+            if (targetId == null) return Result.error("目标用户ID不能为空");
+            AuctionMessageSession s = messageCenterService.getOrCreateAdminSession(adminId, targetId);
             return Result.success("成功", s);
         } catch (Exception e) {
             return Result.error(e.getMessage());
@@ -94,10 +116,11 @@ public class MessageCenterController {
             if (currentUserId == null) return Result.error("请先登录");
 
             PageInfo<Map<String, Object>> page;
-            if (RoleCheckHelper.canViewAllMessageCenter(session)) {
-                page = messageCenterService.getAllSessions(current, size, goodsId, userId);
-            } else if (RoleCheckHelper.isCustomerService(session)) {
+            if (RoleCheckHelper.isCustomerService(session)) {
                 page = messageCenterService.getServiceSessions(currentUserId, current, size);
+            } else if (RoleCheckHelper.isAdminOrSuperAdmin(session) || RoleCheckHelper.hasAnyRole(session, 2, 5, 7, 8)) {
+                boolean isSuperAdmin = RoleCheckHelper.canViewAllMessageCenter(session);
+                page = messageCenterService.getAdminSessions(currentUserId, current, size, isSuperAdmin);
             } else {
                 page = messageCenterService.getMySessions(currentUserId, current, size);
             }
@@ -167,18 +190,19 @@ public class MessageCenterController {
     }
 
     /**
-     * 关闭会话（超级管理员）
+     * 关闭会话（管理员/超管/客服可关闭自己参与的会话）
      */
     @PutMapping("/session/{id}/close")
     public Result<Void> closeSession(@PathVariable Long id, HttpServletRequest request) {
         try {
             HttpSession session = request.getSession(false);
             if (session == null) return Result.error("请先登录");
-            if (!RoleCheckHelper.canViewAllMessageCenter(session)) {
-                return Result.error("无权限关闭会话");
-            }
             Long userId = (Long) session.getAttribute("userId");
             if (userId == null) return Result.error("请先登录");
+            boolean isSuperAdmin = RoleCheckHelper.canViewAllMessageCenter(session);
+            if (!messageCenterService.canAccessSession(id, userId, isSuperAdmin)) {
+                return Result.error("无权限关闭该会话");
+            }
             messageCenterService.closeSession(id, userId);
             return Result.success("关闭成功", null);
         } catch (Exception e) {
