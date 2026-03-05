@@ -38,7 +38,7 @@ public class AuctionOrderController {
                 return Result.error("未登录");
             }
             PageInfo<AuctionOrder> page;
-            if (RoleCheckHelper.canManageOrderAdmin(session)) {
+            if (RoleCheckHelper.canViewOrderAdmin(session)) {
                 page = orderService.getOrderPage(current, size, orderStatus, buyerId, sellerId, orderNo);
             } else if (RoleCheckHelper.isCustomerService(session)) {
                 Long serviceId = (Long) session.getAttribute("userId");
@@ -66,7 +66,7 @@ public class AuctionOrderController {
             if (order == null || order.getDelFlag() == 1) {
                 return Result.error("订单不存在");
             }
-            if (RoleCheckHelper.canManageOrderAdmin(session)) {
+            if (RoleCheckHelper.canViewOrderAdmin(session)) {
                 return Result.success("查询成功", order);
             }
             if (RoleCheckHelper.isCustomerService(session)) {
@@ -111,6 +111,40 @@ public class AuctionOrderController {
             return Result.success("退款成功", null);
         } catch (Exception e) {
             return Result.error("退款失败：" + e.getMessage());
+        }
+    }
+
+    /** 落槌确认：拍卖师/管理员确认成交，生成成交确认书编号 */
+    @PostMapping("/{id}/confirm-deal")
+    public Result<Void> confirmDeal(@PathVariable Long id, HttpServletRequest request) {
+        try {
+            if (!RoleCheckHelper.canConfirmDeal(request.getSession(false))) {
+                return Result.error("无权限落槌确认");
+            }
+            Long uid = (Long) request.getSession(false).getAttribute("userId");
+            if (uid == null) return Result.error("未登录");
+            orderService.confirmDeal(id, uid);
+            return Result.success("落槌确认成功", null);
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+    }
+
+    /** 发货：填写快递信息 */
+    @PutMapping("/{id}/ship")
+    public Result<Void> shipOrder(@PathVariable Long id, @RequestBody Map<String, Object> body, HttpServletRequest request) {
+        try {
+            AuctionOrder order = orderService.getById(id);
+            if (order == null) return Result.error("订单不存在");
+            if (!RoleCheckHelper.canShipOrder(request.getSession(false), order.getSellerId())) {
+                return Result.error("无权限发货");
+            }
+            String expressCompany = body != null && body.get("expressCompany") != null ? body.get("expressCompany").toString() : null;
+            String expressNo = body != null && body.get("expressNo") != null ? body.get("expressNo").toString() : null;
+            orderService.shipOrder(id, expressCompany, expressNo);
+            return Result.success("发货成功", null);
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
         }
     }
 }

@@ -8,6 +8,11 @@ export function getOrderById(id) {
   return request({ url: `/order/${id}`, method: "get" });
 }
 
+/** 买方确认收货 */
+export function confirmReceipt(id) {
+  return request({ url: `/order/${id}/confirm-receipt`, method: "put" });
+}
+
 export function getAdminOrderPage(params) {
   return request({ url: "/OnlineAuction/auctionOrder/page", method: "get", params });
 }
@@ -22,4 +27,18 @@ export function updateOrderStatus(id, orderStatus) {
 
 export function processRefund(id, remark) {
   return request({ url: `/OnlineAuction/auctionOrder/${id}/refund`, method: "post", data: { remark } });
+}
+
+/** 落槌确认 */
+export function confirmDeal(id) {
+  return request({ url: `/OnlineAuction/auctionOrder/${id}/confirm-deal`, method: "post" });
+}
+
+/** 发货 */
+export function shipOrder(id, expressCompany, expressNo) {
+  return request({
+    url: `/OnlineAuction/auctionOrder/${id}/ship`,
+    method: "put",
+    data: { expressCompany, expressNo },
+  });
 }

@@ -108,7 +108,14 @@ public final class RoleCheckHelper {
     }
 
     /**
-     * 可管理后台订单（查看、状态更新、结算）
+     * 可查看后台订单列表/详情（管理员、超级管理员、拍卖师、财务、运营）
+     */
+    public static boolean canViewOrderAdmin(HttpSession session) {
+        return hasAnyRole(session, 3, 4, 5, 7, 8);
+    }
+
+    /**
+     * 可管理后台订单（状态更新、结算，不含拍卖师）
      */
     public static boolean canManageOrderAdmin(HttpSession session) {
         return hasAnyRole(session, 3, 4, 7);
@@ -119,6 +126,27 @@ public final class RoleCheckHelper {
      */
     public static boolean canProcessRefund(HttpSession session) {
         return hasAnyRole(session, 3, 4, 7);
+    }
+
+    /** 可落槌确认成交（拍卖师、管理员、超级管理员） */
+    public static boolean canConfirmDeal(HttpSession session) {
+        return hasAnyRole(session, 3, 4, 5);
+    }
+
+    /** 可发货（卖方本人、管理员、超级管理员、运营） */
+    public static boolean canShipOrder(HttpSession session, Long sellerId) {
+        if (sellerId == null) return hasAnyRole(session, 3, 4, 8);
+        Long uid = getUserId(session);
+        if (uid != null && uid.equals(sellerId)) return true;
+        return hasAnyRole(session, 3, 4, 8);
+    }
+
+    private static Long getUserId(HttpSession session) {
+        if (session == null) return null;
+        Object v = session.getAttribute("userId");
+        if (v instanceof Long) return (Long) v;
+        if (v instanceof Number) return ((Number) v).longValue();
+        return null;
     }
 
     /**
@@ -171,10 +199,10 @@ public final class RoleCheckHelper {
     }
 
     /**
-     * 可查看后台历史竞拍管理（仅管理员、超级管理员）
+     * 可查看后台历史竞拍管理（管理员、超级管理员、拍卖师）
      */
     public static boolean canViewAuctionHistoryAdmin(HttpSession session) {
-        return hasAnyRole(session, 3, 4);
+        return hasAnyRole(session, 3, 4, 5);
     }
 
     /** 消息中心：买方、卖方、管理员、超级管理员、客服、拍卖师、财务、运营可查看（权限细分在会话类型） */

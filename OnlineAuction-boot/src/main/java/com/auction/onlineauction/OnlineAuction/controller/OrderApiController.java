@@ -57,4 +57,18 @@ public class OrderApiController {
             return Result.error("查询失败：" + e.getMessage());
         }
     }
+
+    /** 买方确认收货（仅买方本人，订单状态 待收货->已完成） */
+    @PutMapping("/{id}/confirm-receipt")
+    public Result<Void> confirmReceipt(@PathVariable Long id, HttpServletRequest request) {
+        try {
+            if (request.getSession(false) == null) return Result.error("请先登录");
+            Long userId = (Long) request.getSession(false).getAttribute("userId");
+            if (userId == null) return Result.error("请先登录");
+            orderService.confirmReceiptByBuyer(id, userId);
+            return Result.success("确认收货成功", null);
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+    }
 }

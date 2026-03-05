@@ -33,6 +33,19 @@
       <el-table-column prop="createTime" label="创建时间" width="160">
         <template slot-scope="scope">{{ formatDateTime(scope.row.createTime) }}</template>
       </el-table-column>
+      <el-table-column v-if="roleType === 'buyer'" label="物流" width="140">
+        <template slot-scope="scope">
+          <span v-if="scope.row.expressCompany">{{ scope.row.expressCompany }} {{ scope.row.expressNo }}</span>
+          <span v-else class="text-muted">-</span>
+        </template>
+      </el-table-column>
+      <el-table-column v-if="roleType === 'buyer'" label="操作" width="100">
+        <template slot-scope="scope">
+          <el-button v-if="scope.row.orderStatus === 2" size="mini" type="success" @click="handleConfirmReceipt(scope.row)">
+            确认收货
+          </el-button>
+        </template>
+      </el-table-column>
     </el-table>
     <el-empty v-if="!loading && tableData.length === 0" description="暂无订单"></el-empty>
     <div class="pagination-wrap" v-if="pagination.total > 0">
@@ -50,7 +63,7 @@
 </template>
 
 <script>
-import { getMyOrderPage } from "@/api/order";
+import { getMyOrderPage, confirmReceipt } from "@/api/order";
 
 export default {
   name: "ProfileOrder",
@@ -110,6 +123,23 @@ export default {
       const d = new Date(val);
       return isNaN(d.getTime()) ? val : d.toLocaleString("zh-CN", { hour12: false });
     },
+    handleConfirmReceipt(row) {
+      this.$confirm("确认已收到商品，完成订单？", "确认收货", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "info",
+      })
+        .then(async () => {
+          try {
+            await confirmReceipt(row.id);
+            this.$message.success("确认收货成功");
+            this.loadData();
+          } catch (e) {
+            this.$message.error(e.message || "操作失败");
+          }
+        })
+        .catch(() => {});
+    },
   },
 };
 </script>
@@ -118,4 +148,5 @@ export default {
 .profile-order-page { padding: 20px; }
 .filter-bar { margin-bottom: 20px; display: flex; align-items: center; }
 .pagination-wrap { margin-top: 20px; }
+.text-muted { color: #909399; font-size: 12px; }
 </style>

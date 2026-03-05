@@ -19,11 +19,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * <p>
@@ -197,7 +197,63 @@ public class AuctionOrderServiceImpl extends ServiceImpl<AuctionOrderMapper, Auc
 
     private String generateOrderNo() {
         String prefix = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        int suffix = ThreadLocalRandom.current().nextInt(10000000, 100000000);
+        int suffix = java.util.concurrent.ThreadLocalRandom.current().nextInt(10000000, 100000000);
         return prefix + suffix;
+    }
+
+    @Override
+    public void confirmDeal(Long orderId, Long confirmUserId) {
+        AuctionOrder order = getById(orderId);
+        if (order == null || order.getDelFlag() == 1) {
+            throw new RuntimeException("订单不存在");
+        }
+        if (order.getConfirmDealAt() != null) {
+            throw new RuntimeException("该订单已落槌确认");
+        }
+        if (order.getOrderStatus() != 0 && order.getOrderStatus() != 1) {
+            throw new RuntimeException("仅待付款或待发货订单可执行落槌确认");
+        }
+        order.setConfirmDealAt(LocalDateTime.now());
+        order.setConfirmUserId(confirmUserId);
+        order.setConfirmationNo("CJQS" + order.getOrderNo());
+        order.setUpdateTime(LocalDateTime.now());
+        updateById(order);
+    }
+
+    @Override
+    public void shipOrder(Long orderId, String expressCompany, String expressNo) {
+        AuctionOrder order = getById(orderId);
+        if (order == null || order.getDelFlag() == 1) {
+            throw new RuntimeException("订单不存在");
+        }
+        if (order.getOrderStatus() != 1) {
+            throw new RuntimeException("仅待发货订单可执行发货");
+        }
+        if (expressCompany == null || expressCompany.trim().isEmpty() || expressNo == null || expressNo.trim().isEmpty()) {
+            throw new RuntimeException("请填写快递公司和快递单号");
+        }
+        order.setExpressCompany(expressCompany.trim());
+        order.setExpressNo(expressNo.trim());
+        order.setShipTime(LocalDateTime.now());
+        order.setOrderStatus(2);
+        order.setUpdateTime(LocalDateTime.now());
+        updateById(order);
+    }
+
+    @Override
+    public void confirmReceiptByBuyer(Long orderId, Long buyerId) {
+        AuctionOrder order = getById(orderId);
+        if (order == null || order.getDelFlag() == 1) {
+            throw new RuntimeException("订单不存在");
+        }
+        if (!order.getBuyerId().equals(buyerId)) {
+            throw new RuntimeException("仅买方本人可确认收货");
+        }
+        if (order.getOrderStatus() != 2) {
+            throw new RuntimeException("仅待收货订单可确认收货");
+        }
+        order.setOrderStatus(3);
+        order.setUpdateTime(LocalDateTime.now());
+        updateById(order);
     }
 }

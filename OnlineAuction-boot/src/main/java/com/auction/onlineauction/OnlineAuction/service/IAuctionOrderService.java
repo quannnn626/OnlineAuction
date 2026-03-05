@@ -34,6 +34,15 @@ public interface IAuctionOrderService extends IService<AuctionOrder> {
     /** 处理退款：订单状态改为已退款，解冻买方保证金 */
     void processRefund(Long orderId, String remark);
 
+    /** 落槌确认：拍卖师/管理员确认成交，生成成交确认书编号，锁定买受人 */
+    void confirmDeal(Long orderId, Long confirmUserId);
+
+    /** 发货：填写快递信息，订单状态 待发货->待收货 */
+    void shipOrder(Long orderId, String expressCompany, String expressNo);
+
+    /** 买方确认收货：仅买方本人可操作，待收货->已完成 */
+    void confirmReceiptByBuyer(Long orderId, Long buyerId);
+
     /** 指定商品是否已存在有效订单 */
     boolean existsActiveOrderByGoodsId(Long goodsId);
 

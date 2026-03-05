@@ -94,6 +94,42 @@ public class AuctionOrder implements Serializable {
     private Integer orderStatus;
 
     /**
+     * 落槌确认时间（拍卖师/管理员确认成交）
+     */
+    @TableField("confirm_deal_at")
+    private LocalDateTime confirmDealAt;
+
+    /**
+     * 落槌确认人ID（关联auction_user.id）
+     */
+    @TableField("confirm_user_id")
+    private Long confirmUserId;
+
+    /**
+     * 成交确认书编号
+     */
+    @TableField("confirmation_no")
+    private String confirmationNo;
+
+    /**
+     * 快递公司
+     */
+    @TableField("express_company")
+    private String expressCompany;
+
+    /**
+     * 快递单号
+     */
+    @TableField("express_no")
+    private String expressNo;
+
+    /**
+     * 发货时间
+     */
+    @TableField("ship_time")
+    private LocalDateTime shipTime;
+
+    /**
      * 创建时间（竞拍成交后系统自动生成）
      */
     @TableField("create_time")
