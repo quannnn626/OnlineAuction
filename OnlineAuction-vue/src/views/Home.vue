@@ -215,14 +215,15 @@ export default {
   mounted() {
     this.loadCategories();
     this.loadBanners();
-    this.loadGuessYouLike();
+    this.loadHotGoods();
   },
   methods: {
     async loadHotGoods() {
       this.goodsLoading = true;
       try {
-        const list = await getHotGoods(12);
-        this.goodsList = Array.isArray(list) ? list : [];
+        const res = await getHotGoods(12);
+        // 兼容 data 为数组或 PageInfo { list } 两种格式
+        this.goodsList = Array.isArray(res) ? res : (res && res.list) || [];
       } catch (e) {
         this.goodsList = [];
       } finally {
