@@ -4,6 +4,8 @@ import com.auction.onlineauction.OnlineAuction.common.Result;
 import com.auction.onlineauction.OnlineAuction.entity.AuctionGoods;
 import com.auction.onlineauction.OnlineAuction.service.IAuctionGoodsService;
 import com.github.pagehelper.PageInfo;
+
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -72,11 +74,26 @@ public class GoodsApiController extends BaseApiController {
     }
 
     /**
-     * 获取商品详情（仅已上架且审核通过的商品）
+     * 热门商品：按点击量倒序，只展示上架且审核通过的商品
+     */
+    @GetMapping("/hot")
+    public Result<List<AuctionGoods>> getHotGoods(
+            @RequestParam(defaultValue = "12") Integer limit) {
+        try {
+            List<AuctionGoods> list = goodsService.getGuessYouLikeGoods(limit);
+            return Result.success("查询成功", list);
+        } catch (Exception e) {
+            return Result.error("查询失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 获取商品详情（仅已上架且审核通过的商品），访问时增加点击量
      */
     @GetMapping("/{id}")
     public Result<AuctionGoods> getGoodsById(@PathVariable Long id) {
         try {
+            goodsService.incrementViewCount(id);
             AuctionGoods goods = goodsService.getGoodsByIdForPublic(id);
             return Result.success("查询成功", goods);
         } catch (Exception e) {

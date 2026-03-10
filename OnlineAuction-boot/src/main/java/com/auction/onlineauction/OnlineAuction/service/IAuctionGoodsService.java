@@ -98,4 +98,10 @@ public interface IAuctionGoodsService extends IService<AuctionGoods> {
      * 重新申请上架（将已下架商品改为待审核状态）
      */
     void reapplyGoods(Long id, Long userId);
+
+    /** 猜你喜欢：按点击量倒序，只展示上架且审核通过的商品 */
+    List<AuctionGoods> getGuessYouLikeGoods(int limit);
+
+    /** 增加商品点击量（进入详情页时调用） */
+    void incrementViewCount(Long goodsId);
 }

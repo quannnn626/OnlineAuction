@@ -659,4 +659,38 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
             throw new RuntimeException("重新申请上架失败");
         }
     }
+
+    @Override
+    public List<AuctionGoods> getGuessYouLikeGoods(int limit) {
+        int safeLimit = Math.max(1, Math.min(limit, 50));
+        QueryWrapper<AuctionGoods> wrapper = new QueryWrapper<>();
+        wrapper.eq("del_flag", 0)
+                .eq("shelf_status", 1)
+                .eq("audit_status", 1)
+                .in("goods_status", 0, 1)
+                .orderByDesc("view_count")
+                .last("LIMIT " + safeLimit);
+        List<AuctionGoods> list = list(wrapper);
+        // 若无符合条件的商品（未开始/竞拍中），放宽为仅需上架且审核通过（包含已结束的）
+        if (list.isEmpty()) {
+            wrapper = new QueryWrapper<>();
+            wrapper.eq("del_flag", 0)
+                    .eq("shelf_status", 1)
+                    .eq("audit_status", 1)
+                    .orderByDesc("view_count")
+                    .last("LIMIT " + safeLimit);
+            list = list(wrapper);
+        }
+        for (AuctionGoods goods : list) {
+            updateGoodsStatusByTime(goods);
+            loadFilesForGoods(goods);
+        }
+        return list;
+    }
+
+    @Override
+    public void incrementViewCount(Long goodsId) {
+        if (goodsId == null) return;
+        baseMapper.incrementViewCount(goodsId);
+    }
 }

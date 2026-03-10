@@ -101,10 +101,10 @@ public final class RoleCheckHelper {
     }
 
     /**
-     * 可查看/管理后台保证金（财务、管理员、超级管理员）
+     * 可查看/管理后台保证金（仅财务、超级管理员，管理员无此权限）
      */
     public static boolean canManageDepositAdmin(HttpSession session) {
-        return hasAnyRole(session, 3, 4, 7);
+        return hasAnyRole(session, 4, 7);
     }
 
     /**

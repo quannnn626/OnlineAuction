@@ -144,8 +144,8 @@
 
     <!-- 猜你喜欢商品列表区域 -->
     <div class="goods-section">
-      <div class="goods-title"><i class="el-icon-thumb"></i> 猜你喜欢</div>
-      <div class="goods-list" v-if="goodsList.length > 0">
+      <div class="goods-title"><i class="el-icon-thumb"></i> 热门商品</div>
+      <div class="goods-list" v-loading="goodsLoading" v-if="goodsList.length > 0">
         <div
           v-for="goods in goodsList"
           :key="goods.id"
@@ -165,7 +165,7 @@
             </div>
             <div class="goods-item-image">
               <img
-                :src="getGoodsImage(goods.goodsImg)"
+                :src="getGoodsImageUrl(goods)"
                 :alt="goods.goodsName"
                 @error="handleImageError"
               />
@@ -186,7 +186,7 @@
           </div>
         </div>
       </div>
-      <el-empty v-else description="暂无商品数据"></el-empty>
+      <el-empty v-else-if="!goodsLoading" description="暂无商品数据"></el-empty>
     </div>
   </div>
 </template>
@@ -194,6 +194,7 @@
 <script>
 import { getCategoryTreeForHome } from "@/api/category";
 import { getBannerList } from "@/api/banner";
+import { getHotGoods } from "@/api/goods";
 
 export default {
   name: "Home",
@@ -207,26 +208,27 @@ export default {
       hoveredCategoryId: null, // 当前悬浮的一级分类ID
       categoryLoading: false,
       dropdownTimer: null, // 用于延迟隐藏下拉面板
-      goodsList: [
-        {
-          id: 1,
-          goodsName: "清代青花瓷花瓶",
-          goodsDesc:
-            "清代乾隆年间青花瓷花瓶，保存完好，具有很高的收藏价值。瓶身绘有精美的花鸟图案，工艺精湛。",
-          goodsImg: "/images/goods-placeholder.svg",
-          basePrice: 50000.0,
-          startTime: "2025-01-01 10:00:00",
-          endTime: "2025-01-05 18:00:00",
-          goodsStatus: 1,
-        },
-      ],
+      goodsList: [],
+      goodsLoading: false,
     };
   },
   mounted() {
     this.loadCategories();
     this.loadBanners();
+    this.loadGuessYouLike();
   },
   methods: {
+    async loadHotGoods() {
+      this.goodsLoading = true;
+      try {
+        const list = await getHotGoods(12);
+        this.goodsList = Array.isArray(list) ? list : [];
+      } catch (e) {
+        this.goodsList = [];
+      } finally {
+        this.goodsLoading = false;
+      }
+    },
     async loadBanners() {
       try {
         const data = await getBannerList();
@@ -317,12 +319,19 @@ export default {
     handleGoodsClick(goods) {
       this.$router.push({ path: "/goods-detail", query: { id: goods.id } });
     },
-    getGoodsImage(goodsImg) {
-      if (!goodsImg) {
-        return "/images/no-image.svg";
+    getGoodsImageUrl(goods) {
+      const files = goods.files || [];
+      const firstImg = files.find((f) => f && f.filePath && /\.(jpg|jpeg|png|gif|webp|bmp|svg)/i.test(f.filePath));
+      if (firstImg && firstImg.filePath) {
+        const p = firstImg.filePath;
+        return /^https?:\/\//i.test(p) ? p : (p.startsWith("/") ? p : "/" + p);
       }
-      const images = goodsImg.split(",");
-      return images[0].trim();
+      if (goods.goodsImg) {
+        const imgs = String(goods.goodsImg).split(",");
+        const url = imgs[0] && imgs[0].trim();
+        if (url) return url.startsWith("/") ? url : "/" + url;
+      }
+      return "/images/no-image.svg";
     },
     handleImageError(event) {
       event.target.src = "/images/no-image.svg";

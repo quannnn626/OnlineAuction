@@ -149,5 +149,23 @@ public class AuctionGoods implements Serializable {
     @TableField("del_flag")
     private Integer delFlag;
 
+    /**
+     * 商品点击量（用于猜你喜欢排序）
+     */
+    @TableField("view_count")
+    private Integer viewCount;
+
+    /**
+     * 商品收藏量
+     */
+    @TableField("collect_count")
+    private Integer collectCount;
+
+    /**
+     * 商品竞价次数
+     */
+    @TableField("bid_count")
+    private Integer bidCount;
+
 
 }
