@@ -21,6 +21,39 @@ service.interceptors.request.use(
   }
 );
 
+// 判断是否为会话失效（需跳转登录）
+function isSessionExpired(msg, response) {
+  if (!msg) msg = "";
+  const msgStr = String(msg);
+  if (
+    msgStr.indexOf("未登录") !== -1 ||
+    msgStr.indexOf("请先登录") !== -1 ||
+    msgStr.indexOf("登录过期") !== -1
+  ) {
+    return true;
+  }
+  if (response && response.status === 401) {
+    return true;
+  }
+  return false;
+}
+
+// 清除登录信息并跳转登录页
+function clearAndRedirectToLogin() {
+  localStorage.removeItem("userInfo");
+  localStorage.removeItem("userId");
+  localStorage.removeItem("userName");
+  localStorage.removeItem("userRole");
+  localStorage.removeItem("isAdmin");
+  localStorage.removeItem("isSuperAdmin");
+  localStorage.removeItem("isBuyer");
+  localStorage.removeItem("isSeller");
+  Message.warning("登录已过期，请重新登录");
+  if (router.currentRoute.path !== "/login") {
+    router.replace("/login");
+  }
+}
+
 // 响应拦截器
 service.interceptors.response.use(
   (response) => {
@@ -29,21 +62,10 @@ service.interceptors.response.use(
     if (res.code !== 200) {
       const errorMessage = res.message || "请求失败";
       const error = new Error(errorMessage);
-      error.response = response; // 保存完整的响应对象
-      // 会话失效（如后端重启导致 Session 丢失）
-      if (errorMessage.indexOf("未登录") !== -1) {
-        localStorage.removeItem("userInfo");
-        localStorage.removeItem("userId");
-        localStorage.removeItem("userName");
-        localStorage.removeItem("userRole");
-        localStorage.removeItem("isAdmin");
-        localStorage.removeItem("isSuperAdmin");
-        localStorage.removeItem("isBuyer");
-        localStorage.removeItem("isSeller");
-        Message.warning("登录已过期，请重新登录");
-        if (router.currentRoute.path !== "/login") {
-          router.replace("/login");
-        }
+      error.response = response;
+      // 会话失效（如后端重启、超时导致 Session 丢失）
+      if (isSessionExpired(errorMessage, response)) {
+        clearAndRedirectToLogin();
       } else {
         Message.error(errorMessage);
       }
@@ -53,24 +75,14 @@ service.interceptors.response.use(
     return res.data;
   },
   (error) => {
-    // 会话失效（如后端重启导致 Session 丢失）：清除本地存储并跳转登录页
     const msg = error.response?.data?.message || error.message || "";
-    if (msg.indexOf("未登录") !== -1) {
-      localStorage.removeItem("userInfo");
-      localStorage.removeItem("userId");
-      localStorage.removeItem("userName");
-      localStorage.removeItem("userRole");
-      localStorage.removeItem("isAdmin");
-      localStorage.removeItem("isSuperAdmin");
-      localStorage.removeItem("isBuyer");
-      localStorage.removeItem("isSeller");
-      Message.warning("登录已过期，请重新登录");
-      if (router.currentRoute.path !== "/login") {
-        router.replace("/login");
-      }
+    const status = error.response?.status;
+    // 会话失效：未登录、请先登录、HTTP 401
+    if (isSessionExpired(msg, error.response)) {
+      clearAndRedirectToLogin();
       return Promise.reject(error);
     }
-    // 更详细的错误信息
+    // 网络错误（如服务重启中连接被拒绝）
     let errorMessage = "网络错误";
     if (error.response) {
       errorMessage = `请求失败: ${error.response.status} ${error.response.statusText}`;
