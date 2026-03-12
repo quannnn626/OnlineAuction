@@ -102,6 +102,9 @@ public interface IAuctionGoodsService extends IService<AuctionGoods> {
     /** 猜你喜欢：按点击量倒序，只展示上架且审核通过的商品 */
     List<AuctionGoods> getGuessYouLikeGoods(int limit);
 
+    /** 热门商品分页：每页50条，按点击量倒序 */
+    PageInfo<AuctionGoods> getHotGoodsPage(Integer current);
+
     /** 增加商品点击量（进入详情页时调用） */
     void incrementViewCount(Long goodsId);
 }

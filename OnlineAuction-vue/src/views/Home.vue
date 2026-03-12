@@ -187,6 +187,15 @@
         </div>
       </div>
       <el-empty v-else-if="!goodsLoading" description="暂无商品数据"></el-empty>
+      <div class="hot-pagination" v-if="hotTotal > 50">
+        <el-pagination
+          :current-page="hotCurrentPage"
+          :page-size="50"
+          :total="hotTotal"
+          layout="prev, pager, next"
+          @current-change="handleHotPageChange"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -210,25 +219,32 @@ export default {
       dropdownTimer: null, // 用于延迟隐藏下拉面板
       goodsList: [],
       goodsLoading: false,
+      hotCurrentPage: 1,
+      hotTotal: 0,
     };
   },
   mounted() {
     this.loadCategories();
     this.loadBanners();
-    this.loadHotGoods();
+    this.loadHotGoods(1);
   },
   methods: {
-    async loadHotGoods() {
+    async loadHotGoods(page = 1) {
       this.goodsLoading = true;
       try {
-        const res = await getHotGoods(12);
-        // 兼容 data 为数组或 PageInfo { list } 两种格式
-        this.goodsList = Array.isArray(res) ? res : (res && res.list) || [];
+        const res = await getHotGoods(page);
+        this.goodsList = (res && res.list) || [];
+        this.hotTotal = res ? (res.total || 0) : 0;
+        this.hotCurrentPage = page;
       } catch (e) {
         this.goodsList = [];
+        this.hotTotal = 0;
       } finally {
         this.goodsLoading = false;
       }
+    },
+    handleHotPageChange(page) {
+      this.loadHotGoods(page);
     },
     async loadBanners() {
       try {
@@ -609,6 +625,11 @@ export default {
   padding: 30px;
   border-radius: 8px;
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+}
+
+.hot-pagination {
+  margin-top: 24px;
+  text-align: center;
 }
 
 .goods-title {

@@ -74,14 +74,14 @@ public class GoodsApiController extends BaseApiController {
     }
 
     /**
-     * 热门商品：按点击量倒序，只展示上架且审核通过的商品
+     * 热门商品分页：每页50条，按点击量倒序，支持翻页
      */
     @GetMapping("/hot")
-    public Result<List<AuctionGoods>> getHotGoods(
-            @RequestParam(defaultValue = "12") Integer limit) {
+    public Result<PageInfo<AuctionGoods>> getHotGoods(
+            @RequestParam(defaultValue = "1") Integer current) {
         try {
-            List<AuctionGoods> list = goodsService.getGuessYouLikeGoods(limit);
-            return Result.success("查询成功", list);
+            PageInfo<AuctionGoods> pageInfo = goodsService.getHotGoodsPage(current);
+            return Result.success("查询成功", pageInfo);
         } catch (Exception e) {
             return Result.error("查询失败：" + e.getMessage());
         }

@@ -65,13 +65,13 @@ export function getMyGoodsList(params) {
 }
 
 /**
- * 热门商品：按点击量倒序展示上架商品
+ * 热门商品分页：每页50条，按点击量倒序
  */
-export function getHotGoods(limit = 12) {
+export function getHotGoods(current = 1) {
   return request({
     url: "/goods/hot",
     method: "get",
-    params: { limit },
+    params: { current },
   });
 }
 

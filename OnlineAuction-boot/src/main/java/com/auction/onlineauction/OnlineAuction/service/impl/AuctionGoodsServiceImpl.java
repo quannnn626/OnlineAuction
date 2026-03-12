@@ -689,6 +689,33 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
     }
 
     @Override
+    public PageInfo<AuctionGoods> getHotGoodsPage(Integer current) {
+        int pageSize = 50;
+        PageHelper.startPage(current, pageSize);
+        QueryWrapper<AuctionGoods> wrapper = new QueryWrapper<>();
+        wrapper.eq("del_flag", 0)
+                .eq("shelf_status", 1)
+                .eq("audit_status", 1)
+                .in("goods_status", 0, 1)
+                .orderByDesc("view_count");
+        List<AuctionGoods> list = list(wrapper);
+        if (list.isEmpty()) {
+            PageHelper.startPage(current, pageSize);
+            wrapper = new QueryWrapper<>();
+            wrapper.eq("del_flag", 0)
+                    .eq("shelf_status", 1)
+                    .eq("audit_status", 1)
+                    .orderByDesc("view_count");
+            list = list(wrapper);
+        }
+        for (AuctionGoods goods : list) {
+            updateGoodsStatusByTime(goods);
+            loadFilesForGoods(goods);
+        }
+        return new PageInfo<>(list);
+    }
+
+    @Override
     public void incrementViewCount(Long goodsId) {
         if (goodsId == null) return;
         baseMapper.incrementViewCount(goodsId);
