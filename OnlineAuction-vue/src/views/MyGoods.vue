@@ -26,8 +26,8 @@
         <el-table-column label="商品图片" width="120">
           <template slot-scope="scope">
             <el-image
-              :src="getGoodsImage(scope.row.goodsImg)"
-              :preview-src-list="[getGoodsImage(scope.row.goodsImg)]"
+              :src="getGoodsImageUrl(scope.row)"
+              :preview-src-list="[getGoodsImageUrl(scope.row)]"
               style="width: 80px; height: 80px; object-fit: cover;"
               fit="cover">
               <div slot="error" class="image-slot">
@@ -145,7 +145,8 @@ export default {
           size: this.pagination.size
         }
         const result = await getMyGoodsList(params)
-        this.goodsList = result.records || []
+        // 后端 PageHelper 返回 list，MyBatis-Plus 返回 records
+        this.goodsList = result.list || result.records || []
         this.pagination.total = result.total || 0
       } catch (error) {
         this.$message.error('加载失败，请重试')
@@ -188,12 +189,19 @@ export default {
       this.pagination.current = current
       this.loadData()
     },
-    getGoodsImage(goodsImg) {
-      if (!goodsImg) {
-        return '/images/no-image.svg'
+    getGoodsImageUrl(goods) {
+      const files = goods.files || []
+      const firstImg = files.find((f) => f && f.filePath && /\.(jpg|jpeg|png|gif|webp|bmp|svg)/i.test(f.filePath))
+      if (firstImg && firstImg.filePath) {
+        const p = firstImg.filePath
+        return /^https?:\/\//i.test(p) ? p : (p.startsWith('/') ? p : '/' + p)
       }
-      const images = goodsImg.split(',')
-      return images[0].trim()
+      if (goods.goodsImg) {
+        const imgs = String(goods.goodsImg).split(',')
+        const url = imgs[0] && imgs[0].trim()
+        if (url) return url.startsWith('/') ? url : '/' + url
+      }
+      return '/images/no-image.svg'
     },
     getStatusType(status) {
       const typeMap = {
