@@ -102,7 +102,7 @@ export default {
       this.loading = true;
       try {
         const data = await getMenuTree(false);
-        // 前端双重保护：仅普通用户(role=1)可看到留言板，其他角色一律隐藏
+        // 前端双重保护：仅买方(1)、卖方(2)可看到留言板，管理员等角色隐藏
         let menuTree = data || [];
         const userInfo = localStorage.getItem("userInfo");
         let user = null;
@@ -110,9 +110,9 @@ export default {
           try {
             user = JSON.parse(userInfo);
             const roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
-            const isOrdinaryUser = roles.includes("1");
-            if (!isOrdinaryUser) {
-              // 非普通用户：过滤掉留言板菜单
+            const isEndUser = roles.includes("1") || roles.includes("2");
+            if (!isEndUser) {
+              // 非买方/卖方：过滤掉留言板菜单
               menuTree = this.filterMenu(menuTree, (menu) => {
                 return menu.id !== 8 && menu.menuPath !== "/message-board";
               });
@@ -122,13 +122,23 @@ export default {
           }
         }
 
-        // 普通用户端兜底菜单：补充“历史竞拍”入口（避免后端菜单未配置导致看不到）
+        // 买方/卖方端兜底菜单：补充“历史竞拍”入口（避免后端菜单未配置导致看不到）
         if (user && !user.isAdmin && !user.isSuperAdmin && !this.menuExists(menuTree, "/bid-history")) {
           menuTree.push({
             id: 99991,
             menuName: "历史竞拍",
             menuPath: "/bid-history",
             menuIcon: "el-icon-time",
+            children: [],
+          });
+        }
+        // 卖方兜底菜单：补充“商品申请”入口（卖方申请上架商品）
+        if (user && user.isSeller && !this.menuExists(menuTree, "/seller/goods/add")) {
+          menuTree.push({
+            id: 99992,
+            menuName: "商品申请",
+            menuPath: "/seller/goods/add",
+            menuIcon: "el-icon-upload2",
             children: [],
           });
         }

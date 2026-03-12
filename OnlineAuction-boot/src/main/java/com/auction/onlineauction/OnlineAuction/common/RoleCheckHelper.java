@@ -3,7 +3,7 @@ package com.auction.onlineauction.OnlineAuction.common;
 import javax.servlet.http.HttpSession;
 /**
  * 角色校验工具
- * 角色：1=普通用户 3=管理员 4=超级管理员 5=拍卖师 6=客服 7=财务 8=运营
+ * 角色：1=买方 2=卖方 3=管理员 4=超级管理员 5=拍卖师 6=客服 7=财务 8=运营
  */
 public final class RoleCheckHelper {
 
@@ -150,31 +150,31 @@ public final class RoleCheckHelper {
     }
 
     /**
-     * 前台留言板可查看（仅普通用户 role=1）
+     * 前台留言板可查看（买方 role=1、卖方 role=2）
      */
     public static boolean canViewMessageBoard(HttpSession session) {
-        return hasAnyRole(session, 1);
+        return hasAnyRole(session, 1, 2);
     }
 
     /**
-     * 前台留言板可发布（仅普通用户 role=1）
+     * 前台留言板可发布（买方 role=1、卖方 role=2）
      */
     public static boolean canAddMessageBoard(HttpSession session) {
-        return hasAnyRole(session, 1);
+        return hasAnyRole(session, 1, 2);
     }
 
     /**
-     * 前台留言板可编辑自己的留言（仅普通用户 role=1）
+     * 前台留言板可编辑自己的留言（买方 role=1、卖方 role=2）
      */
     public static boolean canEditMessageBoard(HttpSession session) {
-        return hasAnyRole(session, 1);
+        return hasAnyRole(session, 1, 2);
     }
 
     /**
-     * 前台留言板可删除自己的留言（仅普通用户 role=1）
+     * 前台留言板可删除自己的留言（买方 role=1、卖方 role=2）
      */
     public static boolean canDeleteMessageBoard(HttpSession session) {
-        return hasAnyRole(session, 1);
+        return hasAnyRole(session, 1, 2);
     }
 
     /**
@@ -225,7 +225,7 @@ public final class RoleCheckHelper {
         return hasAnyRole(session, 3, 4);
     }
 
-    /** 是否为可被管理员沟通的内部角色（卖方、客服、拍卖师、财务、运营，不含普通用户） */
+    /** 是否为可被管理员沟通的内部角色（卖方、客服、拍卖师、财务、运营，不含买方） */
     public static boolean isStaffRole(int roleType) {
         return roleType == 2 || roleType == 5 || roleType == 6 || roleType == 7 || roleType == 8;
     }

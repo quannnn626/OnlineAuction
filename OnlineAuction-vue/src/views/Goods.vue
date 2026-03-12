@@ -4,13 +4,21 @@
     <div class="page-header">
       <h2>拍卖商品</h2>
       <div class="header-actions">
-        <el-button type="primary" icon="el-icon-plus" @click="handleAdd">
+        <el-button
+          v-if="isSeller"
+          type="primary"
+          icon="el-icon-plus"
+          @click="handleAdd">
           上架商品
         </el-button>
         <el-button type="warning" icon="el-icon-time" @click="handleBidHistory">
           历史竞拍
         </el-button>
-        <el-button type="info" icon="el-icon-user" @click="handleMyGoods">
+        <el-button
+          v-if="isSeller"
+          type="info"
+          icon="el-icon-user"
+          @click="handleMyGoods">
           我的商品
         </el-button>
       </div>
@@ -149,6 +157,7 @@ export default {
     return {
       goodsList: [],
       loading: false,
+      isSeller: false,
       searchKeyword: "",
       statusFilter: "",
       pagination: {
@@ -159,6 +168,15 @@ export default {
     };
   },
   created() {
+    const userInfo = localStorage.getItem("userInfo");
+    if (userInfo) {
+      try {
+        const user = JSON.parse(userInfo);
+        this.isSeller = !!user.isSeller;
+      } catch (e) {
+        this.isSeller = false;
+      }
+    }
     this.loadData();
   },
   methods: {
@@ -196,8 +214,7 @@ export default {
       this.loadData();
     },
     handleAdd() {
-      this.$message.info("上架商品功能开发中...");
-      // TODO: 跳转到上架商品页面
+      this.$router.push("/seller/goods/add");
     },
     handleView(goods) {
       this.$router.push({ path: "/goods-detail", query: { id: goods.id } });

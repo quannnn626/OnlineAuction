@@ -102,7 +102,7 @@
         >
           <template slot-scope="scope">
             <el-tag
-              v-if="scope.row.userRole === 2"
+              v-if="[1, 2, 3].includes(scope.row.sellerAuditStatus)"
               :type="getSellerAuditTagType(scope.row.sellerAuditStatus)"
             >
               {{ getSellerAuditText(scope.row.sellerAuditStatus) }}
@@ -134,7 +134,7 @@
               {{ scope.row.userStatus === 0 ? "禁用" : "恢复" }}
             </el-button>
             <el-button
-              v-if="scope.row.userRole === 2 && scope.row.sellerAuditStatus === 1"
+              v-if="scope.row.sellerAuditStatus === 1"
               size="mini"
               type="success"
               icon="el-icon-check"
@@ -404,10 +404,10 @@ export default {
   },
   computed: {
     showSellerAuditColumn() {
-      // 如果表格中有卖方用户，显示资质审核列
+      // 如果表格中有卖方用户或曾申请过卖方的用户，显示资质审核列
       return this.tableData.some((user) => {
         const roles = this.parseUserRole(user.userRole);
-        return roles.includes("2");
+        return roles.includes("2") || [1, 2, 3].includes(user.sellerAuditStatus);
       });
     },
     isSuperAdmin() {

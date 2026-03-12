@@ -101,7 +101,7 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
             throw new RuntimeException("手机号不能为空");
         }
         if (user.getUserRole() == null || user.getUserRole().trim().isEmpty()) {
-            // 默认设置为普通用户
+            // 默认设置为买方用户
             user.setUserRole("1");
         }
         
@@ -128,9 +128,9 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
         String[] roles = roleStr.split(",");
         for (String role : roles) {
             role = role.trim();
-            if (!role.equals("1") && !role.equals("3") && !role.equals("4")
+            if (!role.equals("1") && !role.equals("2") && !role.equals("3") && !role.equals("4")
                     && !role.equals("5") && !role.equals("6") && !role.equals("7") && !role.equals("8")) {
-                throw new RuntimeException("用户角色值无效（1=普通用户，3=管理员，4=超级管理员，5=拍卖师，6=客服，7=财务，8=运营）");
+                throw new RuntimeException("用户角色值无效（1=买方 2=卖方 3=管理员 4=超级管理员 5=拍卖师 6=客服 7=财务 8=运营）");
             }
         }
         
@@ -227,13 +227,13 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
             String[] roles = roleStr.split(",");
             for (String role : roles) {
                 role = role.trim();
-                if (!role.equals("1") && !role.equals("3") && !role.equals("4")
+                if (!role.equals("1") && !role.equals("2") && !role.equals("3") && !role.equals("4")
                         && !role.equals("5") && !role.equals("6") && !role.equals("7") && !role.equals("8")) {
-                    throw new RuntimeException("用户角色值无效（1=普通用户，3=管理员，4=超级管理员，5=拍卖师，6=客服，7=财务，8=运营）");
+                    throw new RuntimeException("用户角色值无效（1=买方 2=卖方 3=管理员 4=超级管理员 5=拍卖师 6=客服 7=财务 8=运营）");
                 }
             }
             
-            // 权限检查：管理员只能设置普通用户及运营岗位角色，超级管理员可以设置所有角色
+            // 权限检查：管理员只能设置买方、卖方及运营岗位角色，超级管理员可以设置所有角色
             if (!isSuperAdmin) {
                 for (String role : roles) {
                     role = role.trim();
@@ -321,10 +321,13 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
             throw new RuntimeException("用户不存在");
         }
         
-        // 检查是否为普通用户（1），普通用户才具备申请卖家资质的基础条件
+        // 检查是否为买方（1），只有买方才能申请成为卖方
         String userRole = user.getUserRole();
         if (userRole == null || !userRole.contains("1")) {
-            throw new RuntimeException("只有普通用户才能申请成为卖家");
+            throw new RuntimeException("只有买方用户才能申请成为卖方");
+        }
+        if (userRole.contains("2")) {
+            throw new RuntimeException("您已是卖方用户，无需重复申请");
         }
         
         // 检查是否已有待审核的申请
@@ -375,9 +378,14 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
             }
             user.setSellerAuditRemark(auditRemark);
         } else if (auditStatus == 2) {
-            // 审核通过：仅通过资质审核，不再单独增加“卖方角色”
-            // 是否为卖家由 seller_audit_status==2 来判断
+            // 审核通过：将 user_role 增加卖方角色 2，如 "1" -> "1,2"（可兼买卖）
             user.setSellerAuditRemark(null);
+            String role = user.getUserRole();
+            if (role == null || role.trim().isEmpty()) {
+                user.setUserRole("2");
+            } else if (!role.contains("2")) {
+                user.setUserRole(role.trim() + ",2");
+            }
         }
         
         user.setUpdateTime(LocalDateTime.now());
@@ -467,11 +475,10 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
 
             loginDTO.setIsAdmin(canAccessAdmin);
             loginDTO.setIsSuperAdmin(isSuperAdmin);
-            loginDTO.setIsBuyer(isNormalUser);
-            // 是否卖家由卖家资质审核状态决定
-            loginDTO.setIsSeller(isNormalUser && user.getSellerAuditStatus() != null && user.getSellerAuditStatus() == 2);
+            loginDTO.setIsBuyer(roles.contains("1"));
+            loginDTO.setIsSeller(roles.contains("2"));
         } else {
-            loginDTO.setRoles(Arrays.asList("1")); // 默认普通用户
+            loginDTO.setRoles(Arrays.asList("1")); // 默认买方
             loginDTO.setIsAdmin(false);
             loginDTO.setIsSuperAdmin(false);
             loginDTO.setIsBuyer(true);

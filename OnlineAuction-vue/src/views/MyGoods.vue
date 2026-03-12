@@ -157,8 +157,7 @@ export default {
       this.$router.push('/goods')
     },
     handleAdd() {
-      this.$message.info('上架商品功能开发中...')
-      // TODO: 跳转到上架商品页面
+      this.$router.push('/seller/goods/add')
     },
     handleEdit(goods) {
       this.$message.info(`编辑商品: ${goods.goodsName}`)

@@ -33,7 +33,7 @@ public class MenuApiController {
 
     /**
      * 根据当前登录用户的角色获取菜单树
-     * @param roleType 角色类型（可选）：1=普通用户 3=管理员 4=超级管理员 5=拍卖师 6=客服 7=财务 8=运营
+     * @param roleType 角色类型（可选）：1=买方 2=卖方 3=管理员 4=超级管理员 5=拍卖师 6=客服 7=财务 8=运营
      * @param all 是否返回所有菜单（true=返回所有，false=根据角色过滤，默认false）
      * @return 菜单树
      */
@@ -82,10 +82,38 @@ public class MenuApiController {
             // 根据用户的所有角色获取菜单（合并去重）
             menuTree = menuService.getMenuTreeByRoleTypes(roleTypes);
             
+            // 卖方兜底：role 含 2 但菜单未返回「商品申请」时（如 DB 缺菜单或权限关联），后端补充
+            if (roleTypes.contains(2) && !containsMenuPath(menuTree, "/seller/goods/add")) {
+                AuctionMenu goodsAddMenu = new AuctionMenu();
+                goodsAddMenu.setId(99992L);
+                goodsAddMenu.setMenuName("商品申请");
+                goodsAddMenu.setParentId(0L);
+                goodsAddMenu.setMenuPath("/seller/goods/add");
+                goodsAddMenu.setMenuIcon("el-icon-upload2");
+                goodsAddMenu.setMenuType(1);
+                goodsAddMenu.setPermissionCode("goods:add");
+                goodsAddMenu.setMenuSort(2);
+                goodsAddMenu.setMenuStatus(1);
+                goodsAddMenu.setChildren(new ArrayList<>());
+                menuTree.add(goodsAddMenu);
+            }
+            
             return Result.success("获取成功", menuTree);
         } catch (Exception e) {
             return Result.error("获取失败：" + e.getMessage());
         }
+    }
+
+    /** 递归检查菜单树是否包含指定路径 */
+    private boolean containsMenuPath(List<AuctionMenu> menus, String path) {
+        if (menus == null || menus.isEmpty()) return false;
+        for (AuctionMenu m : menus) {
+            if (path.equals(m.getMenuPath())) return true;
+            if (m.getChildren() != null && !m.getChildren().isEmpty()) {
+                if (containsMenuPath(m.getChildren(), path)) return true;
+            }
+        }
+        return false;
     }
 }
 

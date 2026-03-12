@@ -68,6 +68,33 @@ public class AuctionGoodsController {
     }
 
     /**
+     * 获取我的商品列表（仅卖方可访问，买方无此功能）
+     */
+    @GetMapping("/my")
+    public Result<PageInfo<AuctionGoods>> getMyGoodsList(
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "10") Integer size,
+            HttpServletRequest request) {
+        try {
+            HttpSession session = request.getSession(false);
+            if (session == null) {
+                return Result.error("未登录");
+            }
+            Long userId = (Long) session.getAttribute("userId");
+            if (userId == null) {
+                return Result.error("未登录");
+            }
+            if (!RoleCheckHelper.hasAnyRole(session, 2, 3, 4, 8)) {
+                return Result.error("无权限，仅卖方可查看自己的商品");
+            }
+            PageInfo<AuctionGoods> pageInfo = goodsService.getMyGoodsList(current, size, userId);
+            return Result.success("查询成功", pageInfo);
+        } catch (Exception e) {
+            return Result.error("查询失败：" + e.getMessage());
+        }
+    }
+
+    /**
      * 根据ID获取商品详情（后台）
      */
     @GetMapping("/{id}")
@@ -97,9 +124,9 @@ public class AuctionGoodsController {
             if (userId == null) {
                 return Result.error("未登录");
             }
-            // 运营(8)与普通用户(1)可发布；保留管理员/超管发布能力
-            if (!RoleCheckHelper.hasAnyRole(session, 1, 3, 4, 8)) {
-                return Result.error("无权限新增商品");
+            // 仅卖方(2)、运营(8)、管理员(3)、超管(4)可发布；买方(1)不可上架商品
+            if (!RoleCheckHelper.hasAnyRole(session, 2, 3, 4, 8)) {
+                return Result.error("无权限新增商品，仅卖方角色可上架商品");
             }
             AuctionGoods goods = goodsService.addGoods(requestData, userId);
             return Result.success("新增成功", goods);
@@ -109,14 +136,25 @@ public class AuctionGoodsController {
     }
 
     /**
-     * 更新商品（需管理员/运营/拍卖师角色，或本人为卖家）
+     * 更新商品（管理员/运营/拍卖师可编辑；卖方仅可编辑自己的商品；买方不可编辑）
      */
     @PutMapping("/{id}")
     public Result<AuctionGoods> updateGoods(@PathVariable Long id, @RequestBody Map<String, Object> requestData,
                                            HttpServletRequest request) {
         try {
-            if (!RoleCheckHelper.hasAnyRole(request.getSession(false), 3, 4, 5, 8)) {
-                return Result.error("无权限编辑商品");
+            HttpSession session = request.getSession(false);
+            if (session == null) {
+                return Result.error("未登录");
+            }
+            Long userId = (Long) session.getAttribute("userId");
+            AuctionGoods existing = goodsService.getById(id);
+            if (existing == null || existing.getDelFlag() == 1) {
+                return Result.error("商品不存在");
+            }
+            boolean canEdit = RoleCheckHelper.hasAnyRole(session, 3, 4, 5, 8)
+                    || (RoleCheckHelper.hasAnyRole(session, 2) && userId != null && userId.equals(existing.getSellerId()));
+            if (!canEdit) {
+                return Result.error("无权限编辑商品，仅卖方可编辑自己的商品");
             }
             AuctionGoods goods = goodsService.updateGoods(id, requestData);
             return Result.success("更新成功", goods);
@@ -207,15 +245,17 @@ public class AuctionGoodsController {
                 return Result.error("未登录");
             }
 
-            // 管理员/超级管理员/运营可在商品管理中代商品所有者发起重新申请
+            // 管理员/超级管理员/运营可在商品管理中代商品所有者发起重新申请；卖方仅可对自己的商品重新申请；买方不可操作
             if (RoleCheckHelper.hasAnyRole(session, 3, 4, 8)) {
                 AuctionGoods goods = goodsService.getById(id);
                 if (goods == null || goods.getDelFlag() == 1) {
                     return Result.error("商品不存在");
                 }
                 goodsService.reapplyGoods(id, goods.getSellerId());
-            } else {
+            } else if (RoleCheckHelper.hasAnyRole(session, 2)) {
                 goodsService.reapplyGoods(id, userId);
+            } else {
+                return Result.error("无权限操作，仅卖方可重新申请上架自己的商品");
             }
             return Result.success("重新申请上架成功，等待管理员审核", null);
         } catch (Exception e) {

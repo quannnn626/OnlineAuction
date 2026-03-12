@@ -33,11 +33,7 @@ public class LoginDTO implements Serializable {
     private String avatar;
 
     /**
-     * 用户角色（多个角色用逗号分隔）：
-     * 1=普通用户 3=管理员 4=超级管理员
-     * 5=拍卖师 6=客服 7=财务 8=运营
-     *
-     * 是否为卖家由卖家资质审核状态决定，而非单独“卖家角色”。
+     * 用户角色（多个角色用逗号分隔）：1=买方 2=卖方 3=管理员 4=超级管理员 5=拍卖师 6=客服 7=财务 8=运营
      */
     private String userRole;
 

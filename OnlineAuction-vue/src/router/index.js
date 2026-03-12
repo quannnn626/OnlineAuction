@@ -44,6 +44,11 @@ const routes = [
         component: () => import("@/views/MyGoods.vue"),
       },
       {
+        path: "seller/goods/add",
+        name: "SellerGoodsAdd",
+        component: () => import("@/views/seller/SellerGoodsAdd.vue"),
+      },
+      {
         path: "bid-history",
         name: "BidHistory",
         component: () => import("@/views/BidHistory.vue"),
@@ -192,10 +197,9 @@ router.beforeEach((to, from, next) => {
     }
   }
   
-  // 卖方页面权限检查（如：我的商品、发布商品等）
-  if (to.path === "/my-goods" || to.path.includes("/seller")) {
-    if (!user.isSeller && !user.isAdmin) {
-      // 非卖方用户访问卖方页面，跳转到首页
+  // 卖方页面权限检查（如：我的商品、申请上架商品等）
+  if (to.path === "/my-goods" || to.path.startsWith("/seller")) {
+    if (!user.isSeller && !user.isAdmin && !user.isSuperAdmin) {
       next("/home");
       return;
     }
