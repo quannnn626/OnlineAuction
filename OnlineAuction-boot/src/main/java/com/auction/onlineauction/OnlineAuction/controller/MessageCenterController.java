@@ -33,8 +33,8 @@ public class MessageCenterController {
         try {
             HttpSession session = request.getSession(false);
             if (session == null) return Result.error("请先登录");
-            if (!RoleCheckHelper.canUseMessageCenter(session)) {
-                return Result.error("无权限使用消息中心");
+            if (!RoleCheckHelper.canCreateConsultSession(session)) {
+                return Result.error("请先登录，管理员请使用「发起管理沟通」");
             }
             Long userId = (Long) session.getAttribute("userId");
             if (userId == null) return Result.error("请先登录");
@@ -55,8 +55,8 @@ public class MessageCenterController {
         try {
             HttpSession session = request.getSession(false);
             if (session == null) return Result.error("请先登录");
-            if (!RoleCheckHelper.isAdminOrSuperAdmin(session)) {
-                return Result.error("无权限建立管理沟通");
+            if (!RoleCheckHelper.canCreateAdminSession(session)) {
+                return Result.error("仅管理员/超级管理员可与后台用户发起管理沟通");
             }
             Long adminId = (Long) session.getAttribute("userId");
             if (adminId == null) return Result.error("请先登录");
@@ -118,7 +118,9 @@ public class MessageCenterController {
             PageInfo<Map<String, Object>> page;
             if (RoleCheckHelper.isCustomerService(session)) {
                 page = messageCenterService.getServiceSessions(currentUserId, current, size);
-            } else if (RoleCheckHelper.isAdminOrSuperAdmin(session) || RoleCheckHelper.hasAnyRole(session, 2, 5, 7, 8)) {
+            } else if (RoleCheckHelper.hasAnyRole(session, 2)) {
+                page = messageCenterService.getSellerMergedSessions(currentUserId, current, size);
+            } else if (RoleCheckHelper.isAdminOrSuperAdmin(session) || RoleCheckHelper.hasAnyRole(session, 5, 7, 8)) {
                 boolean isSuperAdmin = RoleCheckHelper.canViewAllMessageCenter(session);
                 page = messageCenterService.getAdminSessions(currentUserId, current, size, isSuperAdmin);
             } else {

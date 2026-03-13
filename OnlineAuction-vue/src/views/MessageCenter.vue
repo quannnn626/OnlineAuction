@@ -2,7 +2,9 @@
   <div class="message-center-page">
     <div class="page-header">
       <h2>消息中心</h2>
-      <p class="page-desc">客服咨询：普通用户/卖方可就某商品向客服发起咨询；管理沟通：管理员/超管可与内部角色对话</p>
+      <p class="page-desc">
+        客服咨询：普通用户/卖方可就某商品向客服发起咨询；管理沟通：管理员/超管可与内部角色对话
+      </p>
     </div>
 
     <div class="content-layout">
@@ -10,10 +12,20 @@
       <div class="session-list">
         <div class="session-list-header">
           <span>我的会话</span>
-          <el-button v-if="isAdminOrSuperAdmin" type="text" size="small" @click="adminSessionVisible = true">
+          <el-button
+            v-if="isAdminOrSuperAdmin"
+            type="text"
+            size="small"
+            @click="adminSessionVisible = true"
+          >
             <i class="el-icon-plus"></i> 发起管理沟通
           </el-button>
-          <el-button type="text" size="small" @click="loadSessions" :loading="sessionsLoading">
+          <el-button
+            type="text"
+            size="small"
+            @click="loadSessions"
+            :loading="sessionsLoading"
+          >
             <i class="el-icon-refresh"></i> 刷新
           </el-button>
         </div>
@@ -25,19 +37,32 @@
             :class="{ active: currentSessionId === s.id }"
             @click="selectSession(s)"
           >
-            <div class="session-goods">{{ s.goodsName || (s.sessionType === 2 ? "管理沟通" : "商品") }}</div>
+            <div class="session-goods">
+              {{ s.goodsName || (s.sessionType === 2 ? "管理沟通" : "商品") }}
+            </div>
             <div class="session-meta">
               <template v-if="s.sessionType === 2">
-                <span>对方: {{ (s.userId === currentUserId ? s.serviceName : s.userName) || '-' }}</span>
+                <span
+                  >对方:
+                  {{
+                    (s.userId === currentUserId ? s.serviceName : s.userName) ||
+                    "-"
+                  }}</span
+                >
               </template>
               <template v-else>
                 <span v-if="s.serviceName">客服: {{ s.serviceName }}</span>
                 <span v-else class="text-warning">待分配</span>
               </template>
-              <el-tag v-if="s.sessionStatus === 1" type="info" size="mini">已关闭</el-tag>
+              <el-tag v-if="s.sessionStatus === 1" type="info" size="mini"
+                >已关闭</el-tag
+              >
             </div>
           </div>
-          <el-empty v-if="!sessionsLoading && sessionList.length === 0" description="暂无会话"></el-empty>
+          <el-empty
+            v-if="!sessionsLoading && sessionList.length === 0"
+            description="暂无会话"
+          ></el-empty>
         </div>
       </div>
 
@@ -45,7 +70,10 @@
       <div class="message-area">
         <template v-if="currentSessionId">
           <div class="message-header">
-            <span>{{ currentSessionDetail.goodsName || (currentSessionDetail.sessionType === 2 ? "管理沟通" : "会话") }}</span>
+            <span>{{
+              currentSessionDetail.goodsName ||
+              (currentSessionDetail.sessionType === 2 ? "管理沟通" : "会话")
+            }}</span>
             <el-button
               v-if="canCloseSession"
               type="text"
@@ -73,15 +101,32 @@
                 <template v-else-if="m.contentType === 2">
                   <p class="msg-order">订单信息: {{ m.content }}</p>
                 </template>
-                <template v-else-if="m.contentType === 3 && m.filePath">
-                  <img v-if="m.fileType === 'image'" :src="getFileUrl(m.filePath)" class="msg-file" />
-                  <video v-else-if="m.fileType === 'video'" :src="getFileUrl(m.filePath)" controls class="msg-video"></video>
-                  <a v-else :href="getFileUrl(m.filePath)" target="_blank">{{ m.fileName || "附件" }}</a>
+                <template v-else-if="m.contentType === 3">
+                  <template v-if="m.filePath">
+                    <img
+                      v-if="m.fileType === 'image'"
+                      :src="getFileUrl(m.filePath)"
+                      class="msg-file"
+                    />
+                    <video
+                      v-else-if="m.fileType === 'video'"
+                      :src="getFileUrl(m.filePath)"
+                      controls
+                      class="msg-video"
+                    ></video>
+                    <a v-else :href="getFileUrl(m.filePath)" target="_blank" rel="noopener">{{
+                      m.fileName || "附件"
+                    }}</a>
+                  </template>
+                  <span v-else class="msg-file-missing">[附件]</span>
                 </template>
               </div>
             </div>
           </div>
-          <div v-if="currentSessionDetail.sessionStatus !== 1" class="message-input">
+          <div
+            v-if="currentSessionDetail.sessionStatus !== 1"
+            class="message-input"
+          >
             <el-input
               v-model="inputContent"
               type="textarea"
@@ -94,13 +139,23 @@
             <div class="input-actions">
               <el-upload
                 :action="uploadUrl"
+                name="files"
                 :show-file-list="false"
+                :with-credentials="true"
                 :on-success="handleFileSuccess"
+                :on-error="handleFileError"
                 :before-upload="beforeFileUpload"
               >
-                <el-button size="small" icon="el-icon-paperclip">附件</el-button>
+                <el-button size="small" icon="el-icon-paperclip">
+                  发送图片/视频
+                </el-button>
               </el-upload>
-              <el-button type="primary" size="small" @click="sendText" :loading="sendLoading">
+              <el-button
+                type="primary"
+                size="small"
+                @click="sendText"
+                :loading="sendLoading"
+              >
                 发送
               </el-button>
             </div>
@@ -112,16 +167,31 @@
       </div>
     </div>
 
-    <el-dialog title="发起管理沟通" :visible.sync="adminSessionVisible" width="400px">
-      <p class="dialog-tip">与卖方、客服、拍卖师、财务、运营建立对话（不可与普通用户沟通）</p>
+    <el-dialog
+      title="发起管理沟通"
+      :visible.sync="adminSessionVisible"
+      width="400px"
+    >
+      <p class="dialog-tip">
+        与卖方、客服、拍卖师、财务、运营建立对话（不可与普通用户沟通）
+      </p>
       <el-form label-width="100px">
         <el-form-item label="目标用户ID">
-          <el-input v-model.number="adminTargetUserId" placeholder="输入目标用户的ID" type="number"></el-input>
+          <el-input
+            v-model.number="adminTargetUserId"
+            placeholder="输入目标用户的ID"
+            type="number"
+          ></el-input>
         </el-form-item>
       </el-form>
       <span slot="footer">
         <el-button @click="adminSessionVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleCreateAdminSession" :loading="adminSessionLoading">确定</el-button>
+        <el-button
+          type="primary"
+          @click="handleCreateAdminSession"
+          :loading="adminSessionLoading"
+          >确定</el-button
+        >
       </span>
     </el-dialog>
   </div>
@@ -144,12 +214,18 @@ export default {
     canCloseSession() {
       const d = this.currentSessionDetail;
       const uid = this.currentUserId;
-      return uid && d && d.sessionStatus !== 1 && (d.userId === uid || d.serviceId === uid);
+      return (
+        uid &&
+        d &&
+        d.sessionStatus !== 1 &&
+        (d.userId === uid || d.serviceId === uid)
+      );
     },
     emptyHint() {
-      return this.isAdminOrSuperAdmin
-        ? "请从左侧选择会话，或点击「发起管理沟通」与内部角色对话"
-        : "请从左侧选择会话，或从商品详情页点击「咨询客服」发起咨询";
+      if (this.isAdminOrSuperAdmin) {
+        return "请从左侧选择会话，或点击「发起管理沟通」与后台用户对话";
+      }
+      return "请从左侧选择会话，或从商品详情页点击「咨询客服」发起咨询";
     },
   },
   data() {
@@ -174,7 +250,10 @@ export default {
   mounted() {
     const user = JSON.parse(localStorage.getItem("userInfo") || "{}");
     this.currentUserId = user.id || user.userId;
-    this.isAdminOrSuperAdmin = (user.userRole && (String(user.userRole).includes("3") || String(user.userRole).includes("4")));
+    this.isAdminOrSuperAdmin =
+      user.userRole &&
+      (String(user.userRole).includes("3") ||
+        String(user.userRole).includes("4"));
     this.loadSessions();
     const goodsId = this.$route.query.goodsId;
     if (goodsId) {
@@ -196,7 +275,7 @@ export default {
       this.sessionsLoading = true;
       try {
         const res = await getSessions({ current: 1, size: 50 });
-        this.sessionList = (res && res.list) ? res.list : [];
+        this.sessionList = res && res.list ? res.list : [];
       } catch (e) {
         this.sessionList = [];
       } finally {
@@ -250,17 +329,31 @@ export default {
       }
     },
     handleFileSuccess(res, file) {
-      if (res && res.code === 200 && res.data) {
-        const fileId = Array.isArray(res.data) ? res.data[0]?.id : res.data?.id;
-        if (fileId) {
-          sendMessage({
-            sessionId: this.currentSessionId,
-            contentType: 3,
-            fileId,
-            content: "",
-          }).then(() => this.loadMessages()).catch(() => {});
-        }
+      if (!res || res.code !== 200 || !res.data) {
+        this.$message.error(res?.message || "上传失败");
+        return;
       }
+      const fileId = Array.isArray(res.data) ? res.data[0]?.id : res.data?.id;
+      if (!fileId) {
+        this.$message.error("上传成功但未获取到文件ID");
+        return;
+      }
+      sendMessage({
+        sessionId: this.currentSessionId,
+        contentType: 3,
+        fileId,
+        content: "",
+      })
+        .then(() => {
+          this.loadMessages();
+          this.$message.success("附件已发送");
+        })
+        .catch((e) => {
+          this.$message.error(e?.message || "发送附件失败");
+        });
+    },
+    handleFileError(err, file, fileList) {
+      this.$message.error(file?.name ? `上传 ${file.name} 失败` : "上传失败");
     },
     beforeFileUpload(file) {
       const isImage = file.type.startsWith("image/");
@@ -309,12 +402,15 @@ export default {
     formatTime(t) {
       if (!t) return "";
       const d = new Date(t);
-      return isNaN(d.getTime()) ? t : d.toLocaleString("zh-CN", { hour12: false });
+      return isNaN(d.getTime())
+        ? t
+        : d.toLocaleString("zh-CN", { hour12: false });
     },
     getFileUrl(path) {
       if (!path) return "";
       if (path.startsWith("http")) return path;
-      return (process.env.VUE_APP_BASE_API || "/api") + path;
+      if (path.startsWith("/upload")) return path;
+      return (process.env.VUE_APP_BASE_API || "") + (path.startsWith("/") ? path : "/" + path);
     },
   },
 };
@@ -442,6 +538,10 @@ export default {
   max-width: 300px;
   max-height: 200px;
   border-radius: 4px;
+}
+.msg-file-missing {
+  color: #909399;
+  font-size: 12px;
 }
 .message-input {
   padding: 12px 16px;

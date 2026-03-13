@@ -116,7 +116,8 @@ public class MessageCenterServiceImpl implements IMessageCenterService {
 
     private Long assignRandomService() {
         QueryWrapper<AuctionUser> q = new QueryWrapper<>();
-        q.eq("user_status", 0).eq("del_flag", 0).like("user_role", "6");
+        q.eq("user_status", 0).eq("del_flag", 0);
+        q.apply("FIND_IN_SET(6, user_role) > 0");
         List<AuctionUser> list = userService.list(q);
         if (list == null || list.isEmpty()) {
             return null;
@@ -168,6 +169,35 @@ public class MessageCenterServiceImpl implements IMessageCenterService {
         q.eq("service_id", serviceId).eq("del_flag", 0).in("session_type", 1, 2).orderByDesc("update_time");
         List<AuctionMessageSession> list = sessionMapper.selectList(q);
         return toSessionPage(list);
+    }
+
+    @Override
+    public PageInfo<Map<String, Object>> getSellerMergedSessions(Long sellerId, Integer current, Integer size) {
+        List<AuctionMessageSession> asUser = sessionMapper.selectList(
+                new QueryWrapper<AuctionMessageSession>().eq("session_type", 1).eq("user_id", sellerId).eq("del_flag", 0).orderByDesc("update_time"));
+        List<AuctionMessageSession> asParticipant = sessionMapper.selectList(
+                new QueryWrapper<AuctionMessageSession>().eq("session_type", 2).eq("del_flag", 0)
+                        .and(w -> w.eq("user_id", sellerId).or().eq("service_id", sellerId))
+                        .orderByDesc("update_time"));
+        Set<Long> seen = new HashSet<>();
+        List<AuctionMessageSession> merged = new ArrayList<>();
+        for (AuctionMessageSession s : asParticipant) {
+            if (seen.add(s.getId())) merged.add(s);
+        }
+        for (AuctionMessageSession s : asUser) {
+            if (seen.add(s.getId())) merged.add(s);
+        }
+        merged.sort((a, b) -> (b.getUpdateTime() == null ? LocalDateTime.MIN : b.getUpdateTime())
+                .compareTo(a.getUpdateTime() == null ? LocalDateTime.MIN : a.getUpdateTime()));
+        int from = (current - 1) * size;
+        int to = Math.min(from + size, merged.size());
+        List<AuctionMessageSession> paged = from < merged.size() ? merged.subList(from, to) : Collections.emptyList();
+        PageInfo<Map<String, Object>> result = toSessionPage(paged);
+        result.setTotal(merged.size());
+        result.setPages(size > 0 ? (int) Math.ceil((double) merged.size() / size) : 0);
+        result.setPageNum(current);
+        result.setPageSize(size);
+        return result;
     }
 
     @Override

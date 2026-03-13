@@ -41,7 +41,12 @@ public interface IMessageCenterService {
     PageInfo<Map<String, Object>> getServiceSessions(Long serviceId, Integer current, Integer size);
 
     /**
-     * 管理沟通会话：管理员/超管/卖方/拍卖师/财务/运营 查看 type=2 的会话
+     * 卖方合并会话：客服咨询(type=1) + 管理沟通(type=2)，卖方与买方无异，可咨询客服也可接收管理沟通
+     */
+    PageInfo<Map<String, Object>> getSellerMergedSessions(Long sellerId, Integer current, Integer size);
+
+    /**
+     * 管理沟通会话：管理员/超管/拍卖师/财务/运营 查看 type=2 的会话
      */
     PageInfo<Map<String, Object>> getAdminSessions(Long currentUserId, Integer current, Integer size, boolean isSuperAdmin);
 

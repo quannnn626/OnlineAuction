@@ -223,7 +223,7 @@ export default {
       }
       return this.displayImageList[this.selectedImageIndex];
     },
-    // 是否可显示咨询客服（仅普通用户、卖方可从商品页发起客服咨询；管理员等从消息中心发起管理沟通）
+    // 是否可显示咨询客服（买方、卖方均可发起客服咨询；管理员等从消息中心使用管理沟通）
     canUseMessageCenter() {
       const userInfo = localStorage.getItem("userInfo");
       if (!userInfo) return false;

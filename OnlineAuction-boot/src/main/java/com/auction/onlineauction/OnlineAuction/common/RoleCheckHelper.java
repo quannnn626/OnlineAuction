@@ -210,6 +210,16 @@ public final class RoleCheckHelper {
         return hasAnyRole(session, 1, 2, 3, 4, 5, 6, 7, 8);
     }
 
+    /** 普通用户(买方、卖方)可发起客服咨询，与客服对话；卖方除可上架商品外与买方无异 */
+    public static boolean canCreateConsultSession(HttpSession session) {
+        return hasAnyRole(session, 1, 2);
+    }
+
+    /** 仅管理员/超级管理员可与后台用户发起管理沟通 */
+    public static boolean canCreateAdminSession(HttpSession session) {
+        return hasAnyRole(session, 3, 4);
+    }
+
     /** 消息中心：超级管理员可查看所有（监管） */
     public static boolean canViewAllMessageCenter(HttpSession session) {
         return hasAnyRole(session, 4);
