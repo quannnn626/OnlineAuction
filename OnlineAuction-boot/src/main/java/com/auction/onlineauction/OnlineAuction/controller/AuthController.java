@@ -5,6 +5,8 @@ import com.auction.onlineauction.OnlineAuction.dto.LoginDTO;
 import com.auction.onlineauction.OnlineAuction.service.IAuctionUserService;
 import com.auction.onlineauction.OnlineAuction.service.IAuctionFileService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -67,25 +69,28 @@ public class AuthController {
     }
 
     /**
-     * 获取当前登录用户信息
+     * 获取当前登录用户信息（用于校验 session 是否有效，服务重启后 session 失效时返回 401）
      */
     @GetMapping("/current")
-    public Result<Map<String, Object>> getCurrentUser(HttpServletRequest request) {
+    public ResponseEntity<Result<Map<String, Object>>> getCurrentUser(HttpServletRequest request) {
         try {
             HttpSession session = request.getSession(false);
             if (session == null) {
-                return Result.error("未登录");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Result.error(401, "未登录"));
             }
             
             Long userId = (Long) session.getAttribute("userId");
             if (userId == null) {
-                return Result.error("未登录");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Result.error(401, "未登录"));
             }
             
             // 从数据库查询完整的用户信息
             com.auction.onlineauction.OnlineAuction.entity.AuctionUser user = userService.getById(userId);
             if (user == null || user.getDelFlag() == 1) {
-                return Result.error("用户不存在");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Result.error(401, "用户不存在"));
             }
             
             Map<String, Object> userInfo = new HashMap<>();
@@ -128,9 +133,10 @@ public class AuthController {
                 userInfo.put("avatarFileId", null);
             }
             
-            return Result.success("获取成功", userInfo);
+            return ResponseEntity.ok(Result.success("获取成功", userInfo));
         } catch (Exception e) {
-            return Result.error("获取失败：" + e.getMessage());
+            return ResponseEntity.ok(
+                    (Result<Map<String, Object>>) (Result<?>) Result.error("获取失败：" + e.getMessage()));
         }
     }
 

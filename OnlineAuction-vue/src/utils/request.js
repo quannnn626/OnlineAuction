@@ -50,7 +50,8 @@ function clearAndRedirectToLogin() {
   localStorage.removeItem("isSeller");
   Message.warning("登录已过期，请重新登录");
   if (router.currentRoute.path !== "/login") {
-    router.replace("/login");
+    // catch 导航失败（如重复导航、被取消），避免 Uncaught "Navigation cancelled" 报错
+    router.replace("/login").catch(() => {});
   }
 }
 

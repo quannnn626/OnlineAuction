@@ -75,7 +75,7 @@
 
 <script>
 import { getMenuTree } from "@/api/menu";
-import { logout } from "@/api/auth";
+import { logout, getCurrentUser } from "@/api/auth";
 
 export default {
   name: "Index",
@@ -87,6 +87,7 @@ export default {
       menuMap: {},
       loading: false,
       userName: "",
+      sessionCheckTimer: null,
     };
   },
   mounted() {
@@ -94,6 +95,13 @@ export default {
     this.loadMenus();
     this.setActiveMenu();
     this.updatePageTitle();
+    // 有登录态时：启动时校验 session，防止服务重启后仍显示已登录
+    this.validateSessionOnMount();
+    // 定期校验 session（每 60 秒），服务重启后尽快检测并跳转登录
+    this.startSessionCheckTimer();
+  },
+  beforeDestroy() {
+    this.clearSessionCheckTimer();
   },
   watch: {
     $route(to) {
@@ -271,6 +279,32 @@ export default {
         } catch (e) {
           // 忽略
         }
+      }
+    },
+    /** 启动时校验 session，服务重启后 session 已失效时由 request 拦截器清除并跳转登录 */
+    validateSessionOnMount() {
+      if (!localStorage.getItem("userInfo")) return;
+      getCurrentUser().catch(() => {
+        this.clearSessionCheckTimer();
+      });
+    },
+    /** 定期校验 session，服务重启后尽快检测并跳转登录 */
+    startSessionCheckTimer() {
+      this.clearSessionCheckTimer();
+      this.sessionCheckTimer = setInterval(() => {
+        if (!localStorage.getItem("userInfo")) {
+          this.clearSessionCheckTimer();
+          return;
+        }
+        getCurrentUser().catch(() => {
+          this.clearSessionCheckTimer();
+        });
+      }, 60000);
+    },
+    clearSessionCheckTimer() {
+      if (this.sessionCheckTimer) {
+        clearInterval(this.sessionCheckTimer);
+        this.sessionCheckTimer = null;
       }
     },
     handleCommand(command) {
