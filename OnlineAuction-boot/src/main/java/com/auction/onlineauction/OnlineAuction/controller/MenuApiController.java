@@ -82,20 +82,20 @@ public class MenuApiController {
             // 根据用户的所有角色获取菜单（合并去重）
             menuTree = menuService.getMenuTreeByRoleTypes(roleTypes);
             
-            // 卖方兜底：role 含 2 但菜单未返回「商品申请」时（如 DB 缺菜单或权限关联），后端补充
-            if (roleTypes.contains(2) && !containsMenuPath(menuTree, "/seller/goods/add")) {
-                AuctionMenu goodsAddMenu = new AuctionMenu();
-                goodsAddMenu.setId(99992L);
-                goodsAddMenu.setMenuName("商品申请");
-                goodsAddMenu.setParentId(0L);
-                goodsAddMenu.setMenuPath("/seller/goods/add");
-                goodsAddMenu.setMenuIcon("el-icon-upload2");
-                goodsAddMenu.setMenuType(1);
-                goodsAddMenu.setPermissionCode("goods:add");
-                goodsAddMenu.setMenuSort(2);
-                goodsAddMenu.setMenuStatus(1);
-                goodsAddMenu.setChildren(new ArrayList<>());
-                menuTree.add(goodsAddMenu);
+            // 卖方兜底：role 含 2 但菜单未返回「我的商品」时（如 DB 缺菜单或权限关联），后端补充
+            if (roleTypes.contains(2) && !containsMenuPath(menuTree, "/my-goods")) {
+                AuctionMenu myGoodsMenu = new AuctionMenu();
+                myGoodsMenu.setId(99992L);
+                myGoodsMenu.setMenuName("我的商品");
+                myGoodsMenu.setParentId(0L);
+                myGoodsMenu.setMenuPath("/my-goods");
+                myGoodsMenu.setMenuIcon("el-icon-goods");
+                myGoodsMenu.setMenuType(1);
+                myGoodsMenu.setPermissionCode("goods:add");
+                myGoodsMenu.setMenuSort(2);
+                myGoodsMenu.setMenuStatus(1);
+                myGoodsMenu.setChildren(new ArrayList<>());
+                menuTree.add(myGoodsMenu);
             }
             
             return Result.success("获取成功", menuTree);

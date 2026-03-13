@@ -461,7 +461,7 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
     }
 
     @Override
-    public PageInfo<AuctionGoods> getGoodsListForApi(Integer current, Integer size, String keyword, Integer status) {
+    public PageInfo<AuctionGoods> getGoodsListForApi(Integer current, Integer size, String keyword, Integer status, String categoryId) {
         PageHelper.startPage(current, size);
 
         QueryWrapper<AuctionGoods> wrapper = new QueryWrapper<>();
@@ -480,6 +480,11 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
         // 状态筛选（如果指定了状态，则进一步筛选）
         if (status != null) {
             wrapper.eq("goods_status", status);
+        }
+        
+        // 商品分类筛选（category_id 为逗号分隔，使用 FIND_IN_SET）
+        if (categoryId != null && !categoryId.trim().isEmpty()) {
+            wrapper.apply("FIND_IN_SET({0}, category_id)", categoryId);
         }
         
         wrapper.orderByDesc("create_time");

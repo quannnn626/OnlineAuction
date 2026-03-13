@@ -2,26 +2,7 @@
   <div class="goods-management-page">
     <!-- 页面标题 -->
     <div class="page-header">
-      <h2>拍卖商品</h2>
-      <div class="header-actions">
-        <el-button
-          v-if="isSeller"
-          type="primary"
-          icon="el-icon-plus"
-          @click="handleAdd">
-          上架商品
-        </el-button>
-        <el-button type="warning" icon="el-icon-time" @click="handleBidHistory">
-          历史竞拍
-        </el-button>
-        <el-button
-          v-if="isSeller"
-          type="info"
-          icon="el-icon-user"
-          @click="handleMyGoods">
-          我的商品
-        </el-button>
-      </div>
+      <h2>拍品列表</h2>
     </div>
 
     <!-- 搜索和筛选区域 -->
@@ -40,6 +21,23 @@
               @click="handleSearch"
             ></el-button>
           </el-input>
+        </el-col>
+        <el-col :span="4">
+          <el-select
+            v-model="categoryFilter"
+            placeholder="商品分类"
+            clearable
+            filterable
+            @change="handleFilter"
+          >
+            <el-option label="全部分类" value=""></el-option>
+            <el-option
+              v-for="cat in categoryList"
+              :key="cat.id"
+              :label="cat.categoryName"
+              :value="String(cat.id)"
+            ></el-option>
+          </el-select>
         </el-col>
         <el-col :span="4">
           <el-select
@@ -150,6 +148,7 @@
 
 <script>
 import { getGoodsList } from "@/api/goods";
+import { getCategoryListForHome } from "@/api/category";
 
 export default {
   name: "Goods",
@@ -157,9 +156,10 @@ export default {
     return {
       goodsList: [],
       loading: false,
-      isSeller: false,
+      categoryList: [],
       searchKeyword: "",
       statusFilter: "",
+      categoryFilter: "",
       pagination: {
         current: 1,
         size: 10,
@@ -168,18 +168,18 @@ export default {
     };
   },
   created() {
-    const userInfo = localStorage.getItem("userInfo");
-    if (userInfo) {
-      try {
-        const user = JSON.parse(userInfo);
-        this.isSeller = !!user.isSeller;
-      } catch (e) {
-        this.isSeller = false;
-      }
-    }
+    this.loadCategories();
     this.loadData();
   },
   methods: {
+    async loadCategories() {
+      try {
+        const res = await getCategoryListForHome();
+        this.categoryList = Array.isArray(res) ? res : [];
+      } catch (e) {
+        this.categoryList = [];
+      }
+    },
     async loadData() {
       this.loading = true;
       try {
@@ -188,6 +188,7 @@ export default {
           size: this.pagination.size,
           keyword: this.searchKeyword,
           status: this.statusFilter,
+          categoryId: this.categoryFilter || undefined,
         };
         const result = await getGoodsList(params);
         // PageInfo结构：list(实际是records)和total
@@ -210,20 +211,12 @@ export default {
     handleReset() {
       this.searchKeyword = "";
       this.statusFilter = "";
+      this.categoryFilter = "";
       this.pagination.current = 1;
       this.loadData();
     },
-    handleAdd() {
-      this.$router.push("/seller/goods/add");
-    },
     handleView(goods) {
       this.$router.push({ path: "/goods-detail", query: { id: goods.id } });
-    },
-    handleBidHistory() {
-      this.$router.push("/bid-history");
-    },
-    handleMyGoods() {
-      this.$router.push("/my-goods");
     },
     handleSizeChange(size) {
       this.pagination.size = size;

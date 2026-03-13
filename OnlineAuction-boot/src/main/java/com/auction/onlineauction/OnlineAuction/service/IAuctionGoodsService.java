@@ -71,7 +71,7 @@ public interface IAuctionGoodsService extends IService<AuctionGoods> {
     /**
      * 获取商品列表（前端API，只显示审核通过的商品）
      */
-    PageInfo<AuctionGoods> getGoodsListForApi(Integer current, Integer size, String keyword, Integer status);
+    PageInfo<AuctionGoods> getGoodsListForApi(Integer current, Integer size, String keyword, Integer status, String categoryId);
 
     /**
      * 搜索商品（前端API）

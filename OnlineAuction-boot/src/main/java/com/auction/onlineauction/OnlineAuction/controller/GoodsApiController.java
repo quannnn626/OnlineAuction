@@ -32,9 +32,10 @@ public class GoodsApiController extends BaseApiController {
             @RequestParam(defaultValue = "1") Integer current,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) Integer status) {
+            @RequestParam(required = false) Integer status,
+            @RequestParam(required = false) String categoryId) {
         try {
-            PageInfo<AuctionGoods> pageInfo = goodsService.getGoodsListForApi(current, size, keyword, status);
+            PageInfo<AuctionGoods> pageInfo = goodsService.getGoodsListForApi(current, size, keyword, status, categoryId);
             return Result.success("查询成功", pageInfo);
         } catch (Exception e) {
             return Result.error("查询失败：" + e.getMessage());

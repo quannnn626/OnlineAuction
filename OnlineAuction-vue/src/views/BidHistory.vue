@@ -1,8 +1,7 @@
 <template>
   <div class="bid-history-page">
     <div class="page-header">
-      <h2>历史竞拍管理</h2>
-      <el-button icon="el-icon-back" @click="$router.push('/goods')">返回拍卖商品</el-button>
+      <h2>历史竞拍</h2>
     </div>
 
     <div class="filter-section">
@@ -14,17 +13,28 @@
             clearable
             @keyup.enter.native="handleSearch"
           >
-            <el-button slot="append" icon="el-icon-search" @click="handleSearch"></el-button>
+            <el-button
+              slot="append"
+              icon="el-icon-search"
+              @click="handleSearch"
+            ></el-button>
           </el-input>
         </el-col>
         <el-col :span="4">
-          <el-button type="info" icon="el-icon-refresh" @click="handleReset">重置</el-button>
+          <el-button type="info" icon="el-icon-refresh" @click="handleReset"
+            >重置</el-button
+          >
         </el-col>
       </el-row>
     </div>
 
     <div class="table-section">
-      <el-table v-loading="loading" :data="tableData" stripe style="width: 100%">
+      <el-table
+        v-loading="loading"
+        :data="tableData"
+        stripe
+        style="width: 100%"
+      >
         <el-table-column prop="goodsId" label="商品ID" width="90" />
         <el-table-column prop="goodsName" label="商品名称" min-width="220" />
         <el-table-column prop="myBidCount" label="我的出价次数" width="120" />
@@ -33,17 +43,27 @@
             <span class="price">¥{{ scope.row.myHighestBid || "0.00" }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="currentHighestPrice" label="当前最高价" width="140">
+        <el-table-column
+          prop="currentHighestPrice"
+          label="当前最高价"
+          width="140"
+        >
           <template slot-scope="scope">
-            <span class="price">¥{{ scope.row.currentHighestPrice || "0.00" }}</span>
+            <span class="price"
+              >¥{{ scope.row.currentHighestPrice || "0.00" }}</span
+            >
           </template>
         </el-table-column>
         <el-table-column prop="latestBidTime" label="最近出价时间" width="180">
-          <template slot-scope="scope">{{ formatTime(scope.row.latestBidTime) }}</template>
+          <template slot-scope="scope">{{
+            formatTime(scope.row.latestBidTime)
+          }}</template>
         </el-table-column>
         <el-table-column label="操作" width="120" fixed="right">
           <template slot-scope="scope">
-            <el-button size="mini" type="primary" @click="openDetail(scope.row)">查看详情</el-button>
+            <el-button size="mini" type="primary" @click="openDetail(scope.row)"
+              >查看详情</el-button
+            >
           </template>
         </el-table-column>
       </el-table>
@@ -61,8 +81,17 @@
       />
     </div>
 
-    <el-dialog :title="`我的竞价详情 - ${detailGoodsName || ''}`" :visible.sync="detailVisible" width="860px">
-      <el-table v-loading="detailLoading" :data="detailData" stripe style="width: 100%">
+    <el-dialog
+      :title="`我的竞价详情 - ${detailGoodsName || ''}`"
+      :visible.sync="detailVisible"
+      width="860px"
+    >
+      <el-table
+        v-loading="detailLoading"
+        :data="detailData"
+        stripe
+        style="width: 100%"
+      >
         <el-table-column prop="buyerName" label="出价人" width="150" />
         <el-table-column prop="bidPrice" label="出价金额" width="150">
           <template slot-scope="scope">
@@ -70,11 +99,15 @@
           </template>
         </el-table-column>
         <el-table-column prop="bidTime" label="出价时间" width="180">
-          <template slot-scope="scope">{{ formatTime(scope.row.bidTime) }}</template>
+          <template slot-scope="scope">{{
+            formatTime(scope.row.bidTime)
+          }}</template>
         </el-table-column>
         <el-table-column label="状态" width="100">
           <template slot-scope="scope">
-            <el-tag v-if="scope.row.isHighest === 1" type="success" size="small">当前最高</el-tag>
+            <el-tag v-if="scope.row.isHighest === 1" type="success" size="small"
+              >当前最高</el-tag
+            >
             <span v-else>-</span>
           </template>
         </el-table-column>
@@ -150,7 +183,10 @@ export default {
           current: this.detailPagination.current,
           size: this.detailPagination.size,
         };
-        const result = await getMyBidRecordsByGoodsPage(this.detailGoodsId, params);
+        const result = await getMyBidRecordsByGoodsPage(
+          this.detailGoodsId,
+          params,
+        );
         this.detailData = result.list || [];
         this.detailPagination.total = result.total || 0;
       } catch (e) {

@@ -1,16 +1,11 @@
 <template>
   <div class="my-goods-page">
-    <!-- 返回按钮 -->
-    <div class="back-section">
-      <el-button icon="el-icon-arrow-left" @click="handleBack">返回商品列表</el-button>
-    </div>
-
     <!-- 页面标题 -->
     <div class="page-header">
       <h2>我的商品</h2>
       <div class="header-actions">
         <el-button type="primary" icon="el-icon-plus" @click="handleAdd">
-          上架商品
+          商品申请
         </el-button>
       </div>
     </div>
@@ -154,9 +149,6 @@ export default {
         this.loading = false
       }
     },
-    handleBack() {
-      this.$router.push('/goods')
-    },
     handleAdd() {
       this.$router.push('/seller/goods/add')
     },
@@ -274,10 +266,6 @@ export default {
   padding: 20px;
   background: #f5f5f5;
   min-height: 100vh;
-}
-
-.back-section {
-  margin-bottom: 20px;
 }
 
 .page-header {

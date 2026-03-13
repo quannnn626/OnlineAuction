@@ -1,7 +1,7 @@
 <template>
   <div class="seller-goods-add-page">
     <div class="back-section">
-      <el-button icon="el-icon-arrow-left" @click="handleBack">返回</el-button>
+      <el-button icon="el-icon-arrow-left" @click="handleBack">返回到我的商品</el-button>
     </div>
     <div class="page-header">
       <h2>申请上架商品</h2>

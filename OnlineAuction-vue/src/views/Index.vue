@@ -2,15 +2,19 @@
   <div class="app-container">
     <el-container>
       <!-- 左侧菜单 -->
-      <el-aside width="200px" class="sidebar">
+      <el-aside width="280px" class="sidebar">
         <div class="logo">
-          <h2>拍卖系统</h2>
+          <div class="logo-icon">◎</div>
+          <span class="logo-text">拍卖系统</span>
         </div>
         <el-menu
           :default-active="activeMenu"
           class="sidebar-menu"
           router
           @select="handleMenuSelect"
+          background-color="transparent"
+          text-color="#94a3b8"
+          active-text-color="#f8fafc"
         >
           <template v-for="menu in menuTree">
             <el-menu-item
@@ -132,16 +136,25 @@ export default {
             children: [],
           });
         }
-        // 卖方兜底菜单：补充“商品申请”入口（卖方申请上架商品）
-        if (user && user.isSeller && !this.menuExists(menuTree, "/seller/goods/add")) {
+        // 卖方兜底菜单：补充“我的商品”入口（卖方独有）
+        if (user && user.isSeller && !this.menuExists(menuTree, "/my-goods")) {
           menuTree.push({
             id: 99992,
-            menuName: "商品申请",
-            menuPath: "/seller/goods/add",
-            menuIcon: "el-icon-upload2",
+            menuName: "我的商品",
+            menuPath: "/my-goods",
+            menuIcon: "el-icon-goods",
             children: [],
           });
         }
+        // 过滤掉“商品申请”菜单（改为在“我的商品”页面右上角的按钮入口）
+        menuTree = menuTree.filter((m) => m.menuPath !== "/seller/goods/add");
+        // 将「拍卖商品」菜单名统一显示为「拍品列表」
+        menuTree = menuTree.map((m) => {
+          if (m.menuPath === "/goods" && m.menuName === "拍卖商品") {
+            return { ...m, menuName: "拍品列表" };
+          }
+          return m;
+        });
         
         this.menuTree = menuTree;
         this.buildMenuMap(this.menuTree);
@@ -307,7 +320,7 @@ export default {
 .app-container {
   height: 100vh;
   overflow: hidden;
-  background: #f0f2f5;
+  background: #f1f5f9;
 }
 
 .app-container ::v-deep .el-container {
@@ -315,7 +328,7 @@ export default {
 }
 
 .sidebar {
-  background: #001529;
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
   height: 100vh;
   position: fixed;
   left: 0;
@@ -325,153 +338,149 @@ export default {
   z-index: 1000;
   display: flex;
   flex-direction: column;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
-  transition: all 0.3s ease;
+  box-shadow: 4px 0 24px rgba(15, 23, 42, 0.25);
+  border-right: 1px solid rgba(148, 163, 184, 0.08);
+  transition: all 0.25s ease;
 }
 
 .logo {
-  height: 64px;
+  height: 88px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #1890ff 0%, #40a9ff 100%);
-  color: #fff;
+  gap: 14px;
   flex-shrink: 0;
-  z-index: 10;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0 24px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
   position: relative;
 }
 
-.logo::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(255, 255, 255, 0.1);
-  opacity: 0;
-  transition: opacity 0.3s ease;
+.logo-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #c9a227 0%, #e8c547 50%, #c9a227 100%);
+  border-radius: 12px;
+  font-size: 24px;
+  color: #0f172a;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(201, 162, 39, 0.35);
 }
 
-.logo:hover::before {
-  opacity: 1;
-}
-
-.logo h2 {
-  font-size: 18px;
+.logo-text {
+  font-size: 20px;
   font-weight: 600;
-  margin: 0;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-  z-index: 1;
-  position: relative;
+  color: #f8fafc;
+  letter-spacing: 0.5px;
 }
 
 .sidebar-menu {
-  border: none;
-  background: transparent;
+  border: none !important;
+  background: transparent !important;
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 16px 0;
+  padding: 20px 16px;
 }
 
 .sidebar-menu ::v-deep .el-menu-item,
 .sidebar-menu ::v-deep .el-submenu__title {
-  color: rgba(255, 255, 255, 0.85);
-  font-size: 14px;
+  color: #94a3b8 !important;
+  font-size: 16px;
   font-weight: 500;
-  margin: 4px 8px;
-  border-radius: 6px;
-  height: 40px;
-  line-height: 40px;
-  transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+  margin: 4px 0;
+  border-radius: 12px;
+  height: 52px;
+  line-height: 52px;
+  transition: all 0.2s ease;
   position: relative;
   overflow: hidden;
 }
 
-.sidebar-menu ::v-deep .el-menu-item::before,
-.sidebar-menu ::v-deep .el-submenu__title::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: #1890ff;
-  transform: scaleY(0);
-  transition: transform 0.3s ease;
+.sidebar-menu ::v-deep .el-menu-item i,
+.sidebar-menu ::v-deep .el-submenu__title i {
+  color: inherit;
+  margin-right: 14px;
+  font-size: 20px;
+  opacity: 0.9;
 }
 
 .sidebar-menu ::v-deep .el-menu-item:hover,
 .sidebar-menu ::v-deep .el-submenu__title:hover {
-  background: rgba(24, 144, 255, 0.1);
-  color: #fff;
-  transform: translateX(4px);
-}
-
-.sidebar-menu ::v-deep .el-menu-item:hover::before,
-.sidebar-menu ::v-deep .el-submenu__title:hover::before {
-  transform: scaleY(1);
+  background: rgba(148, 163, 184, 0.12) !important;
+  color: #e2e8f0 !important;
 }
 
 .sidebar-menu ::v-deep .el-menu-item.is-active {
-  background: #1890ff;
-  color: #fff;
-  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3);
+  background: linear-gradient(90deg, rgba(201, 162, 39, 0.2) 0%, rgba(201, 162, 39, 0.06) 100%) !important;
+  color: #f8fafc !important;
+  border-left: 4px solid #c9a227;
+  padding-left: 52px !important;
 }
 
-.sidebar-menu ::v-deep .el-menu-item.is-active::before {
-  transform: scaleY(1);
-  background: #fff;
+.sidebar-menu ::v-deep .el-menu-item.is-active i {
+  color: #e8c547;
 }
 
 .sidebar-menu ::v-deep .el-submenu__title {
-  padding-left: 24px !important;
+  padding-left: 20px !important;
 }
 
 .sidebar-menu ::v-deep .el-menu-item {
-  padding-left: 48px !important;
+  padding-left: 54px !important;
+  border-left: 4px solid transparent;
 }
 
 .sidebar-menu ::v-deep .el-submenu .el-menu-item {
   padding-left: 68px !important;
-  height: 36px;
-  line-height: 36px;
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.65);
-}
-
-.sidebar-menu ::v-deep .el-submenu .el-menu-item:hover {
-  background: rgba(24, 144, 255, 0.08);
-  color: rgba(255, 255, 255, 0.85);
+  height: 46px;
+  line-height: 46px;
+  font-size: 15px;
+  color: #94a3b8 !important;
+  border-left: 4px solid transparent;
 }
 
 .sidebar-menu ::v-deep .el-submenu .el-menu-item.is-active {
-  background: rgba(24, 144, 255, 0.15);
-  color: #fff;
+  border-left: 4px solid #c9a227;
+  padding-left: 64px !important;
 }
 
-/* 覆盖Element UI子菜单面板的默认白色背景 */
+.sidebar-menu ::v-deep .el-submenu .el-menu-item:hover {
+  background: rgba(148, 163, 184, 0.08) !important;
+  color: #cbd5e1 !important;
+}
+
+.sidebar-menu ::v-deep .el-submenu .el-menu-item.is-active {
+  background: rgba(201, 162, 39, 0.15) !important;
+  color: #f8fafc !important;
+}
+
+.sidebar-menu ::v-deep .el-submenu__icon-arrow {
+  color: inherit;
+  font-size: 12px;
+}
+
 .sidebar-menu ::v-deep .el-menu--inline .el-menu-item,
 .sidebar-menu ::v-deep .el-menu--popup {
-  background-color: #001529 !important;
+  background-color: transparent !important;
 }
 
 .sidebar-menu ::v-deep .el-submenu .el-menu {
-  background-color: #001529 !important;
+  background-color: transparent !important;
 }
 
 .sidebar-menu ::v-deep .el-menu--inline {
-  background-color: #001529 !important;
+  background-color: transparent !important;
 }
 
 .app-container ::v-deep .el-container > .el-container {
-  margin-left: 200px;
+  margin-left: 280px;
   height: 100vh;
   display: flex;
   flex-direction: column;
-  transition: margin-left 0.3s ease;
+  transition: margin-left 0.25s ease;
 }
 
 .header {
@@ -506,7 +515,7 @@ export default {
   content: "";
   width: 3px;
   height: 16px;
-  background: #1890ff;
+  background: linear-gradient(180deg, #c9a227 0%, #e8c547 100%);
   margin-right: 12px;
   border-radius: 2px;
 }
@@ -530,8 +539,8 @@ export default {
 }
 
 .user-info:hover {
-  background: #f5f5f5;
-  color: #1890ff;
+  background: #f1f5f9;
+  color: #b8860b;
 }
 
 .user-info i {
@@ -540,7 +549,7 @@ export default {
 
 .main-content {
   padding: 24px;
-  background: #f0f2f5;
+  background: #f1f5f9;
   overflow-y: auto;
   overflow-x: hidden;
   flex: 1;
@@ -592,36 +601,4 @@ export default {
   }
 }
 
-/* 动画增强 */
-.sidebar-menu ::v-deep .el-menu-item,
-.sidebar-menu ::v-deep .el-submenu__title {
-  animation: fadeInUp 0.5s ease-out forwards;
-}
-
-.sidebar-menu ::v-deep .el-menu-item:nth-child(1) {
-  animation-delay: 0.1s;
-}
-.sidebar-menu ::v-deep .el-menu-item:nth-child(2) {
-  animation-delay: 0.2s;
-}
-.sidebar-menu ::v-deep .el-menu-item:nth-child(3) {
-  animation-delay: 0.3s;
-}
-.sidebar-menu ::v-deep .el-menu-item:nth-child(4) {
-  animation-delay: 0.4s;
-}
-.sidebar-menu ::v-deep .el-menu-item:nth-child(5) {
-  animation-delay: 0.5s;
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 </style>
