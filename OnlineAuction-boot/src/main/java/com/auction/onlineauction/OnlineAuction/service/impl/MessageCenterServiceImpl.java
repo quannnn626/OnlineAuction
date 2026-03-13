@@ -51,7 +51,7 @@ public class MessageCenterServiceImpl implements IMessageCenterService {
         if (goods == null || goods.getDelFlag() == 1) {
             throw new RuntimeException("商品不存在");
         }
-        Long serviceId = assignRandomService();
+        Long serviceId = assignServiceByLoadBalance();
         AuctionMessageSession session = new AuctionMessageSession();
         session.setSessionType(1);
         session.setGoodsId(goodsId);
@@ -114,15 +114,42 @@ public class MessageCenterServiceImpl implements IMessageCenterService {
         }
     }
 
-    private Long assignRandomService() {
+    /** 客服在线判定：最后登录时间在此分钟数内视为在线 */
+    private static final int ONLINE_MINUTES = 30;
+
+    /**
+     * 智能分配客服：优先分配给在线的客服，并根据未处理会话数负载均衡（选未处理会话最少的客服；若多个相同则随机）
+     */
+    private Long assignServiceByLoadBalance() {
         QueryWrapper<AuctionUser> q = new QueryWrapper<>();
         q.eq("user_status", 0).eq("del_flag", 0);
         q.apply("FIND_IN_SET(6, user_role) > 0");
+        LocalDateTime onlineThreshold = LocalDateTime.now().minusMinutes(ONLINE_MINUTES);
+        q.ge("login_date", onlineThreshold);
         List<AuctionUser> list = userService.list(q);
         if (list == null || list.isEmpty()) {
-            return null;
+            q = new QueryWrapper<>();
+            q.eq("user_status", 0).eq("del_flag", 0);
+            q.apply("FIND_IN_SET(6, user_role) > 0");
+            list = userService.list(q);
         }
-        return list.get(new Random().nextInt(list.size())).getId();
+        if (list == null || list.isEmpty()) return null;
+
+        long minCount = Long.MAX_VALUE;
+        List<Long> candidates = new ArrayList<>();
+        for (AuctionUser u : list) {
+            QueryWrapper<AuctionMessageSession> sq = new QueryWrapper<>();
+            sq.eq("service_id", u.getId()).eq("session_type", 1).eq("session_status", 0).eq("del_flag", 0);
+            long cnt = sessionMapper.selectCount(sq);
+            if (cnt < minCount) {
+                minCount = cnt;
+                candidates.clear();
+                candidates.add(u.getId());
+            } else if (cnt == minCount) {
+                candidates.add(u.getId());
+            }
+        }
+        return candidates.get(new Random().nextInt(candidates.size()));
     }
 
     @Override
