@@ -75,6 +75,14 @@
               (currentSessionDetail.sessionType === 2 ? "管理沟通" : "会话")
             }}</span>
             <el-button
+              v-if="isCustomerService && currentSessionDetail.sessionType === 1 && currentSessionDetail.userId"
+              type="text"
+              size="small"
+              @click="goToUserOrders"
+            >
+              查看用户订单
+            </el-button>
+            <el-button
               v-if="canCloseSession"
               type="text"
               size="small"
@@ -227,6 +235,15 @@ export default {
       }
       return "请从左侧选择会话，或从商品详情页点击「咨询客服」发起咨询";
     },
+    isCustomerService() {
+      try {
+        const user = JSON.parse(localStorage.getItem("userInfo") || "{}");
+        const roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
+        return roles.includes("6");
+      } catch (e) {
+        return false;
+      }
+    },
   },
   data() {
     return {
@@ -367,6 +384,15 @@ export default {
         return false;
       }
       return true;
+    },
+    goToUserOrders() {
+      const d = this.currentSessionDetail;
+      if (!d || !d.userId) return;
+      const userName = d.userName && d.userName !== "-" ? encodeURIComponent(d.userName) : "";
+      this.$router.push({
+        path: "/message/service-orders",
+        query: { userId: d.userId, userName },
+      });
     },
     async handleCreateAdminSession() {
       const targetId = this.adminTargetUserId;

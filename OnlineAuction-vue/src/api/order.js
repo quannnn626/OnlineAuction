@@ -17,6 +17,15 @@ export function getAdminOrderPage(params) {
   return request({ url: "/OnlineAuction/auctionOrder/page", method: "get", params });
 }
 
+/** 客服查看某用户的订单（仅在与该用户有会话时可用） */
+export function getServiceUserOrderPage(userId, params) {
+  return request({
+    url: `/OnlineAuction/auctionOrder/service/user/${userId}/page`,
+    method: "get",
+    params,
+  });
+}
+
 export function getAdminOrderById(id) {
   return request({ url: `/OnlineAuction/auctionOrder/${id}`, method: "get" });
 }

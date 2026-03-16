@@ -89,6 +89,12 @@ const routes = [
         meta: { messageCenter: true },
       },
       {
+        path: "message/service-orders",
+        name: "ServiceOrders",
+        component: () => import("@/views/ServiceOrders.vue"),
+        meta: { serviceOrders: true },
+      },
+      {
         path: "admin",
         redirect: "/admin/profile",
       },
@@ -224,6 +230,19 @@ router.beforeEach((to, from, next) => {
     const canAccess = roles.some((r) => ["1","2","3","4","5","6","7","8"].includes(r));
     if (!canAccess) {
       next("/home");
+      return;
+    }
+  }
+
+  // 客服查看用户订单页：仅客服可访问，且必须带 userId 参数（从会话内跳转）
+  if (to.path === "/message/service-orders" && to.meta?.serviceOrders) {
+    const roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
+    if (!roles.includes("6")) {
+      next("/message");
+      return;
+    }
+    if (!to.query.userId) {
+      next("/message");
       return;
     }
   }

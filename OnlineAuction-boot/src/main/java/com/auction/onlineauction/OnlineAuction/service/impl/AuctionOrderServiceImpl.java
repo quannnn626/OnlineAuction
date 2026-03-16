@@ -1,18 +1,23 @@
 package com.auction.onlineauction.OnlineAuction.service.impl;
 
 import com.auction.onlineauction.OnlineAuction.entity.AuctionDeposit;
+import com.auction.onlineauction.OnlineAuction.entity.AuctionGoods;
 import com.auction.onlineauction.OnlineAuction.entity.AuctionMessageSession;
 import com.auction.onlineauction.OnlineAuction.entity.AuctionOrder;
 import com.auction.onlineauction.OnlineAuction.entity.AuctionRecord;
+import com.auction.onlineauction.OnlineAuction.entity.AuctionUser;
 import com.auction.onlineauction.OnlineAuction.mapper.AuctionMessageSessionMapper;
 import com.auction.onlineauction.OnlineAuction.mapper.AuctionOrderMapper;
 import com.auction.onlineauction.OnlineAuction.service.IAuctionDepositService;
+import com.auction.onlineauction.OnlineAuction.service.IAuctionGoodsService;
 import com.auction.onlineauction.OnlineAuction.service.IAuctionOrderService;
+import com.auction.onlineauction.OnlineAuction.service.IAuctionUserService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,8 +25,12 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -40,6 +49,11 @@ public class AuctionOrderServiceImpl extends ServiceImpl<AuctionOrderMapper, Auc
     private IAuctionDepositService depositService;
     @Autowired
     private AuctionMessageSessionMapper messageSessionMapper;
+    @Autowired
+    @Lazy
+    private IAuctionGoodsService goodsService;
+    @Autowired
+    private IAuctionUserService userService;
 
     @Override
     public PageInfo<AuctionOrder> getOrderPage(Integer current, Integer size, Integer orderStatus,
@@ -54,6 +68,94 @@ public class AuctionOrderServiceImpl extends ServiceImpl<AuctionOrderMapper, Auc
         q.orderByDesc("create_time");
         List<AuctionOrder> list = list(q);
         return new PageInfo<>(list);
+    }
+
+    @Override
+    public PageInfo<Map<String, Object>> getOrderPageWithDisplayNames(Integer current, Integer size, Integer orderStatus,
+                                                                     Long buyerId, Long sellerId, String orderNo) {
+        PageInfo<AuctionOrder> raw = getOrderPage(current, size, orderStatus, buyerId, sellerId, orderNo);
+        List<Map<String, Object>> rows = buildOrderRowsWithNames(raw.getList());
+        PageInfo<Map<String, Object>> result = new PageInfo<>(rows);
+        result.setTotal(raw.getTotal());
+        result.setPages(raw.getPages());
+        result.setPageNum(raw.getPageNum());
+        result.setPageSize(raw.getPageSize());
+        return result;
+    }
+
+    @Override
+    public PageInfo<Map<String, Object>> getOrderPageForUserByService(Long serviceId, Long targetUserId, Integer current,
+                                                                       Integer size, Integer orderStatus, String orderNo) {
+        if (serviceId == null || targetUserId == null) {
+            return new PageInfo<>(new ArrayList<>());
+        }
+        QueryWrapper<AuctionMessageSession> sw = new QueryWrapper<>();
+        sw.eq("service_id", serviceId).eq("user_id", targetUserId).eq("del_flag", 0);
+        if (messageSessionMapper.selectCount(sw) == 0) {
+            return new PageInfo<>(new ArrayList<>());
+        }
+        PageHelper.startPage(current, size);
+        QueryWrapper<AuctionOrder> q = new QueryWrapper<>();
+        q.eq("del_flag", 0).and(w -> w.eq("buyer_id", targetUserId).or().eq("seller_id", targetUserId));
+        if (orderStatus != null) q.eq("order_status", orderStatus);
+        if (orderNo != null && !orderNo.trim().isEmpty()) q.like("order_no", orderNo.trim());
+        q.orderByDesc("create_time");
+        List<AuctionOrder> list = list(q);
+        PageInfo<AuctionOrder> raw = new PageInfo<>(list);
+        List<Map<String, Object>> rows = buildOrderRowsWithNames(raw.getList());
+        PageInfo<Map<String, Object>> result = new PageInfo<>(rows);
+        result.setTotal(raw.getTotal());
+        result.setPages(raw.getPages());
+        result.setPageNum(raw.getPageNum());
+        result.setPageSize(raw.getPageSize());
+        return result;
+    }
+
+    private List<Map<String, Object>> buildOrderRowsWithNames(List<AuctionOrder> list) {
+        if (list == null || list.isEmpty()) return new ArrayList<>();
+        Set<Long> goodsIds = list.stream().map(AuctionOrder::getGoodsId).filter(Objects::nonNull).collect(Collectors.toSet());
+        Set<Long> userIds = new java.util.HashSet<>();
+        list.forEach(o -> {
+            if (o.getBuyerId() != null) userIds.add(o.getBuyerId());
+            if (o.getSellerId() != null) userIds.add(o.getSellerId());
+        });
+        Map<Long, AuctionGoods> goodsMap = goodsIds.isEmpty() ? Collections.emptyMap() :
+                goodsService.listByIds(goodsIds).stream().filter(g -> g.getDelFlag() == 0).collect(Collectors.toMap(AuctionGoods::getId, g -> g));
+        Map<Long, AuctionUser> userMap = userIds.isEmpty() ? Collections.emptyMap() :
+                userService.listByIds(new ArrayList<>(userIds)).stream().filter(u -> u.getDelFlag() == 0).collect(Collectors.toMap(AuctionUser::getId, u -> u));
+        List<Map<String, Object>> rows = new ArrayList<>();
+        for (AuctionOrder o : list) {
+            Map<String, Object> row = new LinkedHashMap<>();
+            row.put("id", o.getId());
+            row.put("orderNo", o.getOrderNo());
+            row.put("goodsId", o.getGoodsId());
+            row.put("buyerId", o.getBuyerId());
+            row.put("sellerId", o.getSellerId());
+            AuctionGoods g = o.getGoodsId() != null ? goodsMap.get(o.getGoodsId()) : null;
+            row.put("goodsName", g != null ? g.getGoodsName() : "-");
+            row.put("buyerName", userName(userMap.get(o.getBuyerId())));
+            row.put("sellerName", userName(userMap.get(o.getSellerId())));
+            row.put("dealPrice", o.getDealPrice());
+            row.put("depositAmount", o.getDepositAmount());
+            row.put("remainAmount", o.getRemainAmount());
+            row.put("payDeadline", o.getPayDeadline());
+            row.put("orderStatus", o.getOrderStatus());
+            row.put("confirmDealAt", o.getConfirmDealAt());
+            row.put("confirmationNo", o.getConfirmationNo());
+            row.put("expressCompany", o.getExpressCompany());
+            row.put("expressNo", o.getExpressNo());
+            row.put("shipTime", o.getShipTime());
+            row.put("createTime", o.getCreateTime());
+            row.put("updateTime", o.getUpdateTime());
+            rows.add(row);
+        }
+        return rows;
+    }
+
+    private static String userName(AuctionUser u) {
+        if (u == null) return "-";
+        if (u.getNickName() != null && !u.getNickName().trim().isEmpty()) return u.getNickName().trim();
+        return u.getUserName() != null ? u.getUserName() : "-";
     }
 
     @Override

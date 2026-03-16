@@ -23,8 +23,9 @@ public class AuctionOrderController {
     @Autowired
     private IAuctionOrderService orderService;
 
+    /** 后台订单分页（管理员/超级管理员/拍卖师/财务/运营），返回带商品名、买方名、卖方名的列表 */
     @GetMapping("/page")
-    public Result<PageInfo<AuctionOrder>> getPage(
+    public Result<PageInfo<Map<String, Object>>> getPage(
             @RequestParam(defaultValue = "1") Integer current,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(required = false) Integer orderStatus,
@@ -37,18 +38,40 @@ public class AuctionOrderController {
             if (session == null) {
                 return Result.error("未登录");
             }
-            PageInfo<AuctionOrder> page;
-            if (RoleCheckHelper.canViewOrderAdmin(session)) {
-                page = orderService.getOrderPage(current, size, orderStatus, buyerId, sellerId, orderNo);
-            } else if (RoleCheckHelper.isCustomerService(session)) {
-                Long serviceId = (Long) session.getAttribute("userId");
-                if (serviceId == null) {
-                    return Result.error("未登录");
-                }
-                page = orderService.getOrderPageForConsultedUsers(serviceId, current, size, orderStatus, orderNo != null ? orderNo : "");
-            } else {
+            if (!RoleCheckHelper.canViewOrderAdmin(session)) {
                 return Result.error("无权限查看订单");
             }
+            PageInfo<Map<String, Object>> page = orderService.getOrderPageWithDisplayNames(
+                    current, size, orderStatus, buyerId, sellerId, orderNo);
+            return Result.success("查询成功", page);
+        } catch (Exception e) {
+            return Result.error("查询失败：" + e.getMessage());
+        }
+    }
+
+    /** 客服查看某用户的订单（仅当与该用户存在会话时可查看），返回带名称的列表 */
+    @GetMapping("/service/user/{userId}/page")
+    public Result<PageInfo<Map<String, Object>>> getPageForServiceUser(
+            @PathVariable Long userId,
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(required = false) Integer orderStatus,
+            @RequestParam(required = false) String orderNo,
+            HttpServletRequest request) {
+        try {
+            HttpSession session = request.getSession(false);
+            if (session == null) {
+                return Result.error("未登录");
+            }
+            if (!RoleCheckHelper.isCustomerService(session)) {
+                return Result.error("无权限");
+            }
+            Long serviceId = (Long) session.getAttribute("userId");
+            if (serviceId == null) {
+                return Result.error("未登录");
+            }
+            PageInfo<Map<String, Object>> page = orderService.getOrderPageForUserByService(
+                    serviceId, userId, current, size, orderStatus, orderNo != null ? orderNo : "");
             return Result.success("查询成功", page);
         } catch (Exception e) {
             return Result.error("查询失败：" + e.getMessage());

@@ -19,10 +19,10 @@
           </el-select>
         </el-form-item>
         <el-form-item v-if="canManageOrder" label="买方ID">
-          <el-input v-model="searchForm.buyerId" placeholder="买方用户ID" clearable style="width: 120px"></el-input>
+          <el-input v-model="searchForm.buyerId" placeholder="买方用户ID（筛选）" clearable style="width: 130px"></el-input>
         </el-form-item>
         <el-form-item v-if="canManageOrder" label="卖方ID">
-          <el-input v-model="searchForm.sellerId" placeholder="卖方用户ID" clearable style="width: 120px"></el-input>
+          <el-input v-model="searchForm.sellerId" placeholder="卖方用户ID（筛选）" clearable style="width: 130px"></el-input>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" icon="el-icon-search" @click="handleSearch">搜索</el-button>
@@ -34,9 +34,9 @@
       <el-table v-loading="loading" :data="tableData" stripe>
         <el-table-column prop="id" label="ID" width="70"></el-table-column>
         <el-table-column prop="orderNo" label="订单号" width="160"></el-table-column>
-        <el-table-column prop="goodsId" label="商品ID" width="80"></el-table-column>
-        <el-table-column prop="buyerId" label="买方ID" width="80"></el-table-column>
-        <el-table-column prop="sellerId" label="卖方ID" width="80"></el-table-column>
+        <el-table-column prop="goodsName" label="商品名称" min-width="120"></el-table-column>
+        <el-table-column prop="buyerName" label="买方" width="100"></el-table-column>
+        <el-table-column prop="sellerName" label="卖方" width="100"></el-table-column>
         <el-table-column prop="dealPrice" label="成交价" width="100"></el-table-column>
         <el-table-column prop="depositAmount" label="保证金" width="90"></el-table-column>
         <el-table-column prop="remainAmount" label="尾款" width="90"></el-table-column>

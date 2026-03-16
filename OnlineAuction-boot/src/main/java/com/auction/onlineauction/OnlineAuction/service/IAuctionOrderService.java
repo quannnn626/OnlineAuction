@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.github.pagehelper.PageInfo;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
 /**
  * <p>
@@ -20,6 +21,14 @@ public interface IAuctionOrderService extends IService<AuctionOrder> {
     /** 分页查询订单（后台，支持状态筛选） */
     PageInfo<AuctionOrder> getOrderPage(Integer current, Integer size, Integer orderStatus,
                                         Long buyerId, Long sellerId, String orderNo);
+
+    /** 分页查询订单并填充商品名、买方名、卖方名（后台展示用） */
+    PageInfo<Map<String, Object>> getOrderPageWithDisplayNames(Integer current, Integer size, Integer orderStatus,
+                                                               Long buyerId, Long sellerId, String orderNo);
+
+    /** 客服查看指定用户的订单（仅当该用户与客服存在会话时），返回带名称的列表 */
+    PageInfo<Map<String, Object>> getOrderPageForUserByService(Long serviceId, Long targetUserId, Integer current,
+                                                               Integer size, Integer orderStatus, String orderNo);
 
     /** 客服查看：仅展示咨询过该客服的用户订单，按创建时间倒序 */
     PageInfo<AuctionOrder> getOrderPageForConsultedUsers(Long serviceId, Integer current, Integer size,
