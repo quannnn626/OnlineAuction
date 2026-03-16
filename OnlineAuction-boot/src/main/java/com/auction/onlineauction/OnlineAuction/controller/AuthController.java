@@ -110,6 +110,10 @@ public class AuthController {
             userInfo.put("phone", user.getPhone());
             userInfo.put("email", user.getEmail());
             userInfo.put("sex", user.getSex() != null ? user.getSex() : "2");
+            // 卖方资质信息（买家申请成为卖家用）
+            userInfo.put("sellerAuditStatus", user.getSellerAuditStatus());
+            userInfo.put("sellerAuditRemark", user.getSellerAuditRemark());
+            userInfo.put("sellerCertificateFiles", user.getSellerCertificateFiles());
             
             // 头像信息
             if (user.getAvatarFileId() != null) {

@@ -54,6 +54,12 @@ const routes = [
         component: () => import("@/views/BidHistory.vue"),
       },
       {
+        path: "apply-seller",
+        name: "ApplySeller",
+        component: () => import("@/views/ApplySeller.vue"),
+        meta: { buyerOnly: true },
+      },
+      {
         path: "notice",
         name: "Notice",
         component: () => import("@/views/Notice.vue"),
@@ -206,6 +212,19 @@ router.beforeEach((to, from, next) => {
   // 卖方页面权限检查（如：我的商品、申请上架商品等）
   if (to.path === "/my-goods" || to.path.startsWith("/seller")) {
     if (!user.isSeller && !user.isAdmin && !user.isSuperAdmin) {
+      next("/home");
+      return;
+    }
+  }
+
+  // 申请成为卖家：仅买家（role=1）可访问，已是卖家则跳转到我的商品
+  if (to.path === "/apply-seller" && to.meta?.buyerOnly) {
+    const roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
+    if (roles.includes("2")) {
+      next("/my-goods");
+      return;
+    }
+    if (!roles.includes("1")) {
       next("/home");
       return;
     }

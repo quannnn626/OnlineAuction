@@ -71,6 +71,20 @@ export function auditSeller(id, auditStatus, auditRemark) {
 }
 
 /**
+ * 买方申请成为卖方（上传资质文件后提交）
+ * certificateFiles 为逗号分隔的文件ID字符串，例如 "1,2,3"
+ */
+export function applySeller(id, certificateFiles) {
+  return request({
+    url: `/OnlineAuction/auctionUser/${id}/apply-seller`,
+    method: "post",
+    params: {
+      certificateFiles,
+    },
+  });
+}
+
+/**
  * 删除用户（逻辑删除）
  */
 export function deleteUser(id) {
