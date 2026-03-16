@@ -22,6 +22,12 @@ public interface IAuctionUserService extends IService<AuctionUser> {
     PageInfo<AuctionUser> getUserPage(Integer current, Integer size, String userName, Integer userRole, Integer userStatus, Long currentUserId);
 
     /**
+     * 卖家资质申请列表（后台审核用）
+     * 仅返回 seller_audit_status in (1,2,3) 的用户
+     */
+    PageInfo<AuctionUser> getSellerAuditPage(Integer current, Integer size, String userName, Integer sellerAuditStatus);
+
+    /**
      * 根据ID查询用户详情（不返回密码）
      */
     AuctionUser getUserByIdWithoutPassword(Long id);

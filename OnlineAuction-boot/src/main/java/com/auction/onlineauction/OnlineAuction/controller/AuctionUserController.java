@@ -1,6 +1,7 @@
 package com.auction.onlineauction.OnlineAuction.controller;
 
 import com.auction.onlineauction.OnlineAuction.common.Result;
+import com.auction.onlineauction.OnlineAuction.common.RoleCheckHelper;
 import com.auction.onlineauction.OnlineAuction.entity.AuctionUser;
 import com.auction.onlineauction.OnlineAuction.service.IAuctionUserService;
 import com.github.pagehelper.PageInfo;
@@ -49,6 +50,33 @@ public class AuctionUserController {
             }
             
             PageInfo<AuctionUser> pageInfo = userService.getUserPage(current, size, userName, userRole, userStatus, currentUserId);
+            return Result.success("查询成功", pageInfo);
+        } catch (Exception e) {
+            return Result.error("查询失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 卖家资质申请列表（后台审核用）
+     * 仅管理员/超级管理员可访问
+     */
+    @GetMapping("/seller-audit/page")
+    public Result<PageInfo<AuctionUser>> getSellerAuditPage(
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(required = false) String userName,
+            @RequestParam(required = false) Integer sellerAuditStatus,
+            HttpServletRequest request) {
+        try {
+            HttpSession session = request.getSession(false);
+            if (session == null) {
+                return Result.error("未登录，无法获取卖家资质列表");
+            }
+            if (!RoleCheckHelper.canManageNotice(session) && !RoleCheckHelper.canViewOrderAdmin(session)) {
+                // 这里简单使用已有的管理员/超管判定辅助方法，确保仅后台管理角色可访问
+                return Result.error("无权限查看卖家资质列表");
+            }
+            PageInfo<AuctionUser> pageInfo = userService.getSellerAuditPage(current, size, userName, sellerAuditStatus);
             return Result.success("查询成功", pageInfo);
         } catch (Exception e) {
             return Result.error("查询失败：" + e.getMessage());

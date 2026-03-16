@@ -78,6 +78,24 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
     }
 
     @Override
+    public PageInfo<AuctionUser> getSellerAuditPage(Integer current, Integer size, String userName, Integer sellerAuditStatus) {
+        PageHelper.startPage(current, size);
+        QueryWrapper<AuctionUser> wrapper = new QueryWrapper<>();
+        wrapper.eq("del_flag", 0);
+        // 仅查询有卖家资质记录的用户（已提交过申请或已审核）
+        wrapper.ne("seller_audit_status", 0);
+        if (sellerAuditStatus != null) {
+            wrapper.eq("seller_audit_status", sellerAuditStatus);
+        }
+        if (userName != null && !userName.trim().isEmpty()) {
+            wrapper.like("user_name", userName.trim());
+        }
+        wrapper.orderByDesc("seller_audit_apply_time");
+        List<AuctionUser> list = list(wrapper);
+        return new PageInfo<>(list);
+    }
+
+    @Override
     public AuctionUser getUserByIdWithoutPassword(Long id) {
         AuctionUser user = getById(id);
         if (user == null || user.getDelFlag() == 1) {

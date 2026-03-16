@@ -71,6 +71,17 @@ export function auditSeller(id, auditStatus, auditRemark) {
 }
 
 /**
+ * 卖家资质申请列表（后台审核用）
+ */
+export function getSellerAuditPage(params) {
+  return request({
+    url: "/OnlineAuction/auctionUser/seller-audit/page",
+    method: "get",
+    params,
+  });
+}
+
+/**
  * 买方申请成为卖方（上传资质文件后提交）
  * certificateFiles 为逗号分隔的文件ID字符串，例如 "1,2,3"
  */
