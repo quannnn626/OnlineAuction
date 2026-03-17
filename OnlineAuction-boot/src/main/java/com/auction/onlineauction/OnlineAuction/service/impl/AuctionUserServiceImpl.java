@@ -396,14 +396,9 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
             }
             user.setSellerAuditRemark(auditRemark);
         } else if (auditStatus == 2) {
-            // 审核通过：将 user_role 增加卖方角色 2，如 "1" -> "1,2"（可兼买卖）
+            // 审核通过：身份变为卖家（2），不再保留买方身份
             user.setSellerAuditRemark(null);
-            String role = user.getUserRole();
-            if (role == null || role.trim().isEmpty()) {
-                user.setUserRole("2");
-            } else if (!role.contains("2")) {
-                user.setUserRole(role.trim() + ",2");
-            }
+            user.setUserRole("2");
         }
         
         user.setUpdateTime(LocalDateTime.now());
