@@ -72,6 +72,15 @@ export function getAdminBidRecordsByGoodsPage(goodsId, params) {
   });
 }
 
+/** 按买方分页查询竞拍记录（用于保证金管理） */
+export function getAdminRecordsByBuyerIdPage(buyerId, params) {
+  return request({
+    url: `/OnlineAuction/auctionRecord/admin/buyer/${buyerId}/records/page`,
+    method: "get",
+    params,
+  });
+}
+
 /** 拍卖师/管理员：标记异常出价（0=正常 1=恶意出价 2=机器人） */
 export function markRecordAbnormal(recordId, type) {
   return request({

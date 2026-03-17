@@ -192,4 +192,14 @@ public class AuctionRecordServiceImpl extends ServiceImpl<AuctionRecordMapper, A
         record.setAbnormalType(abnormalType);
         updateById(record);
     }
+
+    @Override
+    public PageInfo<AuctionRecord> getRecordsByBuyerIdPage(Integer current, Integer size, Long buyerId) {
+        if (buyerId == null) {
+            return new PageInfo<>(java.util.Collections.emptyList());
+        }
+        PageHelper.startPage(current, size);
+        List<AuctionRecord> list = recordMapper.selectRecordsByBuyerIdPage(buyerId);
+        return new PageInfo<>(list);
+    }
 }

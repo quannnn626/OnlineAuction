@@ -93,4 +93,10 @@ public class AuctionRecord implements Serializable {
     @TableField(exist = false)
     private String buyerName;
 
+    /**
+     * 商品名称（非数据库字段，用于查询结果）
+     */
+    @TableField(exist = false)
+    private String goodsName;
+
 }

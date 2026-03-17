@@ -359,7 +359,10 @@ public class AuctionOrderServiceImpl extends ServiceImpl<AuctionOrderMapper, Auc
         }
         BigDecimal depositAmount = order.getDepositAmount();
         if (depositAmount != null && depositAmount.compareTo(BigDecimal.ZERO) > 0) {
-            depositService.deductForDefault(order.getBuyerId(), depositAmount, orderId, "订单悔拍扣除");
+            String reason = order.getOrderNo() != null
+                ? "订单悔拍扣除，订单号：" + order.getOrderNo()
+                : "订单悔拍扣除";
+            depositService.deductForDefault(order.getBuyerId(), depositAmount, orderId, reason);
         }
         order.setOrderStatus(4);
         order.setUpdateTime(LocalDateTime.now());

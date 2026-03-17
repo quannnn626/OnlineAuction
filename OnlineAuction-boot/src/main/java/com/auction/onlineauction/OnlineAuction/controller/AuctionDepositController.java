@@ -20,6 +20,37 @@ public class AuctionDepositController {
     @Autowired
     private IAuctionDepositService depositService;
 
+    /** 平台保证金汇总（总额、可用、冻结、用户数） */
+    @GetMapping("/platformSummary")
+    public Result<Map<String, Object>> getPlatformSummary(HttpServletRequest request) {
+        try {
+            if (!RoleCheckHelper.canManageDepositAdmin(request.getSession(false))) {
+                return Result.error("无权限查看保证金");
+            }
+            return Result.success("查询成功", depositService.getPlatformSummary());
+        } catch (Exception e) {
+            return Result.error("查询失败：" + e.getMessage());
+        }
+    }
+
+    /** 用户保证金汇总分页（按用户名/昵称搜索） */
+    @GetMapping("/summaryPage")
+    public Result<PageInfo<Map<String, Object>>> getSummaryPage(
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(required = false) String userName,
+            HttpServletRequest request) {
+        try {
+            if (!RoleCheckHelper.canManageDepositAdmin(request.getSession(false))) {
+                return Result.error("无权限查看保证金");
+            }
+            PageInfo<Map<String, Object>> page = depositService.getDepositSummaryPage(current, size, userName);
+            return Result.success("查询成功", page);
+        } catch (Exception e) {
+            return Result.error("查询失败：" + e.getMessage());
+        }
+    }
+
     @GetMapping("/page")
     public Result<PageInfo<AuctionDeposit>> getPage(
             @RequestParam(defaultValue = "1") Integer current,

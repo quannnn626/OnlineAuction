@@ -54,4 +54,27 @@
         LIMIT #{limit}
     </select>
 
+    <resultMap id="RecordWithGoodsMap" type="com.auction.onlineauction.OnlineAuction.entity.AuctionRecord">
+        <id column="id" property="id" />
+        <result column="goods_id" property="goodsId" />
+        <result column="buyer_id" property="buyerId" />
+        <result column="bid_price" property="bidPrice" />
+        <result column="is_agent" property="isAgent" />
+        <result column="agent_max_price" property="agentMaxPrice" />
+        <result column="bid_time" property="bidTime" />
+        <result column="is_highest" property="isHighest" />
+        <result column="abnormal_type" property="abnormalType" />
+        <result column="del_flag" property="delFlag" />
+        <result column="buyer_name" property="buyerName" />
+        <result column="goods_name" property="goodsName" />
+    </resultMap>
+    <select id="selectRecordsByBuyerIdPage" resultMap="RecordWithGoodsMap">
+        SELECT ar.*, u.nick_name AS buyer_name, g.goods_name
+        FROM auction_record ar
+        LEFT JOIN auction_user u ON ar.buyer_id = u.id
+        LEFT JOIN auction_goods g ON ar.goods_id = g.id
+        WHERE ar.buyer_id = #{buyerId} AND ar.del_flag = 0
+        ORDER BY ar.bid_time DESC
+    </select>
+
 </mapper>

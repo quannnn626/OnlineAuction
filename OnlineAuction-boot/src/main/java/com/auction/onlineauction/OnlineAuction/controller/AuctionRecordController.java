@@ -162,6 +162,24 @@ public class AuctionRecordController {
         }
     }
 
+    /** 按买方分页查询竞拍记录（含商品名，用于保证金管理） */
+    @GetMapping("/admin/buyer/{buyerId}/records/page")
+    public Result<PageInfo<AuctionRecord>> getRecordsByBuyerIdPage(
+            @PathVariable Long buyerId,
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "10") Integer size,
+            HttpServletRequest request) {
+        try {
+            if (!RoleCheckHelper.canManageDepositAdmin(request.getSession(false))) {
+                return Result.error("无权限查看");
+            }
+            PageInfo<AuctionRecord> page = recordService.getRecordsByBuyerIdPage(current, size, buyerId);
+            return Result.success("查询成功", page);
+        } catch (Exception e) {
+            return Result.error("查询失败：" + e.getMessage());
+        }
+    }
+
     /**
      * 拍卖师/管理员标记异常出价：0=正常 1=恶意出价 2=机器人
      */

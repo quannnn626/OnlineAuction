@@ -6,6 +6,7 @@ import com.github.pagehelper.PageInfo;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -22,6 +23,12 @@ public interface IAuctionDepositService extends IService<AuctionDeposit> {
 
     /** 获取用户当前保证金余额（取最新一条记录的 balance） */
     BigDecimal getBalanceByUserId(Long userId);
+
+    /** 平台保证金汇总（总额、可用、冻结、用户数） */
+    Map<String, Object> getPlatformSummary();
+
+    /** 用户保证金汇总分页（按用户名/昵称搜索） */
+    PageInfo<Map<String, Object>> getDepositSummaryPage(Integer current, Integer size, String userName);
 
     /** 手动充值（财务操作，deposit_type=0） */
     void manualTopUp(Long userId, BigDecimal amount, String remark);

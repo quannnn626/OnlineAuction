@@ -10,9 +10,11 @@ import com.github.pagehelper.PageInfo;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -24,6 +26,30 @@ import java.util.List;
  */
 @Service
 public class AuctionDepositServiceImpl extends ServiceImpl<AuctionDepositMapper, AuctionDeposit> implements IAuctionDepositService {
+
+    @Resource
+    private AuctionDepositMapper auctionDepositMapper;
+
+    @Override
+    public Map<String, Object> getPlatformSummary() {
+        Map<String, Object> map = auctionDepositMapper.selectPlatformSummary();
+        if (map == null) {
+            Map<String, Object> empty = new java.util.HashMap<>();
+            empty.put("totalAvailable", BigDecimal.ZERO);
+            empty.put("totalFrozen", BigDecimal.ZERO);
+            empty.put("userCount", 0);
+            return empty;
+        }
+        return map;
+    }
+
+    @Override
+    public PageInfo<Map<String, Object>> getDepositSummaryPage(Integer current, Integer size, String userName) {
+        PageHelper.startPage(current, size);
+        String kw = (userName != null && !userName.trim().isEmpty()) ? userName.trim() : null;
+        List<Map<String, Object>> list = auctionDepositMapper.selectDepositUserSummaryPage(kw);
+        return new PageInfo<>(list);
+    }
 
     @Override
     public PageInfo<AuctionDeposit> getDepositPage(Integer current, Integer size, Long userId, Integer depositType) {

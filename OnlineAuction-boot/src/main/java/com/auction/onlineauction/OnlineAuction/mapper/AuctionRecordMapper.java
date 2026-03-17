@@ -106,4 +106,7 @@ public interface AuctionRecordMapper extends BaseMapper<AuctionRecord> {
             "WHERE ar.goods_id = #{goodsId} AND ar.buyer_id = #{buyerId} AND ar.del_flag = 0 " +
             "ORDER BY ar.bid_time DESC")
     List<AuctionRecord> selectMyRecordsPageByGoodsId(@Param("goodsId") Long goodsId, @Param("buyerId") Long buyerId);
+
+    /** 按买方分页查询竞拍记录（含商品名） */
+    List<AuctionRecord> selectRecordsByBuyerIdPage(@Param("buyerId") Long buyerId);
 }

@@ -62,4 +62,7 @@ public interface IAuctionRecordService extends IService<AuctionRecord> {
 
     /** 拍卖师/管理员标记异常出价：0=正常 1=恶意出价 2=机器人 */
     void markAbnormal(Long recordId, Integer abnormalType);
+
+    /** 按买方分页查询竞拍记录（含商品名，用于保证金管理） */
+    PageInfo<AuctionRecord> getRecordsByBuyerIdPage(Integer current, Integer size, Long buyerId);
 }
