@@ -3,8 +3,10 @@ package com.auction.onlineauction.OnlineAuction.service.impl;
 import com.auction.onlineauction.OnlineAuction.entity.AuctionGoods;
 import com.auction.onlineauction.OnlineAuction.entity.AuctionRecord;
 import com.auction.onlineauction.OnlineAuction.mapper.AuctionRecordMapper;
+import com.auction.onlineauction.OnlineAuction.service.IAuctionDepositService;
 import com.auction.onlineauction.OnlineAuction.service.IAuctionGoodsService;
 import com.auction.onlineauction.OnlineAuction.service.IAuctionRecordService;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
@@ -33,6 +35,8 @@ public class AuctionRecordServiceImpl extends ServiceImpl<AuctionRecordMapper, A
 
     @Autowired
     private IAuctionGoodsService goodsService;
+    @Autowired
+    private IAuctionDepositService depositService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -88,6 +92,15 @@ public class AuctionRecordServiceImpl extends ServiceImpl<AuctionRecordMapper, A
         // 6. 验证不能是自己发布的商品
         if (goods.getSellerId().equals(buyerId)) {
             throw new RuntimeException("不能竞拍自己发布的商品");
+        }
+
+        // 6.5 首次出价时冻结该商品设定的保证金
+        BigDecimal depositRequired = goods.getDepositRequired() != null ? goods.getDepositRequired() : BigDecimal.ZERO;
+        if (depositRequired.compareTo(BigDecimal.ZERO) > 0) {
+            long existBidCount = count(new QueryWrapper<AuctionRecord>().eq("goods_id", goodsId).eq("buyer_id", buyerId).eq("del_flag", 0));
+            if (existBidCount == 0) {
+                depositService.freezeForBid(buyerId, depositRequired, goodsId);
+            }
         }
 
         // 7. 将之前的最高价记录的is_highest设置为0
@@ -165,5 +178,18 @@ public class AuctionRecordServiceImpl extends ServiceImpl<AuctionRecordMapper, A
         PageHelper.startPage(current, size);
         List<AuctionRecord> records = recordMapper.selectMyRecordsPageByGoodsId(goodsId, buyerId);
         return new PageInfo<>(records);
+    }
+
+    @Override
+    public void markAbnormal(Long recordId, Integer abnormalType) {
+        if (abnormalType == null || (abnormalType != 0 && abnormalType != 1 && abnormalType != 2)) {
+            throw new RuntimeException("异常类型无效（0=正常 1=恶意出价 2=机器人）");
+        }
+        AuctionRecord record = getById(recordId);
+        if (record == null || record.getDelFlag() == 1) {
+            throw new RuntimeException("竞拍记录不存在");
+        }
+        record.setAbnormalType(abnormalType);
+        updateById(record);
     }
 }

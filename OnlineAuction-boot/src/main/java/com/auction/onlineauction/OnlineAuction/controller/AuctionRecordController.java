@@ -161,4 +161,20 @@ public class AuctionRecordController {
             return Result.error("查询失败：" + e.getMessage());
         }
     }
+
+    /**
+     * 拍卖师/管理员标记异常出价：0=正常 1=恶意出价 2=机器人
+     */
+    @PutMapping("/{id}/abnormal")
+    public Result<Void> markAbnormal(@PathVariable Long id, @RequestParam Integer type, HttpServletRequest request) {
+        try {
+            if (!RoleCheckHelper.canAuctioneerManage(request.getSession(false))) {
+                return Result.error("无权限，仅拍卖师/管理员可标记");
+            }
+            recordService.markAbnormal(id, type);
+            return Result.success("已更新异常标记", null);
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+    }
 }

@@ -12,6 +12,7 @@
         <result column="agent_max_price" property="agentMaxPrice" />
         <result column="bid_time" property="bidTime" />
         <result column="is_highest" property="isHighest" />
+        <result column="abnormal_type" property="abnormalType" />
         <result column="del_flag" property="delFlag" />
         <result column="buyerName" property="buyerName" />
     </resultMap>

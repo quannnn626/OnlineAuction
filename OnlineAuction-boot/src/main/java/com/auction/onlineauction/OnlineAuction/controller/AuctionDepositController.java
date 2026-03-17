@@ -73,4 +73,46 @@ public class AuctionDepositController {
             return Result.error("充值失败：" + e.getMessage());
         }
     }
+
+    /** 财务冻结用户保证金 */
+    @PostMapping("/freeze")
+    public Result<Void> freeze(@RequestBody Map<String, Object> body, HttpServletRequest request) {
+        try {
+            if (!RoleCheckHelper.canManageDepositAdmin(request.getSession(false))) {
+                return Result.error("无权限操作");
+            }
+            Long userId = body.get("userId") != null ? Long.valueOf(body.get("userId").toString()) : null;
+            Object amt = body.get("amount");
+            BigDecimal amount = amt != null ? (amt instanceof Number ? BigDecimal.valueOf(((Number) amt).doubleValue()) : new BigDecimal(amt.toString())) : null;
+            String remark = body.get("remark") != null ? body.get("remark").toString() : null;
+            if (userId == null || amount == null) {
+                return Result.error("用户ID和金额不能为空");
+            }
+            depositService.freezeByFinance(userId, amount, remark);
+            return Result.success("冻结成功", null);
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+    }
+
+    /** 财务解冻用户保证金 */
+    @PostMapping("/unfreeze")
+    public Result<Void> unfreeze(@RequestBody Map<String, Object> body, HttpServletRequest request) {
+        try {
+            if (!RoleCheckHelper.canManageDepositAdmin(request.getSession(false))) {
+                return Result.error("无权限操作");
+            }
+            Long userId = body.get("userId") != null ? Long.valueOf(body.get("userId").toString()) : null;
+            Object amt = body.get("amount");
+            BigDecimal amount = amt != null ? (amt instanceof Number ? BigDecimal.valueOf(((Number) amt).doubleValue()) : new BigDecimal(amt.toString())) : null;
+            String remark = body.get("remark") != null ? body.get("remark").toString() : null;
+            if (userId == null || amount == null) {
+                return Result.error("用户ID和金额不能为空");
+            }
+            depositService.unfreezeByFinance(userId, amount, remark);
+            return Result.success("解冻成功", null);
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+    }
 }

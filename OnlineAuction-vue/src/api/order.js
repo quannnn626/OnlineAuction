@@ -51,3 +51,11 @@ export function shipOrder(id, expressCompany, expressNo) {
     data: { expressCompany, expressNo },
   });
 }
+
+/** 拍卖师/管理员：标记悔拍（待付款订单，扣除保证金，商品恢复上架） */
+export function markOrderDefault(id) {
+  return request({
+    url: `/OnlineAuction/auctionOrder/${id}/mark-default`,
+    method: "post",
+  });
+}

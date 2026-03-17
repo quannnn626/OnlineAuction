@@ -63,6 +63,9 @@
             <el-button v-if="canConfirmDeal && !scope.row.confirmDealAt && (scope.row.orderStatus === 0 || scope.row.orderStatus === 1)" size="mini" type="info" icon="el-icon-bangzhu" @click="handleConfirmDeal(scope.row)">
               落槌确认
             </el-button>
+            <el-button v-if="canConfirmDeal && scope.row.orderStatus === 0" size="mini" type="warning" icon="el-icon-warning-outline" @click="handleMarkDefault(scope.row)">
+              标记悔拍
+            </el-button>
             <el-button v-if="canManageOrder && scope.row.orderStatus === 0" size="mini" type="success" icon="el-icon-check" @click="handleSettle(scope.row)">
               确认结算
             </el-button>
@@ -146,6 +149,7 @@ import {
   processRefund,
   confirmDeal,
   shipOrder,
+  markOrderDefault,
 } from "@/api/order";
 
 export default {
@@ -306,6 +310,23 @@ export default {
           try {
             await updateOrderStatus(row.id, 1);
             this.$message.success("结算成功");
+            this.loadData();
+          } catch (e) {
+            this.$message.error(e.message || "操作失败");
+          }
+        })
+        .catch(() => {});
+    },
+    handleMarkDefault(row) {
+      this.$confirm(
+        "确认买方未付款/悔拍？将扣除保证金，订单标记为已悔拍，商品恢复上架供拍卖师再次上架。",
+        "标记悔拍",
+        { confirmButtonText: "确定", cancelButtonText: "取消", type: "warning" }
+      )
+        .then(async () => {
+          try {
+            await markOrderDefault(row.id);
+            this.$message.success("已标记悔拍");
             this.loadData();
           } catch (e) {
             this.$message.error(e.message || "操作失败");

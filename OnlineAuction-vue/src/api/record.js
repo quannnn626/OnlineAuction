@@ -71,3 +71,12 @@ export function getAdminBidRecordsByGoodsPage(goodsId, params) {
     params,
   });
 }
+
+/** 拍卖师/管理员：标记异常出价（0=正常 1=恶意出价 2=机器人） */
+export function markRecordAbnormal(recordId, type) {
+  return request({
+    url: `/OnlineAuction/auctionRecord/${recordId}/abnormal`,
+    method: "put",
+    params: { type },
+  });
+}

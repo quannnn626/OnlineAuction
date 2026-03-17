@@ -3,6 +3,25 @@
     <div class="balance-card">
       <div class="balance-label">当前保证金余额</div>
       <div class="balance-value">¥ {{ balance }}</div>
+      <el-button type="primary" size="small" class="apply-btn" @click="applyRechargeVisible = true">申请充值</el-button>
+    </div>
+    <div class="record-section">
+      <h4>我的充值申请</h4>
+      <el-table v-loading="rechargeLoading" :data="rechargeList" stripe size="small">
+        <el-table-column prop="amount" label="申请金额" width="100">
+          <template slot-scope="scope">¥{{ scope.row.amount }}</template>
+        </el-table-column>
+        <el-table-column prop="status" label="状态" width="90">
+          <template slot-scope="scope">{{ rechargeStatusText(scope.row.status) }}</template>
+        </el-table-column>
+        <el-table-column prop="applyRemark" label="备注" min-width="120" show-overflow-tooltip></el-table-column>
+        <el-table-column prop="applyTime" label="申请时间" width="160">
+          <template slot-scope="scope">{{ formatDateTime(scope.row.applyTime) }}</template>
+        </el-table-column>
+      </el-table>
+      <div v-if="rechargeTotal > 0" class="pagination-wrap">
+        <el-pagination small :current-page="Number(rechargePage)" :page-size="10" :total="rechargeTotal" layout="total, prev, pager, next" @current-change="(p) => { this.rechargePage = p; this.loadRechargeList(); }" />
+      </div>
     </div>
     <div class="record-section">
       <h4>变动记录</h4>
@@ -23,7 +42,7 @@
           <template slot-scope="scope">{{ formatDateTime(scope.row.operateTime) }}</template>
         </el-table-column>
       </el-table>
-      <div class="pagination-wrap">
+      <div class="pagination-wrap" v-if="pagination.total > 0">
         <el-pagination
           @size-change="handleSizeChange"
           @current-change="handleCurrentChange"
@@ -35,11 +54,27 @@
         ></el-pagination>
       </div>
     </div>
+
+    <el-dialog title="申请充值" :visible.sync="applyRechargeVisible" width="420px" @close="rechargeForm = {}">
+      <el-form :model="rechargeForm" :rules="rechargeRules" ref="rechargeFormRef" label-width="90px">
+        <el-form-item label="充值金额" prop="amount">
+          <el-input-number v-model="rechargeForm.amount" :min="1" :precision="2" style="width:100%"></el-input-number>
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input v-model="rechargeForm.applyRemark" type="textarea" :rows="2" placeholder="选填"></el-input>
+        </el-form-item>
+      </el-form>
+      <span slot="footer">
+        <el-button @click="applyRechargeVisible = false">取消</el-button>
+        <el-button type="primary" @click="submitRechargeApply" :loading="rechargeSubmitLoading">提交</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import { getMyBalance, getMyDepositPage } from "@/api/deposit";
+import { getMyRechargeApplyPage, applyRecharge } from "@/api/rechargeApply";
 
 export default {
   name: "ProfileDeposit",
@@ -49,11 +84,20 @@ export default {
       balance: "0.00",
       recordList: [],
       pagination: { current: 1, size: 10, total: 0 },
+      rechargeLoading: false,
+      rechargeList: [],
+      rechargePage: 1,
+      rechargeTotal: 0,
+      applyRechargeVisible: false,
+      rechargeSubmitLoading: false,
+      rechargeForm: { amount: null, applyRemark: "" },
+      rechargeRules: { amount: [{ required: true, message: "请输入充值金额", trigger: "blur" }] },
     };
   },
   mounted() {
     this.loadBalance();
     this.loadRecords();
+    this.loadRechargeList();
   },
   methods: {
     isPlus(t) {
@@ -95,6 +139,39 @@ export default {
       this.pagination.current = v;
       this.loadRecords();
     },
+    async loadRechargeList() {
+      this.rechargeLoading = true;
+      try {
+        const res = await getMyRechargeApplyPage({ current: this.rechargePage, size: 10 });
+        this.rechargeList = (res && res.list) ? res.list : [];
+        this.rechargeTotal = (res && res.total) ? res.total : 0;
+      } catch (e) {
+        this.rechargeList = [];
+      } finally {
+        this.rechargeLoading = false;
+      }
+    },
+    rechargeStatusText(s) {
+      const m = { 0: "待审核", 1: "已通过", 2: "已驳回" };
+      return m[s] || "-";
+    },
+    submitRechargeApply() {
+      this.$refs.rechargeFormRef.validate(async (valid) => {
+        if (!valid) return;
+        this.rechargeSubmitLoading = true;
+        try {
+          await applyRecharge({ amount: this.rechargeForm.amount, applyRemark: this.rechargeForm.applyRemark });
+          this.$message.success("申请已提交，请等待财务审核");
+          this.applyRechargeVisible = false;
+          this.loadRechargeList();
+          this.loadBalance();
+        } catch (e) {
+          this.$message.error(e.message || "申请失败");
+        } finally {
+          this.rechargeSubmitLoading = false;
+        }
+      });
+    },
     formatDateTime(val) {
       if (!val) return "-";
       const d = new Date(val);
@@ -115,6 +192,7 @@ export default {
 }
 .balance-label { font-size: 14px; opacity: 0.9; }
 .balance-value { font-size: 28px; font-weight: 600; margin-top: 8px; }
+.apply-btn { margin-top: 12px; }
 .record-section h4 { margin: 0 0 16px 0; font-size: 16px; }
 .pagination-wrap { margin-top: 16px; }
 .amount-plus { color: #67c23a; }

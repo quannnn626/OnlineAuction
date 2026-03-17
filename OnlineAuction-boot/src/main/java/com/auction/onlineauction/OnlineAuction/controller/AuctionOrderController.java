@@ -153,6 +153,20 @@ public class AuctionOrderController {
         }
     }
 
+    /** 悔拍：待付款订单标记悔拍，扣除买方保证金，商品恢复上架供拍卖师再次上架 */
+    @PostMapping("/{id}/mark-default")
+    public Result<Void> markOrderAsDefaulted(@PathVariable Long id, HttpServletRequest request) {
+        try {
+            if (!RoleCheckHelper.canAuctioneerManage(request.getSession(false))) {
+                return Result.error("无权限，仅拍卖师/管理员可操作");
+            }
+            orderService.markOrderAsDefaulted(id);
+            return Result.success("已标记悔拍，保证金已扣除，商品已恢复上架", null);
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+    }
+
     /** 发货：填写快递信息 */
     @PutMapping("/{id}/ship")
     public Result<Void> shipOrder(@PathVariable Long id, @RequestBody Map<String, Object> body, HttpServletRequest request) {

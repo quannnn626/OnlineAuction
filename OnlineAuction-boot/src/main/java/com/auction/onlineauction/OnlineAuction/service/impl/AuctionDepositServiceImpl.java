@@ -64,4 +64,93 @@ public class AuctionDepositServiceImpl extends ServiceImpl<AuctionDepositMapper,
         record.setDelFlag(0);
         save(record);
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void freezeForBid(Long userId, BigDecimal amount, Long goodsId) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            return;
+        }
+        BigDecimal balance = getBalanceByUserId(userId);
+        if (balance.compareTo(amount) < 0) {
+            throw new RuntimeException("保证金余额不足，需冻结" + amount + "元，当前余额" + balance + "元");
+        }
+        BigDecimal newBalance = balance.subtract(amount);
+        AuctionDeposit record = new AuctionDeposit();
+        record.setUserId(userId);
+        record.setOrderId(null);
+        record.setAmount(amount);
+        record.setDepositType(1);
+        record.setBalance(newBalance);
+        record.setOperateTime(LocalDateTime.now());
+        record.setRemark(goodsId != null ? "参与竞拍商品ID=" + goodsId : "参与竞拍冻结");
+        record.setDelFlag(0);
+        save(record);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void deductForDefault(Long userId, BigDecimal amount, Long orderId, String remark) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            return;
+        }
+        BigDecimal balance = getBalanceByUserId(userId);
+        BigDecimal newBalance = balance.subtract(amount);
+        if (newBalance.compareTo(BigDecimal.ZERO) < 0) {
+            newBalance = BigDecimal.ZERO;
+        }
+        AuctionDeposit record = new AuctionDeposit();
+        record.setUserId(userId);
+        record.setOrderId(orderId);
+        record.setAmount(amount);
+        record.setDepositType(4);
+        record.setBalance(newBalance);
+        record.setOperateTime(LocalDateTime.now());
+        record.setRemark(remark != null ? remark : "订单悔拍扣除");
+        record.setDelFlag(0);
+        save(record);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void freezeByFinance(Long userId, BigDecimal amount, String remark) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("冻结金额必须大于0");
+        }
+        BigDecimal balance = getBalanceByUserId(userId);
+        if (balance.compareTo(amount) < 0) {
+            throw new RuntimeException("用户保证金余额不足，当前余额" + balance + "元");
+        }
+        BigDecimal newBalance = balance.subtract(amount);
+        AuctionDeposit record = new AuctionDeposit();
+        record.setUserId(userId);
+        record.setOrderId(null);
+        record.setAmount(amount);
+        record.setDepositType(5);
+        record.setBalance(newBalance);
+        record.setOperateTime(LocalDateTime.now());
+        record.setRemark(remark != null ? remark : "财务冻结");
+        record.setDelFlag(0);
+        save(record);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void unfreezeByFinance(Long userId, BigDecimal amount, String remark) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("解冻金额必须大于0");
+        }
+        BigDecimal balance = getBalanceByUserId(userId);
+        BigDecimal newBalance = balance.add(amount);
+        AuctionDeposit record = new AuctionDeposit();
+        record.setUserId(userId);
+        record.setOrderId(null);
+        record.setAmount(amount);
+        record.setDepositType(6);
+        record.setBalance(newBalance);
+        record.setOperateTime(LocalDateTime.now());
+        record.setRemark(remark != null ? remark : "财务解冻");
+        record.setDelFlag(0);
+        save(record);
+    }
 }

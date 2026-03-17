@@ -86,6 +86,11 @@ const routes = [
             name: "ProfileDeposit",
             component: () => import("@/views/ProfileDeposit.vue"),
           },
+          {
+            path: "invoice",
+            name: "ProfileInvoice",
+            component: () => import("@/views/ProfileInvoice.vue"),
+          },
         ],
       },
       {
@@ -143,6 +148,21 @@ const routes = [
         path: "admin/deposit",
         name: "AdminDeposit",
         component: () => import("@/views/admin/AdminDeposit.vue"),
+      },
+      {
+        path: "admin/fee-record",
+        name: "AdminFeeRecord",
+        component: () => import("@/views/admin/AdminFeeRecord.vue"),
+      },
+      {
+        path: "admin/invoice",
+        name: "AdminInvoice",
+        component: () => import("@/views/admin/AdminInvoice.vue"),
+      },
+      {
+        path: "admin/recharge-apply",
+        name: "AdminRechargeApply",
+        component: () => import("@/views/admin/AdminRechargeApply.vue"),
       },
       {
         path: "admin/message",

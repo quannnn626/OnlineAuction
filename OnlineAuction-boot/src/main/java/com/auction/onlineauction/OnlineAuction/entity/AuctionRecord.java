@@ -76,6 +76,12 @@ public class AuctionRecord implements Serializable {
     private Integer isHighest;
 
     /**
+     * 异常出价：0=正常 1=恶意出价 2=机器人（拍卖师可标记）
+     */
+    @TableField("abnormal_type")
+    private Integer abnormalType;
+
+    /**
      * 逻辑删除：0=未删除 1=已删除
      */
     @TableField("del_flag")

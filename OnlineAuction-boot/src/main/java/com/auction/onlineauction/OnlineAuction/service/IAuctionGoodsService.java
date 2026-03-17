@@ -105,6 +105,12 @@ public interface IAuctionGoodsService extends IService<AuctionGoods> {
      */
     void reapplyGoods(Long id, Long userId);
 
+    /** 拍卖延时：拍卖师/管理员在竞拍中延长结束时间（分钟） */
+    void extendAuctionTime(Long goodsId, int minutes);
+
+    /** 流拍：拍卖师/管理员将竞拍中商品标记为流拍 */
+    void markNoSale(Long goodsId);
+
     /** 猜你喜欢：按点击量倒序，只展示上架且审核通过的商品 */
     List<AuctionGoods> getGuessYouLikeGoods(int limit);
 

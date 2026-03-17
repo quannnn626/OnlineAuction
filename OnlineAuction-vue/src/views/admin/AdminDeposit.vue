@@ -2,7 +2,11 @@
   <div class="admin-deposit-page">
     <div class="page-header">
       <h2>保证金管理</h2>
-      <el-button type="primary" icon="el-icon-plus" @click="handleTopUp">手动充值</el-button>
+      <div>
+        <el-button type="primary" icon="el-icon-plus" @click="handleTopUp">手动充值</el-button>
+        <el-button type="warning" icon="el-icon-lock" @click="openFreezeDialog">冻结</el-button>
+        <el-button type="success" icon="el-icon-unlock" @click="openUnfreezeDialog">解冻</el-button>
+      </div>
     </div>
     <div class="filter-section">
       <el-form :inline="true" :model="searchForm" class="search-form">
@@ -16,6 +20,8 @@
             <el-option label="解冻" :value="2"></el-option>
             <el-option label="抵扣尾款" :value="3"></el-option>
             <el-option label="扣除(悔拍)" :value="4"></el-option>
+          <el-option label="财务冻结" :value="5"></el-option>
+          <el-option label="财务解冻" :value="6"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -24,14 +30,48 @@
         </el-form-item>
       </el-form>
     </div>
+    <el-dialog title="冻结保证金" :visible.sync="freezeVisible" width="420px" @close="freezeForm = {}">
+      <el-form :model="freezeForm" :rules="freezeRules" ref="freezeFormRef" label-width="90px">
+        <el-form-item label="用户ID" prop="userId">
+          <el-input-number v-model="freezeForm.userId" :min="1" placeholder="用户ID" style="width:100%"></el-input-number>
+        </el-form-item>
+        <el-form-item label="冻结金额" prop="amount">
+          <el-input-number v-model="freezeForm.amount" :min="0.01" :precision="2" style="width:100%"></el-input-number>
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input v-model="freezeForm.remark" type="textarea" :rows="2" placeholder="可选"></el-input>
+        </el-form-item>
+      </el-form>
+      <span slot="footer">
+        <el-button @click="freezeVisible = false">取消</el-button>
+        <el-button type="primary" @click="submitFreeze" :loading="freezeLoading">确定</el-button>
+      </span>
+    </el-dialog>
+    <el-dialog title="解冻保证金" :visible.sync="unfreezeVisible" width="420px" @close="unfreezeForm = {}">
+      <el-form :model="unfreezeForm" :rules="unfreezeRules" ref="unfreezeFormRef" label-width="90px">
+        <el-form-item label="用户ID" prop="userId">
+          <el-input-number v-model="unfreezeForm.userId" :min="1" placeholder="用户ID" style="width:100%"></el-input-number>
+        </el-form-item>
+        <el-form-item label="解冻金额" prop="amount">
+          <el-input-number v-model="unfreezeForm.amount" :min="0.01" :precision="2" style="width:100%"></el-input-number>
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input v-model="unfreezeForm.remark" type="textarea" :rows="2" placeholder="可选"></el-input>
+        </el-form-item>
+      </el-form>
+      <span slot="footer">
+        <el-button @click="unfreezeVisible = false">取消</el-button>
+        <el-button type="primary" @click="submitUnfreeze" :loading="unfreezeLoading">确定</el-button>
+      </span>
+    </el-dialog>
     <div class="table-section">
       <el-table v-loading="loading" :data="tableData" stripe>
         <el-table-column prop="id" label="ID" width="70"></el-table-column>
         <el-table-column prop="userId" label="用户ID" width="90"></el-table-column>
         <el-table-column prop="amount" label="金额" width="100">
           <template slot-scope="scope">
-            <span :class="scope.row.depositType === 0 || scope.row.depositType === 2 ? 'amount-plus' : 'amount-minus'">
-              {{ scope.row.depositType === 0 || scope.row.depositType === 2 ? '+' : '-' }}{{ scope.row.amount }}
+            <span :class="(scope.row.depositType === 0 || scope.row.depositType === 2 || scope.row.depositType === 6) ? 'amount-plus' : 'amount-minus'">
+              {{ (scope.row.depositType === 0 || scope.row.depositType === 2 || scope.row.depositType === 6) ? '+' : '-' }}{{ scope.row.amount }}
             </span>
           </template>
         </el-table-column>
@@ -84,7 +124,7 @@
 </template>
 
 <script>
-import { getAdminDepositPage, manualTopUp } from "@/api/deposit";
+import { getAdminDepositPage, manualTopUp, freezeDeposit, unfreezeDeposit } from "@/api/deposit";
 
 export default {
   name: "AdminDeposit",
@@ -100,6 +140,20 @@ export default {
       topUpRules: {
         userId: [{ required: true, message: "请输入用户ID", trigger: "blur" }],
         amount: [{ required: true, message: "请输入充值金额", trigger: "blur" }],
+      },
+      freezeVisible: false,
+      freezeLoading: false,
+      freezeForm: { userId: null, amount: null, remark: "" },
+      freezeRules: {
+        userId: [{ required: true, message: "请输入用户ID", trigger: "blur" }],
+        amount: [{ required: true, message: "请输入冻结金额", trigger: "blur" }],
+      },
+      unfreezeVisible: false,
+      unfreezeLoading: false,
+      unfreezeForm: { userId: null, amount: null, remark: "" },
+      unfreezeRules: {
+        userId: [{ required: true, message: "请输入用户ID", trigger: "blur" }],
+        amount: [{ required: true, message: "请输入解冻金额", trigger: "blur" }],
       },
     };
   },
@@ -162,8 +216,48 @@ export default {
         }
       });
     },
+    openFreezeDialog() {
+      this.freezeForm = { userId: null, amount: null, remark: "" };
+      this.freezeVisible = true;
+    },
+    submitFreeze() {
+      this.$refs.freezeFormRef.validate(async (valid) => {
+        if (!valid) return;
+        this.freezeLoading = true;
+        try {
+          await freezeDeposit(this.freezeForm);
+          this.$message.success("冻结成功");
+          this.freezeVisible = false;
+          this.loadData();
+        } catch (e) {
+          this.$message.error(e.message || "冻结失败");
+        } finally {
+          this.freezeLoading = false;
+        }
+      });
+    },
+    openUnfreezeDialog() {
+      this.unfreezeForm = { userId: null, amount: null, remark: "" };
+      this.unfreezeVisible = true;
+    },
+    submitUnfreeze() {
+      this.$refs.unfreezeFormRef.validate(async (valid) => {
+        if (!valid) return;
+        this.unfreezeLoading = true;
+        try {
+          await unfreezeDeposit(this.unfreezeForm);
+          this.$message.success("解冻成功");
+          this.unfreezeVisible = false;
+          this.loadData();
+        } catch (e) {
+          this.$message.error(e.message || "解冻失败");
+        } finally {
+          this.unfreezeLoading = false;
+        }
+      });
+    },
     getTypeText(t) {
-      const map = { 0: "充值", 1: "冻结", 2: "解冻", 3: "抵扣尾款", 4: "扣除(悔拍)" };
+      const map = { 0: "充值", 1: "冻结", 2: "解冻", 3: "抵扣尾款", 4: "扣除(悔拍)", 5: "财务冻结", 6: "财务解冻" };
       return map[t] || "-";
     },
     formatDateTime(val) {

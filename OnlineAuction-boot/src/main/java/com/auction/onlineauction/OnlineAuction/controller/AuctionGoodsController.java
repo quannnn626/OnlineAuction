@@ -181,6 +181,39 @@ public class AuctionGoodsController {
     }
 
     /**
+     * 拍卖延时：拍卖师/管理员将竞拍中商品结束时间延长（分钟）
+     */
+    @PutMapping("/{id}/extend-time")
+    public Result<Void> extendAuctionTime(@PathVariable Long id, @RequestParam(defaultValue = "5") Integer minutes,
+                                          HttpServletRequest request) {
+        try {
+            if (!RoleCheckHelper.canAuctioneerManage(request.getSession(false))) {
+                return Result.error("无权限，仅拍卖师/管理员可操作");
+            }
+            goodsService.extendAuctionTime(id, minutes != null ? minutes : 5);
+            return Result.success("已延长 " + (minutes != null ? minutes : 5) + " 分钟", null);
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+    }
+
+    /**
+     * 流拍：拍卖师/管理员将竞拍中商品标记为流拍
+     */
+    @PutMapping("/{id}/mark-no-sale")
+    public Result<Void> markNoSale(@PathVariable Long id, HttpServletRequest request) {
+        try {
+            if (!RoleCheckHelper.canAuctioneerManage(request.getSession(false))) {
+                return Result.error("无权限，仅拍卖师/管理员可操作");
+            }
+            goodsService.markNoSale(id);
+            return Result.success("已标记流拍", null);
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+    }
+
+    /**
      * 卖家对自己商品的上下架（仅本人可操作自己的商品）
      */
     @PutMapping("/my/shelf/{id}")

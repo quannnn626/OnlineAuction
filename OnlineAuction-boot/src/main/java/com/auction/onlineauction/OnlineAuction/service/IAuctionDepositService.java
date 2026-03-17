@@ -25,4 +25,16 @@ public interface IAuctionDepositService extends IService<AuctionDeposit> {
 
     /** 手动充值（财务操作，deposit_type=0） */
     void manualTopUp(Long userId, BigDecimal amount, String remark);
+
+    /** 参与竞拍时冻结保证金（deposit_type=1，order_id 为空，remark 含商品ID） */
+    void freezeForBid(Long userId, BigDecimal amount, Long goodsId);
+
+    /** 悔拍扣除保证金（deposit_type=4，不退还） */
+    void deductForDefault(Long userId, BigDecimal amount, Long orderId, String remark);
+
+    /** 财务冻结用户保证金（deposit_type=5） */
+    void freezeByFinance(Long userId, BigDecimal amount, String remark);
+
+    /** 财务解冻用户保证金（deposit_type=6） */
+    void unfreezeByFinance(Long userId, BigDecimal amount, String remark);
 }

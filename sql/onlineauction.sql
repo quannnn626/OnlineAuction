@@ -11,7 +11,7 @@
  Target Server Version : 80019
  File Encoding         : 65001
 
- Date: 17/03/2026 09:11:04
+ Date: 17/03/2026 09:36:52
 */
 
 SET NAMES utf8mb4;
@@ -459,6 +459,8 @@ INSERT INTO `auction_file` VALUES (49, 'QQ图片20230426170644.jpg', '/upload/se
 INSERT INTO `auction_file` VALUES (50, '微信图片_20250329220729.png', '/upload/seller-certificate/202603/bca033c6803b4112a9c1ec17bcb27044.png', 'image', '2026-03-17 09:07:29', '2026-03-17 09:07:28', 0);
 INSERT INTO `auction_file` VALUES (51, '微信图片_20250329220729.png', '/upload/seller-certificate/202603/9b288f3b8dfe47c9813008fe66a58a25.png', 'image', '2026-03-17 09:09:08', '2026-03-17 09:09:07', 0);
 INSERT INTO `auction_file` VALUES (52, 'QQ图片20230426170644.jpg', '/upload/seller-certificate/202603/d46f13403c2a4ef4b77ff32204d1c942.jpg', 'image', '2026-03-17 09:09:11', '2026-03-17 09:09:11', 0);
+INSERT INTO `auction_file` VALUES (53, 'Zephyrus Duo 15 x ZЯØFØRM_3840x2160.jpg', '/upload/seller-certificate/202603/23b59bdafc6f4fdcaa815761094789e4.jpg', 'image', '2026-03-17 09:13:07', '2026-03-17 09:13:07', 0);
+INSERT INTO `auction_file` VALUES (54, 'QQ图片20230426170644.jpg', '/upload/seller-certificate/202603/fb031fbb4f834abca49be5ef3d9f4261.jpg', 'image', '2026-03-17 09:14:05', '2026-03-17 09:14:05', 0);
 
 -- ----------------------------
 -- Table structure for auction_goods
@@ -1083,13 +1085,13 @@ CREATE TABLE `auction_user`  (
 -- Records of auction_user
 -- ----------------------------
 INSERT INTO `auction_user` VALUES (1, 'superadmin', 'e10adc3949ba59abbe56e057f20f883e', 'superadmin', '超级管理员', '17713356500', '', '', 31, '2', '4', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-03-12 10:50:05', '2026-01-21 14:54:06', '2026-03-12 10:50:05', 0);
-INSERT INTO `auction_user` VALUES (2, 'admin', 'e10adc3949ba59abbe56e057f20f883e', 'admin', '管理员', '17034570777', '1709348112@qq.com', '', NULL, '0', '3', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-03-17 09:03:36', '2026-01-21 15:50:21', '2026-03-17 09:03:36', 0);
-INSERT INTO `auction_user` VALUES (3, 'buyuser', 'e10adc3949ba59abbe56e057f20f883e', '买方用户', '买方用户', '19234532287', '1709348112@qq.com', '', 40, '0', '1', 1, NULL, '51,52', '2026-03-17 09:09:13', '2026-03-17 09:02:02', NULL, 0, '127.0.0.1', '2026-03-17 09:07:09', '2026-01-21 16:17:43', '2026-03-17 09:09:13', 0);
-INSERT INTO `auction_user` VALUES (4, 'selluser', 'e10adc3949ba59abbe56e057f20f883e', '卖方用户', '卖方用户', '18766753345', '1709348112@qq.com', '', 32, '0', '2', 2, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-03-16 17:47:44', '2026-01-21 16:18:22', '2026-03-16 17:47:44', 0);
+INSERT INTO `auction_user` VALUES (2, 'admin', 'e10adc3949ba59abbe56e057f20f883e', 'admin', '管理员', '17034570777', '1709348112@qq.com', '', NULL, '0', '3', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-03-17 09:14:12', '2026-01-21 15:50:21', '2026-03-17 09:14:12', 0);
+INSERT INTO `auction_user` VALUES (3, 'buyuser', 'e10adc3949ba59abbe56e057f20f883e', '买方用户', '买方用户', '19234532287', '1709348112@qq.com', '', 40, '0', '2', 2, NULL, '51,52', '2026-03-17 09:09:13', '2026-03-17 09:11:32', NULL, 0, '127.0.0.1', '2026-03-17 09:11:52', '2026-01-21 16:17:43', '2026-03-17 09:11:52', 0);
+INSERT INTO `auction_user` VALUES (4, 'selluser', 'e10adc3949ba59abbe56e057f20f883e', '卖方用户', '卖方用户', '18766753345', '1709348112@qq.com', '', 32, '0', '2', 2, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-03-17 09:26:51', '2026-01-21 16:18:22', '2026-03-17 09:26:51', 0);
 INSERT INTO `auction_user` VALUES (5, 'paimaishi', 'e10adc3949ba59abbe56e057f20f883e', '拍卖师', '拍卖师', '13848553521', '', '', NULL, '2', '5', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-03-12 11:17:45', '2026-02-25 12:26:19', '2026-03-12 11:17:45', 0);
 INSERT INTO `auction_user` VALUES (6, 'yunying', 'e10adc3949ba59abbe56e057f20f883e', '运营', '运营', '13348553521', '', '', NULL, '2', '8', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-03-12 11:14:51', '2026-02-26 14:47:27', '2026-03-12 11:14:51', 0);
 INSERT INTO `auction_user` VALUES (7, 'caiwu', 'e10adc3949ba59abbe56e057f20f883e', '财务', '财务', '18948553521', '', '', NULL, '2', '7', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-03-05 17:06:24', '2026-02-26 16:28:29', '2026-03-05 17:06:24', 0);
-INSERT INTO `auction_user` VALUES (8, 'buyuser2', 'e10adc3949ba59abbe56e057f20f883e', '买方用户2', '买方用户2', '13345647785', '', '', NULL, '2', '1', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-03-05 17:08:44', '2026-03-02 07:36:52', '2026-03-05 17:08:44', 0);
+INSERT INTO `auction_user` VALUES (8, 'buyuser2', 'e10adc3949ba59abbe56e057f20f883e', '买方用户2', '买方用户2', '13345647785', '', '', NULL, '2', '1', 1, '不符合要求', '54', '2026-03-17 09:14:07', '2026-03-17 09:13:31', NULL, 0, '127.0.0.1', '2026-03-17 09:13:56', '2026-03-02 07:36:52', '2026-03-17 09:14:07', 0);
 INSERT INTO `auction_user` VALUES (9, 'kefu', 'e10adc3949ba59abbe56e057f20f883e', '客服', '客服', '13136792405', '', '', 41, '2', '6', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-03-13 10:24:24', '2026-03-03 09:47:26', '2026-03-13 10:24:24', 0);
 INSERT INTO `auction_user` VALUES (10, 'kefu2', 'e10adc3949ba59abbe56e057f20f883e', '客服2', '客服2', '17734552371', '', '', NULL, '2', '6', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-03-16 10:03:17', '2026-03-13 10:18:20', '2026-03-16 10:03:17', 0);
 

@@ -259,7 +259,7 @@ public class AuctionOrderServiceImpl extends ServiceImpl<AuctionOrderMapper, Auc
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public AuctionOrder createWinningOrder(Long goodsId, Long sellerId, AuctionRecord highestRecord, LocalDateTime payDeadline) {
+    public AuctionOrder createWinningOrder(Long goodsId, Long sellerId, AuctionRecord highestRecord, LocalDateTime payDeadline, BigDecimal depositAmount) {
         if (goodsId == null || sellerId == null || highestRecord == null) {
             throw new RuntimeException("创建订单参数不完整");
         }
@@ -272,7 +272,12 @@ public class AuctionOrderServiceImpl extends ServiceImpl<AuctionOrderMapper, Auc
             throw new RuntimeException("中标价格无效");
         }
 
-        BigDecimal depositAmount = BigDecimal.ZERO;
+        if (depositAmount == null || depositAmount.compareTo(BigDecimal.ZERO) < 0) {
+            depositAmount = BigDecimal.ZERO;
+        }
+        if (depositAmount.compareTo(dealPrice) > 0) {
+            depositAmount = dealPrice;
+        }
         BigDecimal remainAmount = dealPrice.subtract(depositAmount);
 
         AuctionOrder order = new AuctionOrder();
@@ -340,6 +345,34 @@ public class AuctionOrderServiceImpl extends ServiceImpl<AuctionOrderMapper, Auc
         order.setOrderStatus(2);
         order.setUpdateTime(LocalDateTime.now());
         updateById(order);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void markOrderAsDefaulted(Long orderId) {
+        AuctionOrder order = getById(orderId);
+        if (order == null || order.getDelFlag() == 1) {
+            throw new RuntimeException("订单不存在");
+        }
+        if (order.getOrderStatus() != 0) {
+            throw new RuntimeException("仅待付款订单可标记为悔拍");
+        }
+        BigDecimal depositAmount = order.getDepositAmount();
+        if (depositAmount != null && depositAmount.compareTo(BigDecimal.ZERO) > 0) {
+            depositService.deductForDefault(order.getBuyerId(), depositAmount, orderId, "订单悔拍扣除");
+        }
+        order.setOrderStatus(4);
+        order.setUpdateTime(LocalDateTime.now());
+        updateById(order);
+        AuctionGoods goods = goodsService.getById(order.getGoodsId());
+        if (goods != null && goods.getDelFlag() == 0) {
+            goods.setGoodsStatus(3);
+            goods.setShelfStatus(1);
+            goods.setAuditStatus(1);
+            goods.setCurrentHighestPrice(null);
+            goods.setUpdateTime(LocalDateTime.now());
+            goodsService.updateById(goods);
+        }
     }
 
     @Override

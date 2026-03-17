@@ -133,6 +133,11 @@ public final class RoleCheckHelper {
         return hasAnyRole(session, 3, 4, 5);
     }
 
+    /** 拍卖师/管理员/超级管理员：拍卖延时、流拍、异常出价标记、悔拍等 */
+    public static boolean canAuctioneerManage(HttpSession session) {
+        return hasAnyRole(session, 3, 4, 5);
+    }
+
     /** 可发货（卖方本人、管理员、超级管理员、运营） */
     public static boolean canShipOrder(HttpSession session, Long sellerId) {
         if (sellerId == null) return hasAnyRole(session, 3, 4, 8);

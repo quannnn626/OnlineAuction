@@ -174,6 +174,32 @@
               编辑
             </el-button>
             <el-button
+              v-if="canAuctioneerManage && scope.row.goodsStatus === 1"
+              size="mini"
+              type="warning"
+              icon="el-icon-time"
+              @click="handleExtendTime(scope.row)"
+            >
+              拍卖延时
+            </el-button>
+            <el-button
+              v-if="canAuctioneerManage && scope.row.goodsStatus === 1"
+              size="mini"
+              type="info"
+              icon="el-icon-warning-outline"
+              @click="handleMarkNoSale(scope.row)"
+            >
+              流拍
+            </el-button>
+            <el-button
+              v-if="canAuctioneerManage"
+              size="mini"
+              icon="el-icon-document"
+              @click="openRecordsDialog(scope.row)"
+            >
+              竞拍记录
+            </el-button>
+            <el-button
               v-if="canOffline(scope.row)"
               size="mini"
               type="warning"
@@ -351,6 +377,17 @@
           >
           </el-input-number>
         </el-form-item>
+        <el-form-item label="保证金（参与竞拍需冻结）" prop="depositRequired">
+          <el-input-number
+            v-model="formData.depositRequired"
+            :min="0"
+            :precision="2"
+            :step="1"
+            style="width: 100%"
+            placeholder="加价时冻结该金额"
+          >
+          </el-input-number>
+        </el-form-item>
         <el-form-item label="保留价" prop="reservePrice">
           <el-input-number
             v-model="formData.reservePrice"
@@ -417,6 +454,48 @@
         >
       </div>
     </el-dialog>
+
+    <!-- 竞拍记录（拍卖师可标记异常出价） -->
+    <el-dialog
+      title="竞拍记录"
+      :visible.sync="recordsDialogVisible"
+      width="700px"
+    >
+      <p v-if="recordsGoodsName" class="records-goods-name">{{ recordsGoodsName }}</p>
+      <el-table v-loading="recordsLoading" :data="recordsList" stripe size="small">
+        <el-table-column prop="bidPrice" label="出价" width="100">
+          <template slot-scope="scope">¥{{ scope.row.bidPrice }}</template>
+        </el-table-column>
+        <el-table-column prop="buyerName" label="买家" width="100"></el-table-column>
+        <el-table-column prop="bidTime" label="出价时间" width="160">
+          <template slot-scope="scope">{{ scope.row.bidTime ? new Date(scope.row.bidTime).toLocaleString() : "-" }}</template>
+        </el-table-column>
+        <el-table-column label="异常标记" width="180">
+          <template slot-scope="scope">
+            <el-select
+              :value="scope.row.abnormalType != null ? scope.row.abnormalType : 0"
+              size="mini"
+              @change="(v) => changeRecordAbnormal(scope.row, v)"
+              style="width: 120px"
+            >
+              <el-option label="正常" :value="0"></el-option>
+              <el-option label="恶意出价" :value="1"></el-option>
+              <el-option label="机器人" :value="2"></el-option>
+            </el-select>
+          </template>
+        </el-table-column>
+      </el-table>
+      <div v-if="recordsPagination.total > 0" class="records-pagination">
+        <el-pagination
+          small
+          :current-page="recordsPagination.current"
+          :page-size="recordsPagination.size"
+          :total="recordsPagination.total"
+          layout="total, prev, pager, next"
+          @current-change="(p) => { recordsPagination.current = p; loadRecords(); }"
+        />
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -429,8 +508,14 @@ import {
   auditGoods,
   reapplyGoods,
   updateShelfStatus,
+  extendAuctionTime,
+  markNoSale,
 } from "@/api/goods";
 import { getCategoryTree } from "@/api/category";
+import {
+  getAdminBidRecordsByGoodsPage,
+  markRecordAbnormal,
+} from "@/api/record";
 
 export default {
   name: "AdminGoods",
@@ -467,6 +552,7 @@ export default {
         fileIds: [],
         basePrice: 0,
         addPrice: 0,
+        depositRequired: 0,
         reservePrice: 0,
         startTime: null,
         endTime: null,
@@ -514,6 +600,9 @@ export default {
             trigger: "blur",
           },
         ],
+        depositRequired: [
+          { type: "number", min: 0, message: "保证金不能为负", trigger: "blur" },
+        ],
         reservePrice: [
           {
             type: "number",
@@ -535,7 +624,24 @@ export default {
         status: 2,
         remark: "",
       },
+      recordsDialogVisible: false,
+      recordsLoading: false,
+      recordsList: [],
+      recordsGoodsName: "",
+      recordsGoodsId: null,
+      recordsPagination: { current: 1, size: 10, total: 0 },
     };
+  },
+  computed: {
+    canAuctioneerManage() {
+      try {
+        const user = JSON.parse(localStorage.getItem("userInfo") || "{}");
+        const roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
+        return roles.some((r) => ["3", "4", "5"].includes(r));
+      } catch (e) {
+        return false;
+      }
+    },
   },
   mounted() {
     this.loadData();
@@ -669,6 +775,7 @@ export default {
         goodsImg: "",
         basePrice: 0,
         addPrice: 0,
+        depositRequired: 0,
         reservePrice: 0,
         startTime: null,
         endTime: null,
@@ -696,6 +803,7 @@ export default {
         ...goods,
         categoryIds: categoryIds,
         fileIds: goods.files ? goods.files.map((f) => f.id) : [],
+        depositRequired: goods.depositRequired != null ? Number(goods.depositRequired) : 0,
       };
       this.fileList = this.getFileListFromImages(goods.files);
       // 更新选中分类名称显示
@@ -774,6 +882,79 @@ export default {
         if (error !== "cancel") {
           this.$message.error("重新申请失败");
         }
+      }
+    },
+    // 拍卖师：拍卖延时
+    async handleExtendTime(goods) {
+      try {
+        const minutes = await this.$prompt("延长分钟数（1~1440）", "拍卖延时", {
+          confirmButtonText: "确定",
+          cancelButtonText: "取消",
+          inputValue: "5",
+          inputValidator: (v) => {
+            const n = parseInt(v, 10);
+            if (isNaN(n) || n < 1 || n > 1440) return "请输入 1~1440 的整数";
+            return true;
+          },
+        }).then(({ value }) => parseInt(value, 10)).catch(() => null);
+        if (minutes == null) return;
+        await extendAuctionTime(goods.id, minutes);
+        this.$message.success("已延长 " + minutes + " 分钟");
+        this.loadData();
+      } catch (e) {
+        this.$message.error(e.message || "操作失败");
+      }
+    },
+    // 拍卖师：流拍
+    async handleMarkNoSale(goods) {
+      try {
+        await this.$confirm(`确定将 "${goods.goodsName}" 标记为流拍吗？`, "流拍", {
+          confirmButtonText: "确定",
+          cancelButtonText: "取消",
+          type: "warning",
+        });
+        await markNoSale(goods.id);
+        this.$message.success("已标记流拍");
+        this.loadData();
+      } catch (e) {
+        if (e !== "cancel") this.$message.error(e.message || "操作失败");
+      }
+    },
+    // 竞拍记录弹窗
+    async openRecordsDialog(goods) {
+      this.recordsGoodsId = goods.id;
+      this.recordsGoodsName = goods.goodsName;
+      this.recordsDialogVisible = true;
+      this.recordsPagination.current = 1;
+      await this.loadRecords();
+    },
+    async loadRecords() {
+      if (!this.recordsGoodsId) return;
+      this.recordsLoading = true;
+      try {
+        const res = await getAdminBidRecordsByGoodsPage(this.recordsGoodsId, {
+          current: this.recordsPagination.current,
+          size: this.recordsPagination.size,
+        });
+        this.recordsList = res.list || res.records || [];
+        this.recordsPagination.total = res.total || 0;
+      } catch (e) {
+        this.recordsList = [];
+      } finally {
+        this.recordsLoading = false;
+      }
+    },
+    getAbnormalText(type) {
+      const m = { 0: "正常", 1: "恶意出价", 2: "机器人" };
+      return m[type] || "正常";
+    },
+    async changeRecordAbnormal(record, type) {
+      try {
+        await markRecordAbnormal(record.id, type);
+        this.$message.success("已更新");
+        record.abnormalType = type;
+      } catch (e) {
+        this.$message.error(e.message || "更新失败");
       }
     },
     // 下架（仅已上架商品）

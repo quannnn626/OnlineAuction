@@ -19,3 +19,13 @@ export function getDepositBalance(userId) {
 export function manualTopUp(data) {
   return request({ url: "/OnlineAuction/auctionDeposit/topUp", method: "post", data });
 }
+
+/** 财务：冻结用户保证金 */
+export function freezeDeposit(data) {
+  return request({ url: "/OnlineAuction/auctionDeposit/freeze", method: "post", data });
+}
+
+/** 财务：解冻用户保证金 */
+export function unfreezeDeposit(data) {
+  return request({ url: "/OnlineAuction/auctionDeposit/unfreeze", method: "post", data });
+}

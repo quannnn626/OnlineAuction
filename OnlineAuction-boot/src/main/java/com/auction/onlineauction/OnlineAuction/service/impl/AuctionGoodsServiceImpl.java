@@ -15,6 +15,7 @@ import com.github.pagehelper.PageInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -290,6 +291,38 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
         }
     }
 
+    @Override
+    public void extendAuctionTime(Long goodsId, int minutes) {
+        if (minutes <= 0 || minutes > 1440) {
+            throw new RuntimeException("延时分钟数需在 1~1440 之间");
+        }
+        AuctionGoods goods = getById(goodsId);
+        if (goods == null || goods.getDelFlag() == 1) {
+            throw new RuntimeException("商品不存在");
+        }
+        if (goods.getGoodsStatus() == null || goods.getGoodsStatus() != 1) {
+            throw new RuntimeException("仅竞拍中的商品可延时");
+        }
+        LocalDateTime newEnd = goods.getEndTime().plusMinutes(minutes);
+        goods.setEndTime(newEnd);
+        goods.setUpdateTime(LocalDateTime.now());
+        updateById(goods);
+    }
+
+    @Override
+    public void markNoSale(Long goodsId) {
+        AuctionGoods goods = getById(goodsId);
+        if (goods == null || goods.getDelFlag() == 1) {
+            throw new RuntimeException("商品不存在");
+        }
+        if (goods.getGoodsStatus() == null || goods.getGoodsStatus() != 1) {
+            throw new RuntimeException("仅竞拍中的商品可标记流拍");
+        }
+        goods.setGoodsStatus(3);
+        goods.setUpdateTime(LocalDateTime.now());
+        updateById(goods);
+    }
+
     /**
      * 为商品加载文件信息
      */
@@ -327,6 +360,12 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
         }
         if (requestData.get("addPrice") != null) {
             goods.setAddPrice(new java.math.BigDecimal(requestData.get("addPrice").toString()));
+        }
+        if (requestData.get("depositRequired") != null) {
+            goods.setDepositRequired(new java.math.BigDecimal(requestData.get("depositRequired").toString()));
+        }
+        if (requestData.get("deposit_required") != null) {
+            goods.setDepositRequired(new java.math.BigDecimal(requestData.get("deposit_required").toString()));
         }
         if (requestData.get("reservePrice") != null) {
             goods.setReservePrice(new java.math.BigDecimal(requestData.get("reservePrice").toString()));
@@ -619,11 +658,14 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
             return 3;
         }
 
+        BigDecimal depositRequired = goods.getDepositRequired() != null && goods.getDepositRequired().compareTo(BigDecimal.ZERO) >= 0
+                ? goods.getDepositRequired() : BigDecimal.ZERO;
         orderService.createWinningOrder(
                 goods.getId(),
                 goods.getSellerId(),
                 highestRecord,
-                now.plusHours(24)
+                now.plusHours(24),
+                depositRequired
         );
         return 2;
     }

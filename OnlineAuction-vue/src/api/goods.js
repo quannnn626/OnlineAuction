@@ -116,3 +116,20 @@ export function updateMyGoodsShelf(id, shelfStatus) {
     params: { shelfStatus },
   });
 }
+
+/** 拍卖师/管理员：拍卖延时（竞拍中商品延长结束时间，单位分钟） */
+export function extendAuctionTime(id, minutes = 5) {
+  return request({
+    url: `/OnlineAuction/auctionGoods/${id}/extend-time`,
+    method: "put",
+    params: { minutes },
+  });
+}
+
+/** 拍卖师/管理员：流拍（将竞拍中商品标记为流拍） */
+export function markNoSale(id) {
+  return request({
+    url: `/OnlineAuction/auctionGoods/${id}/mark-no-sale`,
+    method: "put",
+  });
+}

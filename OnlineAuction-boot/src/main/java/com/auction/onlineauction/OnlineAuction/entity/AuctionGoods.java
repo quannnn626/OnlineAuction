@@ -89,6 +89,12 @@ public class AuctionGoods implements Serializable {
     private BigDecimal addPrice;
 
     /**
+     * 参与该商品竞拍需冻结的保证金金额（加价时扣除/冻结）
+     */
+    @TableField("deposit_required")
+    private BigDecimal depositRequired;
+
+    /**
      * 保留价（仅卖方可见）
      */
     @TableField("reserve_price")

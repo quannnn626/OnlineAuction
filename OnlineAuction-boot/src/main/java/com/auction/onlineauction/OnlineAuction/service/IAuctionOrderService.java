@@ -5,6 +5,7 @@ import com.auction.onlineauction.OnlineAuction.entity.AuctionRecord;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.github.pagehelper.PageInfo;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Map;
 
@@ -55,6 +56,9 @@ public interface IAuctionOrderService extends IService<AuctionOrder> {
     /** 指定商品是否已存在有效订单 */
     boolean existsActiveOrderByGoodsId(Long goodsId);
 
-    /** 根据中标记录创建订单 */
-    AuctionOrder createWinningOrder(Long goodsId, Long sellerId, AuctionRecord highestRecord, LocalDateTime payDeadline);
+    /** 根据中标记录创建订单（depositAmount 为商品设定的保证金，可为 0） */
+    AuctionOrder createWinningOrder(Long goodsId, Long sellerId, AuctionRecord highestRecord, LocalDateTime payDeadline, BigDecimal depositAmount);
+
+    /** 悔拍：扣除买方保证金，订单置为已悔拍，商品恢复为上架状态供拍卖师再次上架 */
+    void markOrderAsDefaulted(Long orderId);
 }
