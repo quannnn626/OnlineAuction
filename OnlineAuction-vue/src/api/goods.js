@@ -105,3 +105,14 @@ export function updateShelfStatus(id, shelfStatus) {
     params: { shelfStatus },
   });
 }
+
+/**
+ * 卖家对自己商品的上下架（我的商品页使用）
+ */
+export function updateMyGoodsShelf(id, shelfStatus) {
+  return request({
+    url: `/OnlineAuction/auctionGoods/my/shelf/${id}`,
+    method: "put",
+    params: { shelfStatus },
+  });
+}

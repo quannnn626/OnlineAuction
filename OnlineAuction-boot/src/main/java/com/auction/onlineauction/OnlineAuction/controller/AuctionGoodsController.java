@@ -181,6 +181,27 @@ public class AuctionGoodsController {
     }
 
     /**
+     * 卖家对自己商品的上下架（仅本人可操作自己的商品）
+     */
+    @PutMapping("/my/shelf/{id}")
+    public Result<Void> updateMyGoodsShelf(@PathVariable Long id, @RequestParam Integer shelfStatus,
+                                          HttpServletRequest request) {
+        try {
+            HttpSession session = request.getSession(false);
+            if (session == null) return Result.error("未登录");
+            Long userId = (Long) session.getAttribute("userId");
+            if (userId == null) return Result.error("未登录");
+            if (!RoleCheckHelper.hasAnyRole(session, 2, 3, 4, 8)) {
+                return Result.error("无权限，仅卖方可操作自己的商品上下架");
+            }
+            goodsService.updateShelfStatusByOwner(id, userId, shelfStatus);
+            return Result.success(shelfStatus == 1 ? "已上架" : "已下架", null);
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+    }
+
+    /**
      * 删除商品（逻辑删除，仅管理员、超级管理员可操作）
      */
     @DeleteMapping("/{id}")

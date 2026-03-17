@@ -249,6 +249,29 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
     }
 
     @Override
+    public void updateShelfStatusByOwner(Long goodsId, Long sellerId, Integer shelfStatus) {
+        if (shelfStatus == null || (shelfStatus != 0 && shelfStatus != 1)) {
+            throw new RuntimeException("上架状态值无效（0=下架，1=上架）");
+        }
+        AuctionGoods goods = getById(goodsId);
+        if (goods == null || goods.getDelFlag() == 1) {
+            throw new RuntimeException("商品不存在");
+        }
+        if (!goods.getSellerId().equals(sellerId)) {
+            throw new RuntimeException("仅可操作自己的商品");
+        }
+        if (shelfStatus == 1 && (goods.getAuditStatus() == null || goods.getAuditStatus() != 1)) {
+            throw new RuntimeException("仅审核通过的商品可上架");
+        }
+        goods.setShelfStatus(shelfStatus);
+        goods.setUpdateTime(LocalDateTime.now());
+        boolean success = updateById(goods);
+        if (!success) {
+            throw new RuntimeException("更新上架状态失败");
+        }
+    }
+
+    @Override
     public void auditGoods(Long id, Integer auditStatus, String auditRemark) {
         AuctionGoods goods = getById(id);
         if (goods == null || goods.getDelFlag() == 1) {

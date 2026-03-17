@@ -33,20 +33,42 @@
       <el-table-column prop="createTime" label="创建时间" width="160">
         <template slot-scope="scope">{{ formatDateTime(scope.row.createTime) }}</template>
       </el-table-column>
-      <el-table-column v-if="roleType === 'buyer'" label="物流" width="140">
+      <el-table-column label="物流" width="160">
         <template slot-scope="scope">
           <span v-if="scope.row.expressCompany">{{ scope.row.expressCompany }} {{ scope.row.expressNo }}</span>
           <span v-else class="text-muted">-</span>
         </template>
       </el-table-column>
-      <el-table-column v-if="roleType === 'buyer'" label="操作" width="100">
+      <el-table-column label="操作" width="140">
         <template slot-scope="scope">
-          <el-button v-if="scope.row.orderStatus === 2" size="mini" type="success" @click="handleConfirmReceipt(scope.row)">
-            确认收货
-          </el-button>
+          <template v-if="roleType === 'buyer'">
+            <el-button v-if="scope.row.orderStatus === 2" size="mini" type="success" @click="handleConfirmReceipt(scope.row)">
+              确认收货
+            </el-button>
+          </template>
+          <template v-else-if="roleType === 'seller'">
+            <el-button v-if="scope.row.orderStatus === 1" size="mini" type="primary" @click="openShipDialog(scope.row)">
+              发货
+            </el-button>
+          </template>
         </template>
       </el-table-column>
     </el-table>
+    <el-dialog title="发货" :visible.sync="shipVisible" width="450px">
+      <el-form :model="shipForm" label-width="90px">
+        <el-form-item label="订单号">{{ shipForm.orderNo }}</el-form-item>
+        <el-form-item label="快递公司" required>
+          <el-input v-model="shipForm.expressCompany" placeholder="如：顺丰速运、中通快递" clearable></el-input>
+        </el-form-item>
+        <el-form-item label="快递单号" required>
+          <el-input v-model="shipForm.expressNo" placeholder="请输入快递单号" clearable></el-input>
+        </el-form-item>
+      </el-form>
+      <span slot="footer">
+        <el-button @click="shipVisible = false">取消</el-button>
+        <el-button type="primary" :loading="shipLoading" @click="submitShip">确认发货</el-button>
+      </span>
+    </el-dialog>
     <el-empty v-if="!loading && tableData.length === 0" description="暂无订单"></el-empty>
     <div class="pagination-wrap" v-if="pagination.total > 0">
       <el-pagination
@@ -63,7 +85,7 @@
 </template>
 
 <script>
-import { getMyOrderPage, confirmReceipt } from "@/api/order";
+import { getMyOrderPage, confirmReceipt, shipOrder } from "@/api/order";
 
 export default {
   name: "ProfileOrder",
@@ -74,6 +96,9 @@ export default {
       searchStatus: undefined,
       tableData: [],
       pagination: { current: 1, size: 10, total: 0 },
+      shipVisible: false,
+      shipLoading: false,
+      shipForm: { orderId: null, orderNo: "", expressCompany: "", expressNo: "" },
     };
   },
   mounted() {
@@ -139,6 +164,36 @@ export default {
           }
         })
         .catch(() => {});
+    },
+    openShipDialog(row) {
+      this.shipForm = {
+        orderId: row.id,
+        orderNo: row.orderNo || "",
+        expressCompany: "",
+        expressNo: "",
+      };
+      this.shipVisible = true;
+    },
+    async submitShip() {
+      if (!this.shipForm.expressCompany || !this.shipForm.expressNo) {
+        this.$message.warning("请填写快递公司和快递单号");
+        return;
+      }
+      this.shipLoading = true;
+      try {
+        await shipOrder(
+          this.shipForm.orderId,
+          this.shipForm.expressCompany,
+          this.shipForm.expressNo
+        );
+        this.$message.success("发货成功");
+        this.shipVisible = false;
+        this.loadData();
+      } catch (e) {
+        this.$message.error(e.message || "发货失败");
+      } finally {
+        this.shipLoading = false;
+      }
     },
   },
 };

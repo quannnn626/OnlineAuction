@@ -69,6 +69,12 @@ public interface IAuctionGoodsService extends IService<AuctionGoods> {
     void updateShelfStatus(Long id, Integer shelfStatus);
 
     /**
+     * 卖家对自己商品的上下架（仅本人可操作，上架需审核通过）
+     * @param shelfStatus 0=下架 1=上架
+     */
+    void updateShelfStatusByOwner(Long goodsId, Long sellerId, Integer shelfStatus);
+
+    /**
      * 获取商品列表（前端API，只显示审核通过的商品）
      */
     PageInfo<AuctionGoods> getGoodsListForApi(Integer current, Integer size, String keyword, Integer status, String categoryId);

@@ -10,6 +10,23 @@
       </div>
     </div>
 
+    <!-- 佣金/手续费查看 -->
+    <div class="commission-section">
+      <div class="commission-card">
+        <div class="commission-title">
+          <i class="el-icon-coin"></i> 佣金 / 手续费
+        </div>
+        <div class="commission-content">
+          <p class="commission-desc">平台按成交订单收取一定比例服务费，可在下方订单完成后查看对应手续费。</p>
+          <p v-if="!commissionSummary.ready" class="commission-placeholder">暂无数据，敬请期待</p>
+          <template v-else>
+            <p>累计手续费：¥{{ commissionSummary.totalFee || '0.00' }}</p>
+            <p>已结算订单数：{{ commissionSummary.orderCount || 0 }}</p>
+          </template>
+        </div>
+      </div>
+    </div>
+
     <!-- 商品表格 -->
     <div class="table-section">
       <el-table
@@ -49,6 +66,13 @@
             </el-tag>
           </template>
         </el-table-column>
+        <el-table-column prop="shelfStatus" label="上架状态" width="90">
+          <template slot-scope="scope">
+            <el-tag :type="scope.row.shelfStatus === 1 ? 'success' : 'info'" size="small">
+              {{ scope.row.shelfStatus === 1 ? '已上架' : '已下架' }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="goodsStatus" label="商品状态" width="100">
           <template slot-scope="scope">
             <el-tag :type="getStatusType(scope.row.goodsStatus)">
@@ -67,7 +91,7 @@
             {{ formatTime(scope.row.createTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="250" fixed="right">
+        <el-table-column label="操作" width="320" fixed="right">
           <template slot-scope="scope">
             <el-button
               size="mini"
@@ -76,6 +100,22 @@
               @click="handleEdit(scope.row)"
               :disabled="scope.row.auditStatus === 1 && (scope.row.goodsStatus === 1 || scope.row.goodsStatus === 0)">
               编辑
+            </el-button>
+            <el-button
+              v-if="canShelfOff(scope.row)"
+              size="mini"
+              type="warning"
+              icon="el-icon-download"
+              @click="handleShelfOff(scope.row)">
+              下架
+            </el-button>
+            <el-button
+              v-if="canShelfOn(scope.row)"
+              size="mini"
+              type="success"
+              icon="el-icon-upload2"
+              @click="handleShelfOn(scope.row)">
+              上架
             </el-button>
             <el-button
               v-if="scope.row.auditStatus === 2 || scope.row.auditStatus === 3 || scope.row.goodsStatus === 3"
@@ -113,7 +153,7 @@
 </template>
 
 <script>
-import { getMyGoodsList, deleteGoods, reapplyGoods } from '@/api/goods'
+import { getMyGoodsList, reapplyGoods, updateMyGoodsShelf } from '@/api/goods'
 
 export default {
   name: 'MyGoods',
@@ -125,7 +165,8 @@ export default {
         current: 1,
         size: 10,
         total: 0
-      }
+      },
+      commissionSummary: { ready: false, totalFee: '0.00', orderCount: 0 }
     }
   },
   created() {
@@ -156,19 +197,41 @@ export default {
       this.$message.info(`编辑商品: ${goods.goodsName}`)
       // TODO: 跳转到编辑商品页面
     },
-    async handleDelete(goods) {
+    canShelfOff(row) {
+      return row.auditStatus === 1 && row.shelfStatus === 1
+    },
+    canShelfOn(row) {
+      return row.auditStatus === 1 && row.shelfStatus === 0
+    },
+    async handleShelfOff(goods) {
       try {
-        await this.$confirm(`确定下架商品 "${goods.goodsName}" 吗？`, '提示', {
+        await this.$confirm(`确定下架商品 "${goods.goodsName}" 吗？下架后前台将不再展示。`, '提示', {
           confirmButtonText: '确定',
           cancelButtonText: '取消',
           type: 'warning'
         })
-        await deleteGoods(goods.id)
+        await updateMyGoodsShelf(goods.id, 0)
         this.$message.success('下架成功')
         this.loadData()
       } catch (error) {
         if (error !== 'cancel') {
-          this.$message.error('下架失败，请重试')
+          this.$message.error(error.message || '下架失败，请重试')
+        }
+      }
+    },
+    async handleShelfOn(goods) {
+      try {
+        await this.$confirm(`确定上架商品 "${goods.goodsName}" 吗？`, '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'info'
+        })
+        await updateMyGoodsShelf(goods.id, 1)
+        this.$message.success('上架成功')
+        this.loadData()
+      } catch (error) {
+        if (error !== 'cancel') {
+          this.$message.error(error.message || '上架失败，请重试')
         }
       }
     },
@@ -329,5 +392,41 @@ export default {
   background: #f5f5f5;
   color: #909399;
   font-size: 24px;
+}
+
+.commission-section {
+  margin-bottom: 20px;
+}
+
+.commission-card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 16px 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.commission-title {
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.commission-title i {
+  margin-right: 6px;
+  color: #e6a23c;
+}
+
+.commission-content {
+  color: #666;
+  font-size: 13px;
+}
+
+.commission-desc {
+  margin-bottom: 8px;
+}
+
+.commission-placeholder {
+  color: #909399;
+  font-style: italic;
 }
 </style>
