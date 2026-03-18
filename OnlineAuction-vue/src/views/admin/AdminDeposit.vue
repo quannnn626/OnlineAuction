@@ -74,6 +74,11 @@
         </div>
         <div class="table-section">
           <el-table v-loading="summaryLoading" :data="summaryTableData" stripe>
+            <el-table-column label="" width="50" align="center">
+              <template slot-scope="scope">
+                <el-radio v-model="selectedUserId" :label="scope.row.userId">&nbsp;</el-radio>
+              </template>
+            </el-table-column>
             <el-table-column prop="userId" label="用户ID" width="90"></el-table-column>
             <el-table-column prop="userName" label="用户名" width="120"></el-table-column>
             <el-table-column prop="nickName" label="昵称" width="120">
@@ -274,10 +279,26 @@
       </div>
     </el-drawer>
 
-    <el-dialog title="冻结保证金" :visible.sync="freezeVisible" width="420px" @close="freezeForm = {}">
+    <el-dialog title="冻结保证金" :visible.sync="freezeVisible" width="460px" @close="onDialogClose('freeze')">
       <el-form :model="freezeForm" :rules="freezeRules" ref="freezeFormRef" label-width="90px">
-        <el-form-item label="用户ID" prop="userId">
-          <el-input-number v-model="freezeForm.userId" :min="1" placeholder="用户ID" style="width: 100%"></el-input-number>
+        <el-form-item label="选择用户" prop="userId">
+          <el-select
+            v-model="freezeForm.userId"
+            filterable
+            remote
+            placeholder="输入用户名或昵称搜索"
+            :remote-method="searchUsersRemote"
+            :loading="userSearchLoading"
+            style="width: 100%"
+            clearable
+          >
+            <el-option
+              v-for="u in userOptions"
+              :key="u.userId"
+              :label="userOptionLabel(u)"
+              :value="u.userId"
+            ></el-option>
+          </el-select>
         </el-form-item>
         <el-form-item label="冻结金额" prop="amount">
           <el-input-number v-model="freezeForm.amount" :min="0.01" :precision="2" style="width: 100%"></el-input-number>
@@ -291,10 +312,26 @@
         <el-button type="primary" @click="submitFreeze" :loading="freezeLoading">确定</el-button>
       </span>
     </el-dialog>
-    <el-dialog title="解冻保证金" :visible.sync="unfreezeVisible" width="420px" @close="unfreezeForm = {}">
+    <el-dialog title="解冻保证金" :visible.sync="unfreezeVisible" width="460px" @close="onDialogClose('unfreeze')">
       <el-form :model="unfreezeForm" :rules="unfreezeRules" ref="unfreezeFormRef" label-width="90px">
-        <el-form-item label="用户ID" prop="userId">
-          <el-input-number v-model="unfreezeForm.userId" :min="1" placeholder="用户ID" style="width: 100%"></el-input-number>
+        <el-form-item label="选择用户" prop="userId">
+          <el-select
+            v-model="unfreezeForm.userId"
+            filterable
+            remote
+            placeholder="输入用户名或昵称搜索"
+            :remote-method="searchUsersRemote"
+            :loading="userSearchLoading"
+            style="width: 100%"
+            clearable
+          >
+            <el-option
+              v-for="u in userOptions"
+              :key="u.userId"
+              :label="userOptionLabel(u)"
+              :value="u.userId"
+            ></el-option>
+          </el-select>
         </el-form-item>
         <el-form-item label="解冻金额" prop="amount">
           <el-input-number v-model="unfreezeForm.amount" :min="0.01" :precision="2" style="width: 100%"></el-input-number>
@@ -308,10 +345,26 @@
         <el-button type="primary" @click="submitUnfreeze" :loading="unfreezeLoading">确定</el-button>
       </span>
     </el-dialog>
-    <el-dialog title="手动充值" :visible.sync="topUpVisible" width="450px" @close="topUpForm = {}">
+    <el-dialog title="手动充值" :visible.sync="topUpVisible" width="460px" @close="onDialogClose('topUp')">
       <el-form :model="topUpForm" :rules="topUpRules" ref="topUpFormRef" label-width="90px">
-        <el-form-item label="用户ID" prop="userId">
-          <el-input-number v-model="topUpForm.userId" :min="1" placeholder="请输入用户ID" style="width: 100%"></el-input-number>
+        <el-form-item label="选择用户" prop="userId">
+          <el-select
+            v-model="topUpForm.userId"
+            filterable
+            remote
+            placeholder="输入用户名或昵称搜索"
+            :remote-method="searchUsersRemote"
+            :loading="userSearchLoading"
+            style="width: 100%"
+            clearable
+          >
+            <el-option
+              v-for="u in userOptions"
+              :key="u.userId"
+              :label="userOptionLabel(u)"
+              :value="u.userId"
+            ></el-option>
+          </el-select>
         </el-form-item>
         <el-form-item label="充值金额" prop="amount">
           <el-input-number v-model="topUpForm.amount" :min="0.01" :precision="2" placeholder="请输入金额" style="width: 100%"></el-input-number>
@@ -333,6 +386,7 @@ import {
   getPlatformSummary,
   getDepositSummaryPage,
   getAdminDepositPage,
+  searchUsersForDeposit,
   manualTopUp,
   freezeDeposit,
   unfreezeDeposit,
@@ -358,21 +412,21 @@ export default {
       topUpLoading: false,
       topUpForm: { userId: null, amount: null, remark: "" },
       topUpRules: {
-        userId: [{ required: true, message: "请输入用户ID", trigger: "blur" }],
+        userId: [{ required: true, message: "请选择用户", trigger: "change" }],
         amount: [{ required: true, message: "请输入充值金额", trigger: "blur" }],
       },
       freezeVisible: false,
       freezeLoading: false,
       freezeForm: { userId: null, amount: null, remark: "" },
       freezeRules: {
-        userId: [{ required: true, message: "请输入用户ID", trigger: "blur" }],
+        userId: [{ required: true, message: "请选择用户", trigger: "change" }],
         amount: [{ required: true, message: "请输入冻结金额", trigger: "blur" }],
       },
       unfreezeVisible: false,
       unfreezeLoading: false,
       unfreezeForm: { userId: null, amount: null, remark: "" },
       unfreezeRules: {
-        userId: [{ required: true, message: "请输入用户ID", trigger: "blur" }],
+        userId: [{ required: true, message: "请选择用户", trigger: "change" }],
         amount: [{ required: true, message: "请输入解冻金额", trigger: "blur" }],
       },
       detailDrawerVisible: false,
@@ -384,6 +438,9 @@ export default {
       detailOrderList: [],
       detailRecordLoading: false,
       detailRecordList: [],
+      userOptions: [],
+      userSearchLoading: false,
+      selectedUserId: null,
     };
   },
   computed: {
@@ -404,6 +461,28 @@ export default {
     this.loadData();
   },
   methods: {
+    searchUsersRemote(query) {
+      const kw = query ? String(query).trim() : "";
+      this.userSearchLoading = true;
+      searchUsersForDeposit({ keyword: kw || undefined, limit: 20 })
+        .then((res) => {
+          this.userOptions = Array.isArray(res) ? res : [];
+        })
+        .catch(() => { this.userOptions = []; })
+        .finally(() => { this.userSearchLoading = false; });
+    },
+    userOptionLabel(u) {
+      if (!u) return "";
+      const name = u.userName || "";
+      const nick = u.nickName ? `（${u.nickName}）` : "";
+      return name ? `${name}${nick}` : (nick || "-");
+    },
+    onDialogClose(type) {
+      this.userOptions = [];
+      if (type === "freeze") this.freezeForm = { userId: null, amount: null, remark: "" };
+      else if (type === "unfreeze") this.unfreezeForm = { userId: null, amount: null, remark: "" };
+      else if (type === "topUp") this.topUpForm = { userId: null, amount: null, remark: "" };
+    },
     loadSummary() {
       getPlatformSummary()
         .then((res) => {
@@ -551,8 +630,18 @@ export default {
       this.loadData();
     },
     handleTopUp() {
-      this.topUpForm = { userId: null, amount: null, remark: "" };
+      if (!this.selectedUserId) {
+        this.$message.warning("请先在用户汇总中选择用户");
+        this.activeTab = "summary";
+        return;
+      }
+      const row = this.summaryTableData.find((r) => r.userId == this.selectedUserId);
+      this.topUpForm = { userId: this.selectedUserId, amount: null, remark: "" };
+      this.userOptions = row ? [row] : [{ userId: this.selectedUserId, userName: "已选用户", nickName: "" }];
       this.topUpVisible = true;
+      this.$nextTick(() => {
+        if (this.userOptions.length === 0) this.searchUsersRemote("");
+      });
     },
     submitTopUp() {
       this.$refs.topUpFormRef.validate(async (valid) => {
@@ -573,8 +662,18 @@ export default {
       });
     },
     openFreezeDialog() {
-      this.freezeForm = { userId: null, amount: null, remark: "" };
+      if (!this.selectedUserId) {
+        this.$message.warning("请先在用户汇总中选择用户");
+        this.activeTab = "summary";
+        return;
+      }
+      const row = this.summaryTableData.find((r) => r.userId == this.selectedUserId);
+      this.freezeForm = { userId: this.selectedUserId, amount: null, remark: "" };
+      this.userOptions = row ? [row] : [{ userId: this.selectedUserId, userName: "已选用户", nickName: "" }];
       this.freezeVisible = true;
+      this.$nextTick(() => {
+        if (this.userOptions.length === 0) this.searchUsersRemote("");
+      });
     },
     submitFreeze() {
       this.$refs.freezeFormRef.validate(async (valid) => {
@@ -595,8 +694,18 @@ export default {
       });
     },
     openUnfreezeDialog() {
-      this.unfreezeForm = { userId: null, amount: null, remark: "" };
+      if (!this.selectedUserId) {
+        this.$message.warning("请先在用户汇总中选择用户");
+        this.activeTab = "summary";
+        return;
+      }
+      const row = this.summaryTableData.find((r) => r.userId == this.selectedUserId);
+      this.unfreezeForm = { userId: this.selectedUserId, amount: null, remark: "" };
+      this.userOptions = row ? [row] : [{ userId: this.selectedUserId, userName: "已选用户", nickName: "" }];
       this.unfreezeVisible = true;
+      this.$nextTick(() => {
+        if (this.userOptions.length === 0) this.searchUsersRemote("");
+      });
     },
     submitUnfreeze() {
       this.$refs.unfreezeFormRef.validate(async (valid) => {

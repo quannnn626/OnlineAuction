@@ -5,6 +5,9 @@ import com.auction.onlineauction.OnlineAuction.entity.AuctionUser;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.github.pagehelper.PageInfo;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * <p>
  * 系统用户表 服务类
@@ -26,6 +29,9 @@ public interface IAuctionUserService extends IService<AuctionUser> {
      * 仅返回 seller_audit_status in (1,2,3) 的用户
      */
     PageInfo<AuctionUser> getSellerAuditPage(Integer current, Integer size, String userName, Integer sellerAuditStatus);
+
+    /** 按用户名/昵称搜索用户（用于保证金等场景的选择器），返回 id、userName、nickName */
+    List<Map<String, Object>> searchUsersForSelection(String keyword, int limit);
 
     /**
      * 根据ID查询用户详情（不返回密码）

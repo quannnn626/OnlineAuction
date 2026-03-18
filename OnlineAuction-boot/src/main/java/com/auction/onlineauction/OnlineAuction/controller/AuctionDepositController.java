@@ -4,6 +4,7 @@ import com.auction.onlineauction.OnlineAuction.common.Result;
 import com.auction.onlineauction.OnlineAuction.common.RoleCheckHelper;
 import com.auction.onlineauction.OnlineAuction.entity.AuctionDeposit;
 import com.auction.onlineauction.OnlineAuction.service.IAuctionDepositService;
+import com.auction.onlineauction.OnlineAuction.service.IAuctionUserService;
 import com.github.pagehelper.PageInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -19,6 +21,25 @@ public class AuctionDepositController {
 
     @Autowired
     private IAuctionDepositService depositService;
+    @Autowired
+    private IAuctionUserService userService;
+
+    /** 按用户名/昵称搜索用户（用于冻结/解冻/充值时的选择器） */
+    @GetMapping("/searchUsers")
+    public Result<List<Map<String, Object>>> searchUsers(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "20") Integer limit,
+            HttpServletRequest request) {
+        try {
+            if (!RoleCheckHelper.canManageDepositAdmin(request.getSession(false))) {
+                return Result.error("无权限");
+            }
+            List<Map<String, Object>> list = userService.searchUsersForSelection(keyword, limit);
+            return Result.success("查询成功", list);
+        } catch (Exception e) {
+            return Result.error("查询失败：" + e.getMessage());
+        }
+    }
 
     /** 平台保证金汇总（总额、可用、冻结、用户数） */
     @GetMapping("/platformSummary")

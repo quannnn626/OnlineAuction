@@ -8,6 +8,15 @@ export function getMyDepositPage(params) {
   return request({ url: "/deposit/page", method: "get", params });
 }
 
+/** 按用户名/昵称搜索用户（用于选择器） */
+export function searchUsersForDeposit(params) {
+  return request({
+    url: "/OnlineAuction/auctionDeposit/searchUsers",
+    method: "get",
+    params,
+  });
+}
+
 /** 平台保证金汇总 */
 export function getPlatformSummary() {
   return request({

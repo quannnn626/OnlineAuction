@@ -13,7 +13,9 @@ import org.springframework.util.DigestUtils;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -75,6 +77,25 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
         wrapper.orderByDesc("create_time");
         List<AuctionUser> list = list(wrapper);
         return new PageInfo<>(list);
+    }
+
+    @Override
+    public List<Map<String, Object>> searchUsersForSelection(String keyword, int limit) {
+        QueryWrapper<AuctionUser> wrapper = new QueryWrapper<>();
+        wrapper.eq("del_flag", 0).select("id", "user_name", "nick_name");
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            String kw = keyword.trim();
+            wrapper.and(w -> w.like("user_name", kw).or().like("nick_name", kw));
+        }
+        wrapper.orderByDesc("id").last("LIMIT " + Math.min(Math.max(limit, 1), 50));
+        List<AuctionUser> list = list(wrapper);
+        return list.stream().map(u -> {
+            Map<String, Object> m = new HashMap<>();
+            m.put("userId", u.getId());
+            m.put("userName", u.getUserName() != null ? u.getUserName() : "");
+            m.put("nickName", u.getNickName() != null ? u.getNickName() : "");
+            return m;
+        }).collect(Collectors.toList());
     }
 
     @Override
