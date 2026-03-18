@@ -34,7 +34,7 @@ public class AuctionFeeRecord implements Serializable {
     @TableField("amount")
     private BigDecimal amount;
 
-    /** 1=平台扣费 2=佣金结算 */
+    /** 1=佣金 2=违约金 3=违规扣除保证金 4=其他手续费 */
     @TableField("fee_type")
     private Integer feeType;
 

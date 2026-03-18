@@ -39,6 +39,9 @@ public interface IAuctionDepositService extends IService<AuctionDeposit> {
     /** 悔拍扣除保证金（deposit_type=4，不退还） */
     void deductForDefault(Long userId, BigDecimal amount, Long orderId, String remark);
 
+    /** 抵扣尾款（deposit_type=3）：买方支付订单尾款时从保证金余额扣除 */
+    void deductForRemainPayment(Long userId, BigDecimal amount, Long orderId, String remark);
+
     /** 财务冻结用户保证金（deposit_type=5） */
     void freezeByFinance(Long userId, BigDecimal amount, String remark);
 

@@ -9,6 +9,7 @@ import com.auction.onlineauction.OnlineAuction.entity.AuctionUser;
 import com.auction.onlineauction.OnlineAuction.mapper.AuctionMessageSessionMapper;
 import com.auction.onlineauction.OnlineAuction.mapper.AuctionOrderMapper;
 import com.auction.onlineauction.OnlineAuction.service.IAuctionDepositService;
+import com.auction.onlineauction.OnlineAuction.service.IAuctionFeeRecordService;
 import com.auction.onlineauction.OnlineAuction.service.IAuctionGoodsService;
 import com.auction.onlineauction.OnlineAuction.service.IAuctionOrderService;
 import com.auction.onlineauction.OnlineAuction.service.IAuctionUserService;
@@ -47,6 +48,8 @@ public class AuctionOrderServiceImpl extends ServiceImpl<AuctionOrderMapper, Auc
 
     @Autowired
     private IAuctionDepositService depositService;
+    @Autowired
+    private IAuctionFeeRecordService feeRecordService;
     @Autowired
     private AuctionMessageSessionMapper messageSessionMapper;
     @Autowired
@@ -363,6 +366,10 @@ public class AuctionOrderServiceImpl extends ServiceImpl<AuctionOrderMapper, Auc
                 ? "订单悔拍扣除，订单号：" + order.getOrderNo()
                 : "订单悔拍扣除";
             depositService.deductForDefault(order.getBuyerId(), depositAmount, orderId, reason);
+            String feeRemark = order.getOrderNo() != null
+                ? "违规扣除保证金（悔拍），订单号：" + order.getOrderNo()
+                : "违规扣除保证金（悔拍）";
+            feeRecordService.recordDeduction(order.getBuyerId(), orderId, depositAmount, 3, feeRemark);
         }
         order.setOrderStatus(4);
         order.setUpdateTime(LocalDateTime.now());
@@ -393,5 +400,36 @@ public class AuctionOrderServiceImpl extends ServiceImpl<AuctionOrderMapper, Auc
         order.setOrderStatus(3);
         order.setUpdateTime(LocalDateTime.now());
         updateById(order);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void payByBuyer(Long orderId, Long buyerId) {
+        AuctionOrder order = getById(orderId);
+        if (order == null || order.getDelFlag() == 1) {
+            throw new RuntimeException("订单不存在");
+        }
+        if (!order.getBuyerId().equals(buyerId)) {
+            throw new RuntimeException("仅买方本人可支付该订单");
+        }
+        if (order.getOrderStatus() != 0) {
+            throw new RuntimeException("仅待付款订单可支付");
+        }
+        // 假支付：仅将订单状态改为待发货，不扣保证金（保证金仅用于悔拍扣除）
+        updateOrderStatus(orderId, 1);
+    }
+
+    @Override
+    public PageInfo<Map<String, Object>> getOrdersPendingCommissionSettlement(Integer current, Integer size) {
+        PageHelper.startPage(current, size);
+        List<AuctionOrder> list = baseMapper.selectOrdersPendingCommissionSettlement();
+        PageInfo<AuctionOrder> raw = new PageInfo<>(list);
+        List<Map<String, Object>> rows = buildOrderRowsWithNames(raw.getList());
+        PageInfo<Map<String, Object>> result = new PageInfo<>(rows);
+        result.setTotal(raw.getTotal());
+        result.setPages(raw.getPages());
+        result.setPageNum(raw.getPageNum());
+        result.setPageSize(raw.getPageSize());
+        return result;
     }
 }

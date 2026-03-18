@@ -139,6 +139,29 @@ public class AuctionDepositServiceImpl extends ServiceImpl<AuctionDepositMapper,
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    public void deductForRemainPayment(Long userId, BigDecimal amount, Long orderId, String remark) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            return;
+        }
+        BigDecimal balance = getBalanceByUserId(userId);
+        if (balance.compareTo(amount) < 0) {
+            throw new RuntimeException("保证金余额不足，需支付尾款" + amount + "元，当前余额" + balance + "元，请先充值");
+        }
+        BigDecimal newBalance = balance.subtract(amount);
+        AuctionDeposit record = new AuctionDeposit();
+        record.setUserId(userId);
+        record.setOrderId(orderId);
+        record.setAmount(amount);
+        record.setDepositType(3);
+        record.setBalance(newBalance);
+        record.setOperateTime(LocalDateTime.now());
+        record.setRemark(remark != null ? remark : "订单尾款支付");
+        record.setDelFlag(0);
+        save(record);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public void freezeByFinance(Long userId, BigDecimal amount, String remark) {
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new RuntimeException("冻结金额必须大于0");

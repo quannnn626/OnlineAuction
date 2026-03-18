@@ -39,9 +39,12 @@
           <span v-else class="text-muted">-</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="140">
+      <el-table-column label="操作" width="180">
         <template slot-scope="scope">
           <template v-if="roleType === 'buyer'">
+            <el-button v-if="scope.row.orderStatus === 0" size="mini" type="primary" @click="handlePay(scope.row)">
+              去付款
+            </el-button>
             <el-button v-if="scope.row.orderStatus === 2" size="mini" type="success" @click="handleConfirmReceipt(scope.row)">
               确认收货
             </el-button>
@@ -85,7 +88,7 @@
 </template>
 
 <script>
-import { getMyOrderPage, confirmReceipt, shipOrder } from "@/api/order";
+import { getMyOrderPage, payOrder, confirmReceipt, shipOrder } from "@/api/order";
 
 export default {
   name: "ProfileOrder",
@@ -147,6 +150,23 @@ export default {
       if (!val) return "-";
       const d = new Date(val);
       return isNaN(d.getTime()) ? val : d.toLocaleString("zh-CN", { hour12: false });
+    },
+    handlePay(row) {
+      this.$confirm("确认已完成付款？", "支付确认", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "info",
+      })
+        .then(async () => {
+          try {
+            await payOrder(row.id);
+            this.$message.success("支付成功");
+            this.loadData();
+          } catch (e) {
+            this.$message.error(e.message || "支付失败");
+          }
+        })
+        .catch(() => {});
     },
     handleConfirmReceipt(row) {
       this.$confirm("确认已收到商品，完成订单？", "确认收货", {

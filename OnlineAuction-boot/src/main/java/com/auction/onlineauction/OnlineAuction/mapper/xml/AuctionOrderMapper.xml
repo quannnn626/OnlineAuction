@@ -20,4 +20,14 @@
         <result column="del_flag" property="delFlag" />
     </resultMap>
 
+    <select id="selectOrdersPendingCommissionSettlement" resultMap="BaseResultMap">
+        SELECT o.* FROM auction_order o
+        WHERE o.del_flag = 0 AND o.order_status = 3
+        AND NOT EXISTS (
+            SELECT 1 FROM auction_fee_record f
+            WHERE f.order_id = o.id AND f.fee_type = 1 AND f.del_flag = 0
+        )
+        ORDER BY o.create_time DESC
+    </select>
+
 </mapper>

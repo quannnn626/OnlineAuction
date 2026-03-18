@@ -8,6 +8,11 @@ export function getOrderById(id) {
   return request({ url: `/order/${id}`, method: "get" });
 }
 
+/** 买方支付（待付款订单，假支付，仅更新状态为待发货） */
+export function payOrder(id) {
+  return request({ url: `/order/${id}/pay`, method: "put" });
+}
+
 /** 买方确认收货 */
 export function confirmReceipt(id) {
   return request({ url: `/order/${id}/confirm-receipt`, method: "put" });

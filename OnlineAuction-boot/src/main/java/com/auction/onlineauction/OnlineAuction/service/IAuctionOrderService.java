@@ -53,6 +53,9 @@ public interface IAuctionOrderService extends IService<AuctionOrder> {
     /** 买方确认收货：仅买方本人可操作，待收货->已完成 */
     void confirmReceiptByBuyer(Long orderId, Long buyerId);
 
+    /** 买方支付尾款：待付款订单，用保证金抵扣尾款后订单变为待发货 */
+    void payByBuyer(Long orderId, Long buyerId);
+
     /** 指定商品是否已存在有效订单 */
     boolean existsActiveOrderByGoodsId(Long goodsId);
 
@@ -61,4 +64,7 @@ public interface IAuctionOrderService extends IService<AuctionOrder> {
 
     /** 悔拍：扣除买方保证金，订单置为已悔拍，商品恢复为上架状态供拍卖师再次上架 */
     void markOrderAsDefaulted(Long orderId);
+
+    /** 已完成且未做佣金结算的订单分页（带商品名、买卖方名，供财务结算） */
+    PageInfo<Map<String, Object>> getOrdersPendingCommissionSettlement(Integer current, Integer size);
 }
