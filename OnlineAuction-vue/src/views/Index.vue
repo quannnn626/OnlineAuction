@@ -19,13 +19,13 @@
           <template v-for="menu in menuTree">
             <el-menu-item
               v-if="!menu.children || menu.children.length === 0"
-              :key="menu.id"
+              :key="'item-' + menu.id"
               :index="getMenuPath(menu)"
             >
               <i :class="menu.menuIcon || 'el-icon-menu'"></i>
               <span slot="title">{{ menu.menuName }}</span>
             </el-menu-item>
-            <el-submenu v-else :key="menu.id" :index="String(menu.id)">
+            <el-submenu v-else :key="'sub-' + menu.id" :index="String(menu.id)">
               <template slot="title">
                 <i :class="menu.menuIcon || 'el-icon-menu'"></i>
                 <span>{{ menu.menuName }}</span>
@@ -56,8 +56,12 @@
                   <i class="el-icon-arrow-down"></i>
                 </span>
                 <el-dropdown-menu slot="dropdown">
-                  <el-dropdown-item command="profile">个人中心</el-dropdown-item>
-                  <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
+                  <el-dropdown-item command="profile"
+                    >个人中心</el-dropdown-item
+                  >
+                  <el-dropdown-item divided command="logout"
+                    >退出登录</el-dropdown-item
+                  >
                 </el-dropdown-menu>
               </el-dropdown>
             </div>
@@ -121,7 +125,11 @@ export default {
         if (userInfo) {
           try {
             user = JSON.parse(userInfo);
-            const roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
+            const roles = user.userRole
+              ? String(user.userRole)
+                  .split(",")
+                  .map((r) => r.trim())
+              : [];
             const isEndUser = roles.includes("1") || roles.includes("2");
             if (!isEndUser) {
               // 非买方/卖方：过滤掉留言板菜单
@@ -135,7 +143,12 @@ export default {
         }
 
         // 买方/卖方端兜底菜单：补充“历史竞拍”入口（避免后端菜单未配置导致看不到）
-        if (user && !user.isAdmin && !user.isSuperAdmin && !this.menuExists(menuTree, "/bid-history")) {
+        if (
+          user &&
+          !user.isAdmin &&
+          !user.isSuperAdmin &&
+          !this.menuExists(menuTree, "/bid-history")
+        ) {
           menuTree.push({
             id: 99991,
             menuName: "历史竞拍",
@@ -154,6 +167,32 @@ export default {
             children: [],
           });
         }
+        // 后台角色（管理员、超级管理员、拍卖师、客服、财务、运营）若无“个人中心/个人信息”菜单，则补充入口到 /admin/profile
+        if (user) {
+          const roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
+          const isStaff = [3, 4, 5, 6, 7, 8].some((r) => roles.includes(String(r)));
+          const hasProfileMenu = this.menuExists(menuTree, "/admin/profile") || this.menuExists(menuTree, "/profile");
+          if (isStaff && !hasProfileMenu) {
+            menuTree.push({
+              id: 99993,
+              menuName: "个人信息",
+              menuPath: "/admin/profile",
+              menuIcon: "el-icon-user",
+              children: [],
+            });
+          }
+        }
+        // 拍卖师(5)、客服(6)、财务(7) 不显示系统设置及其子功能（轮播图管理、竞拍公告管理）
+        if (user) {
+          const roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
+          const onlyStaffNoAdmin = [5, 6, 7].some((r) => roles.includes(String(r))) && !([3, 4].some((r) => roles.includes(String(r))));
+          if (onlyStaffNoAdmin) {
+            menuTree = this.filterMenu(menuTree, (m) => {
+              const path = (m.menuPath || "").trim();
+              return path !== "/admin/settings" && path !== "admin/settings" && !path.startsWith("/admin/settings/") && !path.startsWith("admin/settings/");
+            });
+          }
+        }
         // 过滤掉“商品申请”菜单（改为在“我的商品”页面右上角的按钮入口）
         menuTree = menuTree.filter((m) => m.menuPath !== "/seller/goods/add");
         // 将「拍卖商品」菜单名统一显示为「拍品列表」
@@ -163,7 +202,16 @@ export default {
           }
           return m;
         });
-        
+        // 个人中心：点击直接进入 /profile 默认展示个人信息，子功能仍在个人中心页内 tab 中
+        menuTree = menuTree.map((m) => {
+          const path = (m.menuPath || "").trim();
+          const isProfile = path === "/profile" || path === "profile";
+          if (isProfile && m.children && m.children.length > 0) {
+            return { ...m, children: [] };
+          }
+          return m;
+        });
+
         this.menuTree = menuTree;
         this.buildMenuMap(this.menuTree);
       } catch (error) {
@@ -178,14 +226,12 @@ export default {
       if (!menus || menus.length === 0) {
         return [];
       }
-      return menus
-        .filter(filterFn)
-        .map((menu) => {
-          if (menu.children && menu.children.length > 0) {
-            menu.children = this.filterMenu(menu.children, filterFn);
-          }
-          return menu;
-        });
+      return menus.filter(filterFn).map((menu) => {
+        if (menu.children && menu.children.length > 0) {
+          menu.children = this.filterMenu(menu.children, filterFn);
+        }
+        return menu;
+      });
     },
     buildMenuMap(menus) {
       this.menuMap = {}; // 重置菜单映射
@@ -332,7 +378,7 @@ export default {
               localStorage.removeItem("isSuperAdmin");
               localStorage.removeItem("isBuyer");
               localStorage.removeItem("isSeller");
-              
+
               this.$message.success("退出登录成功");
               // 跳转到登录页
               this.$router.push("/login");
@@ -448,7 +494,11 @@ export default {
 }
 
 .sidebar-menu ::v-deep .el-menu-item.is-active {
-  background: linear-gradient(90deg, rgba(201, 162, 39, 0.2) 0%, rgba(201, 162, 39, 0.06) 100%) !important;
+  background: linear-gradient(
+    90deg,
+    rgba(201, 162, 39, 0.2) 0%,
+    rgba(201, 162, 39, 0.06) 100%
+  ) !important;
   color: #f8fafc !important;
   border-left: 4px solid #c9a227;
   padding-left: 52px !important;
@@ -634,5 +684,4 @@ export default {
     padding: 0 16px;
   }
 }
-
 </style>

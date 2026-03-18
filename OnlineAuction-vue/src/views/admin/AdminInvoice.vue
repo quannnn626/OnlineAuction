@@ -25,6 +25,7 @@
       <el-table-column prop="userId" label="用户ID" width="80"></el-table-column>
       <el-table-column prop="invoiceTitle" label="发票抬头" min-width="140" show-overflow-tooltip></el-table-column>
       <el-table-column prop="taxNo" label="税号" width="120" show-overflow-tooltip></el-table-column>
+      <el-table-column prop="mailAddress" label="邮寄地址" min-width="160" show-overflow-tooltip></el-table-column>
       <el-table-column prop="amount" label="金额" width="90">
         <template slot-scope="scope">¥{{ scope.row.amount }}</template>
       </el-table-column>
@@ -68,10 +69,13 @@
       <el-form v-if="handleAction === 1" :model="handleForm" label-width="90px">
         <el-form-item label="发票文件">
           <el-upload
+            name="files"
             :action="uploadAction"
-            :on-success="(res, file) => { const d = res && res.data; handleForm.fileId = (Array.isArray(d) && d[0] && d[0].id) ? d[0].id : (d && d.id) ? d.id : (typeof d === 'number') ? d : null; }"
+            :with-credentials="true"
             :show-file-list="true"
             :limit="1"
+            :on-success="onUploadSuccess"
+            :on-error="onUploadError"
           >
             <el-button size="small" type="primary">选择文件</el-button>
           </el-upload>
@@ -144,6 +148,25 @@ export default {
       this.handleAction = action;
       this.handleForm = { id: row.id, fileId: null, handleRemark: "" };
       this.handleVisible = true;
+    },
+    onUploadSuccess(res) {
+      if (!res) return;
+      const d = res.data;
+      if (Array.isArray(d) && d[0] && d[0].id) {
+        this.handleForm.fileId = d[0].id;
+        this.$message.success("文件上传成功");
+      } else if (d && d.id) {
+        this.handleForm.fileId = d.id;
+        this.$message.success("文件上传成功");
+      } else if (typeof d === "number") {
+        this.handleForm.fileId = d;
+        this.$message.success("文件上传成功");
+      } else {
+        this.$message.warning("上传返回格式异常，请重试");
+      }
+    },
+    onUploadError(err) {
+      this.$message.error("文件上传失败，请重试");
     },
     async submitHandle() {
       if (this.handleAction === 1 && !this.handleForm.fileId) {

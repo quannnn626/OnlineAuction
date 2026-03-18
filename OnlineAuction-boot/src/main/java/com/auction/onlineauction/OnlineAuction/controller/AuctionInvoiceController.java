@@ -2,6 +2,7 @@ package com.auction.onlineauction.OnlineAuction.controller;
 
 import com.auction.onlineauction.OnlineAuction.common.Result;
 import com.auction.onlineauction.OnlineAuction.common.RoleCheckHelper;
+import com.auction.onlineauction.OnlineAuction.entity.AuctionFile;
 import com.auction.onlineauction.OnlineAuction.entity.AuctionInvoice;
 import com.auction.onlineauction.OnlineAuction.service.IAuctionInvoiceService;
 import com.github.pagehelper.PageInfo;
@@ -48,13 +49,14 @@ public class AuctionInvoiceController {
             Long orderId = body.get("orderId") != null ? Long.valueOf(body.get("orderId").toString()) : null;
             String invoiceTitle = body.get("invoiceTitle") != null ? body.get("invoiceTitle").toString().trim() : null;
             String taxNo = body.get("taxNo") != null ? body.get("taxNo").toString().trim() : null;
+            String mailAddress = body.get("mailAddress") != null ? body.get("mailAddress").toString().trim() : null;
             Object amt = body.get("amount");
             BigDecimal amount = amt != null ? (amt instanceof Number ? BigDecimal.valueOf(((Number) amt).doubleValue()) : new BigDecimal(amt.toString())) : null;
             Integer invoiceType = body.get("invoiceType") != null ? Integer.valueOf(body.get("invoiceType").toString()) : 1;
             if (invoiceTitle == null || invoiceTitle.isEmpty() || amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
                 return Result.error("发票抬头和金额不能为空");
             }
-            Long id = invoiceService.apply(userId, orderId, invoiceTitle, taxNo, amount, invoiceType);
+            Long id = invoiceService.apply(userId, orderId, invoiceTitle, taxNo, mailAddress, amount, invoiceType);
             return Result.success("申请成功", id);
         } catch (Exception e) {
             return Result.error(e.getMessage());
@@ -75,6 +77,20 @@ public class AuctionInvoiceController {
             }
             PageInfo<AuctionInvoice> page = invoiceService.getAdminPage(current, size, status, userId);
             return Result.success("查询成功", page);
+        } catch (Exception e) {
+            return Result.error("查询失败：" + e.getMessage());
+        }
+    }
+
+    /** 用户：获取本人某条发票的发票文件信息（用于下载/查看），仅已开票且有文件时返回 */
+    @GetMapping("/my/{id}/file")
+    public Result<AuctionFile> getMyInvoiceFile(@PathVariable Long id, HttpServletRequest request) {
+        try {
+            Long userId = getUserId(request);
+            if (userId == null) return Result.error("未登录");
+            AuctionFile file = invoiceService.getMyInvoiceFile(id, userId);
+            if (file == null) return Result.error("无发票文件或无权查看");
+            return Result.success("查询成功", file);
         } catch (Exception e) {
             return Result.error("查询失败：" + e.getMessage());
         }

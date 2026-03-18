@@ -27,6 +27,14 @@ export function getAdminInvoicePage(params) {
   });
 }
 
+/** 用户：获取本人某条发票的发票文件信息（用于下载/查看） */
+export function getMyInvoiceFile(invoiceId) {
+  return request({
+    url: `/OnlineAuction/auctionInvoice/my/${invoiceId}/file`,
+    method: "get",
+  });
+}
+
 /** 财务：处理发票（上传 fileId 或驳回） */
 export function handleInvoice(id, data) {
   return request({

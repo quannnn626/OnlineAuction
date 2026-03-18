@@ -59,11 +59,10 @@ public final class RoleCheckHelper {
     }
 
     /**
-     * 可查看轮播图管理列表（拍卖师、客服、财务仅查看，管理员、超级管理员、运营可查看）
-     * 即所有能访问后台且有 admin:banner:view 的角色
+     * 可查看轮播图管理列表（仅管理员、超级管理员、运营；拍卖师、客服、财务不可见）
      */
     public static boolean canViewBanner(HttpSession session) {
-        return hasAnyRole(session, 3, 4, 5, 6, 7, 8);
+        return hasAnyRole(session, 3, 4, 8);
     }
 
     /**
@@ -204,10 +203,10 @@ public final class RoleCheckHelper {
     }
 
     /**
-     * 可查看后台历史竞拍管理（管理员、超级管理员、拍卖师）
+     * 可查看后台历史竞拍管理（管理员、超级管理员、拍卖师、财务）
      */
     public static boolean canViewAuctionHistoryAdmin(HttpSession session) {
-        return hasAnyRole(session, 3, 4, 5);
+        return hasAnyRole(session, 3, 4, 5, 7);
     }
 
     /** 消息中心：买方、卖方、管理员、超级管理员、客服、拍卖师、财务、运营可查看（权限细分在会话类型） */

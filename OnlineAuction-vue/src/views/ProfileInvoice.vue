@@ -22,6 +22,15 @@
       <el-table-column prop="applyTime" label="申请时间" width="160">
         <template slot-scope="scope">{{ formatDateTime(scope.row.applyTime) }}</template>
       </el-table-column>
+      <el-table-column label="操作" width="140" fixed="right">
+        <template slot-scope="scope">
+          <template v-if="scope.row.status === 1 && scope.row.fileId">
+            <el-button type="text" size="small" @click="previewInvoice(scope.row)">预览</el-button>
+            <el-button type="text" size="small" @click="downloadInvoice(scope.row)">下载</el-button>
+          </template>
+          <span v-else>-</span>
+        </template>
+      </el-table-column>
     </el-table>
     <div v-if="pagination.total > 0" class="pagination-wrap">
       <el-pagination
@@ -61,7 +70,7 @@
 </template>
 
 <script>
-import { getMyInvoicePage, applyInvoice } from "@/api/invoice";
+import { getMyInvoicePage, applyInvoice, getMyInvoiceFile } from "@/api/invoice";
 
 export default {
   name: "ProfileInvoice",
@@ -72,7 +81,7 @@ export default {
       pagination: { current: 1, size: 10, total: 0 },
       applyVisible: false,
       applyLoading: false,
-      applyForm: { invoiceTitle: "", taxNo: "", amount: null, invoiceType: 1 },
+      applyForm: { invoiceTitle: "", taxNo: "", mailAddress: "", amount: null, invoiceType: 1 },
       applyRules: {
         invoiceTitle: [{ required: true, message: "请输入发票抬头", trigger: "blur" }],
         amount: [{ required: true, message: "请输入开票金额", trigger: "blur" }],
@@ -115,6 +124,7 @@ export default {
           await applyInvoice({
             invoiceTitle: this.applyForm.invoiceTitle,
             taxNo: this.applyForm.taxNo,
+            mailAddress: this.applyForm.mailAddress || undefined,
             amount: this.applyForm.amount,
             invoiceType: this.applyForm.invoiceType,
           });
@@ -127,6 +137,43 @@ export default {
           this.applyLoading = false;
         }
       });
+    },
+    getFileUrl(file) {
+      if (!file || !file.filePath) return null;
+      return (window.location.origin || "") + (file.filePath.startsWith("/") ? file.filePath : "/" + file.filePath);
+    },
+    async previewInvoice(row) {
+      try {
+        const file = await getMyInvoiceFile(row.id);
+        const url = this.getFileUrl(file);
+        if (!url) {
+          this.$message.warning("暂无发票文件");
+          return;
+        }
+        window.open(url, "_blank");
+      } catch (e) {
+        this.$message.error(e.message || "获取发票文件失败");
+      }
+    },
+    async downloadInvoice(row) {
+      try {
+        const file = await getMyInvoiceFile(row.id);
+        const url = this.getFileUrl(file);
+        if (!url) {
+          this.$message.warning("暂无发票文件");
+          return;
+        }
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = file.fileName || "发票.pdf";
+        link.style.display = "none";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        this.$message.success("开始下载");
+      } catch (e) {
+        this.$message.error(e.message || "获取发票文件失败");
+      }
     },
   },
 };

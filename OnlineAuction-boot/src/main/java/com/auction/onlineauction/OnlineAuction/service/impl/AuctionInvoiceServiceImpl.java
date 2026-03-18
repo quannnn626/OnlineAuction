@@ -1,12 +1,15 @@
 package com.auction.onlineauction.OnlineAuction.service.impl;
 
+import com.auction.onlineauction.OnlineAuction.entity.AuctionFile;
 import com.auction.onlineauction.OnlineAuction.entity.AuctionInvoice;
 import com.auction.onlineauction.OnlineAuction.mapper.AuctionInvoiceMapper;
+import com.auction.onlineauction.OnlineAuction.service.IAuctionFileService;
 import com.auction.onlineauction.OnlineAuction.service.IAuctionInvoiceService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +19,9 @@ import java.util.List;
 
 @Service
 public class AuctionInvoiceServiceImpl extends ServiceImpl<AuctionInvoiceMapper, AuctionInvoice> implements IAuctionInvoiceService {
+
+    @Autowired
+    private IAuctionFileService fileService;
 
     @Override
     public PageInfo<AuctionInvoice> getMyPage(Integer current, Integer size, Long userId) {
@@ -40,7 +46,7 @@ public class AuctionInvoiceServiceImpl extends ServiceImpl<AuctionInvoiceMapper,
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Long apply(Long userId, Long orderId, String invoiceTitle, String taxNo, BigDecimal amount, Integer invoiceType) {
+    public Long apply(Long userId, Long orderId, String invoiceTitle, String taxNo, String mailAddress, BigDecimal amount, Integer invoiceType) {
         if (userId == null || invoiceTitle == null || invoiceTitle.trim().isEmpty() || amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new RuntimeException("参数不完整");
         }
@@ -52,6 +58,7 @@ public class AuctionInvoiceServiceImpl extends ServiceImpl<AuctionInvoiceMapper,
         inv.setOrderId(orderId);
         inv.setInvoiceTitle(invoiceTitle.trim());
         inv.setTaxNo(taxNo != null ? taxNo.trim() : null);
+        inv.setMailAddress(mailAddress != null ? mailAddress.trim() : null);
         inv.setAmount(amount);
         inv.setInvoiceType(invoiceType);
         inv.setStatus(0);
@@ -83,5 +90,15 @@ public class AuctionInvoiceServiceImpl extends ServiceImpl<AuctionInvoiceMapper,
         inv.setHandleUserId(handleUserId);
         inv.setHandleTime(LocalDateTime.now());
         updateById(inv);
+    }
+
+    @Override
+    public AuctionFile getMyInvoiceFile(Long invoiceId, Long userId) {
+        if (invoiceId == null || userId == null) return null;
+        AuctionInvoice inv = getById(invoiceId);
+        if (inv == null || inv.getDelFlag() == 1 || !userId.equals(inv.getUserId()) || inv.getStatus() != 1 || inv.getFileId() == null) {
+            return null;
+        }
+        return fileService.getById(inv.getFileId());
     }
 }

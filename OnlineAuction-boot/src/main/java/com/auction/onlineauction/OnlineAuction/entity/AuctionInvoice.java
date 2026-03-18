@@ -37,6 +37,9 @@ public class AuctionInvoice implements Serializable {
     @TableField("tax_no")
     private String taxNo;
 
+    @TableField("mail_address")
+    private String mailAddress;
+
     @TableField("amount")
     private BigDecimal amount;
 
