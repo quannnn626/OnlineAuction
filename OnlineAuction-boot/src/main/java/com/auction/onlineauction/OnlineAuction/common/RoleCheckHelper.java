@@ -99,6 +99,26 @@ public final class RoleCheckHelper {
         return hasAnyRole(session, 3, 4);
     }
 
+    /** 专场管理：专场增删改、商品加入移出（管理员、超级管理员、运营） */
+    public static boolean canManageSpecial(HttpSession session) {
+        return hasAnyRole(session, 3, 4, 8);
+    }
+
+    /** 限时拍管理：设置商品竞拍起止时间（管理员、超级管理员、运营） */
+    public static boolean canManageGoodsTime(HttpSession session) {
+        return hasAnyRole(session, 3, 4, 8);
+    }
+
+    /** 推荐位管理：首页/分类推荐添加移除排序（管理员、超级管理员、运营） */
+    public static boolean canManageRecommend(HttpSession session) {
+        return hasAnyRole(session, 3, 4, 8);
+    }
+
+    /** 数据看板：查看统计数据（管理员、超级管理员、运营） */
+    public static boolean canViewDashboard(HttpSession session) {
+        return hasAnyRole(session, 3, 4, 8);
+    }
+
     /**
      * 可查看/管理后台保证金（仅财务、超级管理员，管理员无此权限）
      */

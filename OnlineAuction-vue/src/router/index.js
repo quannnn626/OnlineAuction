@@ -184,6 +184,26 @@ const routes = [
         name: "AdminSettingsNotice",
         component: () => import("@/views/admin/AdminSettingsNotice.vue"),
       },
+      {
+        path: "admin/special",
+        name: "AdminSpecial",
+        component: () => import("@/views/admin/AdminSpecial.vue"),
+      },
+      {
+        path: "admin/goods-time",
+        name: "AdminGoodsTime",
+        component: () => import("@/views/admin/AdminGoodsTime.vue"),
+      },
+      {
+        path: "admin/recommend",
+        name: "AdminRecommend",
+        component: () => import("@/views/admin/AdminRecommend.vue"),
+      },
+      {
+        path: "admin/dashboard",
+        name: "AdminDashboard",
+        component: () => import("@/views/admin/AdminDashboard.vue"),
+      },
     ],
   },
 ];

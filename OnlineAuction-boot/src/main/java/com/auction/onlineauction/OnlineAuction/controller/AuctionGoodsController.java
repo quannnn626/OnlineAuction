@@ -181,6 +181,22 @@ public class AuctionGoodsController {
     }
 
     /**
+     * 限时拍管理：设置商品竞拍起止时间（管理员、超级管理员、运营）
+     */
+    @PutMapping("/admin/{id}/time")
+    public Result<Void> setGoodsTime(@PathVariable Long id, @RequestBody Map<String, Object> body, HttpServletRequest request) {
+        try {
+            if (!RoleCheckHelper.canManageGoodsTime(request.getSession(false))) {
+                return Result.error("无权限设置竞拍时间");
+            }
+            goodsService.setGoodsStartEndTime(id, body);
+            return Result.success("设置成功", null);
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+    }
+
+    /**
      * 拍卖延时：拍卖师/管理员将竞拍中商品结束时间延长（分钟）
      */
     @PutMapping("/{id}/extend-time")

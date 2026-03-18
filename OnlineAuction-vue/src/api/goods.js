@@ -133,3 +133,12 @@ export function markNoSale(id) {
     method: "put",
   });
 }
+
+/** 限时拍管理：设置商品竞拍起止时间（管理员、超级管理员、运营） */
+export function setGoodsTime(id, data) {
+  return request({
+    url: `/OnlineAuction/auctionGoods/admin/${id}/time`,
+    method: "put",
+    data,
+  });
+}

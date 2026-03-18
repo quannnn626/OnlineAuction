@@ -292,6 +292,37 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
     }
 
     @Override
+    public void setGoodsStartEndTime(Long goodsId, Map<String, Object> body) {
+        AuctionGoods goods = getById(goodsId);
+        if (goods == null || goods.getDelFlag() == 1) {
+            throw new RuntimeException("商品不存在");
+        }
+        Object st = body.get("startTime");
+        Object et = body.get("endTime");
+        if (st != null && !st.toString().trim().isEmpty()) {
+            goods.setStartTime(parseDateTime(st));
+        }
+        if (et != null && !et.toString().trim().isEmpty()) {
+            goods.setEndTime(parseDateTime(et));
+        }
+        goods.setUpdateTime(LocalDateTime.now());
+        updateById(goods);
+    }
+
+    private static LocalDateTime parseDateTime(Object v) {
+        if (v == null) return null;
+        String s = v.toString().trim();
+        if (s.isEmpty()) return null;
+        if (v instanceof java.time.LocalDateTime) return (java.time.LocalDateTime) v;
+        try {
+            if (s.length() > 19) s = s.substring(0, 19);
+            return LocalDateTime.parse(s.replace(" ", "T"), DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+        } catch (Exception e) {
+            return LocalDateTime.parse(s, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        }
+    }
+
+    @Override
     public void extendAuctionTime(Long goodsId, int minutes) {
         if (minutes <= 0 || minutes > 1440) {
             throw new RuntimeException("延时分钟数需在 1~1440 之间");

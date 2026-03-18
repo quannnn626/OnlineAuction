@@ -105,6 +105,9 @@ public interface IAuctionGoodsService extends IService<AuctionGoods> {
      */
     void reapplyGoods(Long id, Long userId);
 
+    /** 限时拍管理：设置商品竞拍起止时间（管理员、超级管理员、运营） */
+    void setGoodsStartEndTime(Long goodsId, Map<String, Object> body);
+
     /** 拍卖延时：拍卖师/管理员在竞拍中延长结束时间（分钟） */
     void extendAuctionTime(Long goodsId, int minutes);
 
