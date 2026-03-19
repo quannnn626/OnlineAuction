@@ -31,6 +31,10 @@ public class AuctionSpecial implements Serializable {
     @TableField("special_desc")
     private String specialDesc;
 
+    /** 商品分类ID，添加专场商品时仅能选择该分类下的商品 */
+    @TableField("category_id")
+    private Long categoryId;
+
     @TableField("sort_order")
     private Integer sortOrder;
 

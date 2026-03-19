@@ -1,14 +1,16 @@
 <template>
   <div class="goods-detail-page">
     <div class="container">
+      <div class="back-section">
+        <el-button icon="el-icon-arrow-left" @click="handleBack">
+          返回
+        </el-button>
+      </div>
+
       <!-- 商品图片展示区（无图片则不展示） -->
       <div class="image-gallery" v-if="displayImageList.length > 0">
         <div class="main-image">
-          <img
-            :src="currentMainImage"
-            alt="商品主图"
-            class="main-img"
-          />
+          <img :src="currentMainImage" alt="商品主图" class="main-img" />
         </div>
         <div class="thumbnail-list">
           <img
@@ -28,11 +30,20 @@
         <h1 class="product-title">{{ goodsInfo.goodsName || "商品名称" }}</h1>
         <div class="price-section">
           <div class="price-item">
-            <span class="current-price">¥ {{ goodsInfo.currentHighestPrice || goodsInfo.basePrice || "0.00" }}</span>
-            <span class="price-label">{{ goodsInfo.currentHighestPrice ? "当前最高出价" : "起拍价" }}</span>
+            <span class="current-price"
+              >¥
+              {{
+                goodsInfo.currentHighestPrice || goodsInfo.basePrice || "0.00"
+              }}</span
+            >
+            <span class="price-label">{{
+              goodsInfo.currentHighestPrice ? "当前最高出价" : "起拍价"
+            }}</span>
           </div>
           <div v-if="goodsInfo.currentHighestPrice" class="price-item">
-            <span class="base-price-text">起拍价：¥ {{ goodsInfo.basePrice || "0.00" }}</span>
+            <span class="base-price-text"
+              >起拍价：¥ {{ goodsInfo.basePrice || "0.00" }}</span
+            >
           </div>
         </div>
         <div class="product-category" v-if="categoryNames.length > 0">
@@ -63,7 +74,12 @@
         </div>
 
         <div class="product-actions" v-if="canUseMessageCenter">
-          <el-button type="primary" plain icon="el-icon-chat-dot-round" @click="goToConsult">
+          <el-button
+            type="primary"
+            plain
+            icon="el-icon-chat-dot-round"
+            @click="goToConsult"
+          >
             咨询客服
           </el-button>
         </div>
@@ -71,7 +87,12 @@
         <!-- 竞拍区域 -->
         <div class="bid-section" v-if="canBid">
           <h3>参与竞拍</h3>
-          <el-form :model="bidForm" :rules="bidRules" ref="bidForm" label-width="100px">
+          <el-form
+            :model="bidForm"
+            :rules="bidRules"
+            ref="bidForm"
+            label-width="100px"
+          >
             <el-form-item label="出价金额" prop="bidPrice">
               <el-input-number
                 v-model="bidForm.bidPrice"
@@ -81,10 +102,16 @@
                 :controls="true"
                 style="width: 200px"
               ></el-input-number>
-              <span class="bid-tip">最低出价：¥ {{ minBidPrice.toFixed(2) }}</span>
+              <span class="bid-tip"
+                >最低出价：¥ {{ minBidPrice.toFixed(2) }}</span
+              >
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" @click="handleSubmitBid" :loading="bidding">
+              <el-button
+                type="primary"
+                @click="handleSubmitBid"
+                :loading="bidding"
+              >
                 立即出价
               </el-button>
               <el-button @click="handleQuickBid" :disabled="bidding">
@@ -98,11 +125,21 @@
       <!-- 竞拍记录列表 -->
       <div class="bid-records-section">
         <h3>竞拍记录</h3>
-        <el-table :data="bidRecords" style="width: 100%" v-loading="recordsLoading">
-          <el-table-column prop="buyerName" label="出价人" width="150"></el-table-column>
+        <el-table
+          :data="bidRecords"
+          style="width: 100%"
+          v-loading="recordsLoading"
+        >
+          <el-table-column
+            prop="buyerName"
+            label="出价人"
+            width="150"
+          ></el-table-column>
           <el-table-column prop="bidPrice" label="出价金额" width="150">
             <template slot-scope="scope">
-              <span class="bid-price">¥ {{ scope.row.bidPrice.toFixed(2) }}</span>
+              <span class="bid-price"
+                >¥ {{ scope.row.bidPrice.toFixed(2) }}</span
+              >
             </template>
           </el-table-column>
           <el-table-column prop="bidTime" label="出价时间" width="180">
@@ -112,7 +149,12 @@
           </el-table-column>
           <el-table-column label="状态" width="100">
             <template slot-scope="scope">
-              <el-tag v-if="scope.row.isHighest === 1" type="success" size="small">当前最高</el-tag>
+              <el-tag
+                v-if="scope.row.isHighest === 1"
+                type="success"
+                size="small"
+                >当前最高</el-tag
+              >
             </template>
           </el-table-column>
         </el-table>
@@ -172,8 +214,8 @@ export default {
         const user = JSON.parse(userInfo);
         // 不能竞拍自己发布的商品
         if (user.id === this.goodsInfo.sellerId) return false;
-        // 必须是买方用户
-        if (!user.isBuyer) return false;
+        // 买方/卖方都可竞拍（但不能竞拍自己发布的商品）
+        if (!user.isBuyer && !user.isSeller) return false;
         // 商品状态必须是竞拍中
         if (this.goodsInfo.goodsStatus !== 1) return false;
         // 检查时间
@@ -188,12 +230,17 @@ export default {
     // 最低出价
     minBidPrice() {
       if (this.goodsInfo.currentHighestPrice) {
-        return parseFloat(this.goodsInfo.currentHighestPrice) + parseFloat(this.goodsInfo.addPrice || 0);
+        return (
+          parseFloat(this.goodsInfo.currentHighestPrice) +
+          parseFloat(this.goodsInfo.addPrice || 0)
+        );
       }
       return parseFloat(this.goodsInfo.basePrice || 0);
     },
     displayImageList() {
-      const files = Array.isArray(this.goodsInfo.files) ? this.goodsInfo.files : [];
+      const files = Array.isArray(this.goodsInfo.files)
+        ? this.goodsInfo.files
+        : [];
       const fromFiles = files
         .filter((f) => f && f.filePath && this.isImageFile(f))
         .map((f) => this.normalizeFileUrl(f.filePath));
@@ -204,7 +251,9 @@ export default {
       return this.parseLegacyMedia(this.goodsInfo.goodsImg, true);
     },
     displayVideoList() {
-      const files = Array.isArray(this.goodsInfo.files) ? this.goodsInfo.files : [];
+      const files = Array.isArray(this.goodsInfo.files)
+        ? this.goodsInfo.files
+        : [];
       const fromFiles = files
         .filter((f) => f && f.filePath && this.isVideoFile(f))
         .map((f) => this.normalizeFileUrl(f.filePath));
@@ -213,7 +262,7 @@ export default {
         return fromFiles;
       }
       return this.parseLegacyMedia(this.goodsInfo.goodsImg, false).filter((v) =>
-        this.isVideoFile({ filePath: v })
+        this.isVideoFile({ filePath: v }),
       );
     },
     currentMainImage() {
@@ -229,7 +278,11 @@ export default {
       if (!userInfo) return false;
       try {
         const user = JSON.parse(userInfo);
-        const roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
+        const roles = user.userRole
+          ? String(user.userRole)
+              .split(",")
+              .map((r) => r.trim())
+          : [];
         return roles.includes("1") || roles.includes("2");
       } catch (e) {
         return false;
@@ -241,6 +294,14 @@ export default {
     this.loadCategoryList();
   },
   methods: {
+    handleBack() {
+      // 优先返回上一页（依赖浏览器历史）；如果历史不足则兜底回到首页
+      if (window.history && window.history.length > 1) {
+        this.$router.back();
+      } else {
+        this.$router.push({ path: "/home" });
+      }
+    },
     // 加载商品详情
     async loadGoodsDetail() {
       const goodsId = this.$route.query.id;
@@ -283,7 +344,9 @@ export default {
       this.$refs.bidForm.validate(async (valid) => {
         if (!valid) return;
         if (this.bidForm.bidPrice < this.minBidPrice) {
-          this.$message.error(`出价金额不能低于¥ ${this.minBidPrice.toFixed(2)}`);
+          this.$message.error(
+            `出价金额不能低于¥ ${this.minBidPrice.toFixed(2)}`,
+          );
           return;
         }
         this.bidding = true;
@@ -323,8 +386,7 @@ export default {
         this.categoryList = data || [];
         // 加载分类名称
         this.loadCategoryNames();
-      } catch (error) {
-      }
+      } catch (error) {}
     },
     // 根据categoryId加载分类名称
     loadCategoryNames() {
@@ -333,7 +395,9 @@ export default {
         return;
       }
       // categoryId可能是逗号分隔的多个ID
-      const categoryIds = this.goodsInfo.categoryId.split(",").map((id) => id.trim());
+      const categoryIds = this.goodsInfo.categoryId
+        .split(",")
+        .map((id) => id.trim());
       this.categoryNames = categoryIds
         .map((id) => {
           const category = this.categoryList.find((cat) => cat.id == id);

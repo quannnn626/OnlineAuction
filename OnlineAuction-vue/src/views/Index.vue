@@ -137,6 +137,17 @@ export default {
                 return menu.id !== 8 && menu.menuPath !== "/message-board";
               });
             }
+
+            // 买方/卖方端兜底菜单：补充“拍卖专场”入口（避免后端菜单未配置导致看不到）
+            if (isEndUser && !this.menuExists(menuTree, "/special")) {
+              menuTree.push({
+                id: 99990,
+                menuName: "拍卖专场",
+                menuPath: "/special",
+                menuIcon: "el-icon-collection-tag",
+                children: [],
+              });
+            }
           } catch (e) {
             // 忽略解析错误
           }

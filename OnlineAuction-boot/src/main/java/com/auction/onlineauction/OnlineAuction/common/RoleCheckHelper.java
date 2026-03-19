@@ -104,6 +104,15 @@ public final class RoleCheckHelper {
         return hasAnyRole(session, 3, 4, 8);
     }
 
+    /**
+     * 专场前台查看：已登录用户均可查看专场及专场商品
+     * （运营/管理员仍可通过 canManageSpecial 执行管理操作）
+     */
+    public static boolean canViewSpecial(HttpSession session) {
+        String roleStr = getUserRole(session);
+        return roleStr != null && !roleStr.trim().isEmpty();
+    }
+
     /** 限时拍管理：设置商品竞拍起止时间（管理员、超级管理员、运营） */
     public static boolean canManageGoodsTime(HttpSession session) {
         return hasAnyRole(session, 3, 4, 8);
