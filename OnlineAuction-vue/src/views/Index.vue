@@ -180,9 +180,17 @@ export default {
         }
         // 后台角色（管理员、超级管理员、拍卖师、客服、财务、运营）若无“个人中心/个人信息”菜单，则补充入口到 /admin/profile
         if (user) {
-          const roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
-          const isStaff = [3, 4, 5, 6, 7, 8].some((r) => roles.includes(String(r)));
-          const hasProfileMenu = this.menuExists(menuTree, "/admin/profile") || this.menuExists(menuTree, "/profile");
+          const roles = user.userRole
+            ? String(user.userRole)
+                .split(",")
+                .map((r) => r.trim())
+            : [];
+          const isStaff = [3, 4, 5, 6, 7, 8].some((r) =>
+            roles.includes(String(r)),
+          );
+          const hasProfileMenu =
+            this.menuExists(menuTree, "/admin/profile") ||
+            this.menuExists(menuTree, "/profile");
           if (isStaff && !hasProfileMenu) {
             menuTree.push({
               id: 99993,
@@ -195,12 +203,23 @@ export default {
         }
         // 拍卖师(5)、客服(6)、财务(7) 不显示系统设置及其子功能（轮播图管理、竞拍公告管理）
         if (user) {
-          const roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
-          const onlyStaffNoAdmin = [5, 6, 7].some((r) => roles.includes(String(r))) && !([3, 4].some((r) => roles.includes(String(r))));
+          const roles = user.userRole
+            ? String(user.userRole)
+                .split(",")
+                .map((r) => r.trim())
+            : [];
+          const onlyStaffNoAdmin =
+            [5, 6, 7].some((r) => roles.includes(String(r))) &&
+            ![3, 4].some((r) => roles.includes(String(r)));
           if (onlyStaffNoAdmin) {
             menuTree = this.filterMenu(menuTree, (m) => {
               const path = (m.menuPath || "").trim();
-              return path !== "/admin/settings" && path !== "admin/settings" && !path.startsWith("/admin/settings/") && !path.startsWith("admin/settings/");
+              return (
+                path !== "/admin/settings" &&
+                path !== "admin/settings" &&
+                !path.startsWith("/admin/settings/") &&
+                !path.startsWith("admin/settings/")
+              );
             });
           }
         }

@@ -1,6 +1,8 @@
 import Vue from "vue";
 import VueRouter from "vue-router";
-
+/**
+ * 路由守卫
+ */
 Vue.use(VueRouter);
 
 const routes = [
@@ -223,7 +225,7 @@ const router = new VueRouter({
 router.beforeEach((to, from, next) => {
   const userInfo = localStorage.getItem("userInfo");
   const isLogin = !!userInfo;
-  
+
   // 如果访问登录页，已登录则跳转到首页
   if (to.path === "/login") {
     if (isLogin) {
@@ -240,16 +242,16 @@ router.beforeEach((to, from, next) => {
     }
     return;
   }
-  
+
   // 如果未登录，跳转到登录页
   if (!isLogin) {
     next("/login");
     return;
   }
-  
+
   // 已登录，检查权限
   const user = JSON.parse(userInfo);
-  
+
   // 管理员页面权限检查
   if (to.path.startsWith("/admin")) {
     if (!user.isAdmin && !user.isSuperAdmin) {
@@ -258,7 +260,7 @@ router.beforeEach((to, from, next) => {
       return;
     }
   }
-  
+
   // 卖方页面权限检查（如：我的商品、申请上架商品等）
   if (to.path === "/my-goods" || to.path.startsWith("/seller")) {
     if (!user.isSeller && !user.isAdmin && !user.isSuperAdmin) {
@@ -269,7 +271,11 @@ router.beforeEach((to, from, next) => {
 
   // 申请成为卖家：仅买家（role=1）可访问，已是卖家则跳转到我的商品
   if (to.path === "/apply-seller" && to.meta?.buyerOnly) {
-    const roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
+    const roles = user.userRole
+      ? String(user.userRole)
+          .split(",")
+          .map((r) => r.trim())
+      : [];
     if (roles.includes("2")) {
       next("/my-goods");
       return;
@@ -279,13 +285,19 @@ router.beforeEach((to, from, next) => {
       return;
     }
   }
-  
+
   // 竞拍公告页面权限检查（仅买方、卖方、超级管理员可查看）
   if (to.path === "/notice" && to.meta?.noticeView) {
-    let canView = user.isBuyer === true || user.isSeller === true || user.isSuperAdmin === true;
+    let canView =
+      user.isBuyer === true ||
+      user.isSeller === true ||
+      user.isSuperAdmin === true;
     if (!canView && user.userRole) {
-      const roles = String(user.userRole).split(",").map(r => r.trim());
-      canView = roles.includes("1") || roles.includes("2") || roles.includes("4");
+      const roles = String(user.userRole)
+        .split(",")
+        .map((r) => r.trim());
+      canView =
+        roles.includes("1") || roles.includes("2") || roles.includes("4");
     }
     if (!canView) {
       next("/home");
@@ -295,8 +307,14 @@ router.beforeEach((to, from, next) => {
 
   // 消息中心：买方、卖方、管理员、超管、客服、拍卖师、财务、运营均可访问（会话可见性由后端控制）
   if (to.path === "/message" && to.meta?.messageCenter) {
-    const roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
-    const canAccess = roles.some((r) => ["1","2","3","4","5","6","7","8"].includes(r));
+    const roles = user.userRole
+      ? String(user.userRole)
+          .split(",")
+          .map((r) => r.trim())
+      : [];
+    const canAccess = roles.some((r) =>
+      ["1", "2", "3", "4", "5", "6", "7", "8"].includes(r),
+    );
     if (!canAccess) {
       next("/home");
       return;
@@ -305,7 +323,11 @@ router.beforeEach((to, from, next) => {
 
   // 客服查看用户订单页：仅客服可访问，且必须带 userId 参数（从会话内跳转）
   if (to.path === "/message/service-orders" && to.meta?.serviceOrders) {
-    const roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
+    const roles = user.userRole
+      ? String(user.userRole)
+          .split(",")
+          .map((r) => r.trim())
+      : [];
     if (!roles.includes("6")) {
       next("/message");
       return;
@@ -316,15 +338,19 @@ router.beforeEach((to, from, next) => {
     }
   }
 
-  // 留言板页面权限检查（仅普通用户 role=1 可以访问）
+  // 留言板页面权限检查（买方 role=1、卖方 role=2 可访问）
   if (to.path === "/message-board") {
-    const roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
-    if (!roles.includes("1")) {
+    const roles = user.userRole
+      ? String(user.userRole)
+          .split(",")
+          .map((r) => r.trim())
+      : [];
+    if (!roles.includes("1") && !roles.includes("2")) {
       next("/home");
       return;
     }
   }
-  
+
   next();
 });
 
