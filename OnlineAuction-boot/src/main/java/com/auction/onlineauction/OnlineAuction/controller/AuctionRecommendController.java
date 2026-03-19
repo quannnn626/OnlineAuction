@@ -28,9 +28,6 @@ public class AuctionRecommendController {
             @RequestParam(required = false) Long targetId,
             HttpServletRequest request) {
         try {
-            if (!RoleCheckHelper.canManageRecommend(request.getSession(false))) {
-                return Result.error("无权限查看推荐位");
-            }
             if (!AuctionRecommend.TYPE_HOME.equals(recommendType) && !AuctionRecommend.TYPE_CATEGORY.equals(recommendType)) {
                 return Result.error("recommendType 需为 home 或 category");
             }

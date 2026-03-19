@@ -578,9 +578,11 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
         // 商品分类筛选（category_id 为逗号分隔，使用 FIND_IN_SET）
         if (categoryId != null && !categoryId.trim().isEmpty()) {
             wrapper.apply("FIND_IN_SET({0}, category_id)", categoryId);
+            // 分类列表下：按点击量排序，便于前端将“推荐位”排最前后，其余按点击量靠前展示
+            wrapper.orderByDesc("view_count");
+        } else {
+            wrapper.orderByDesc("create_time");
         }
-        
-        wrapper.orderByDesc("create_time");
 
         List<AuctionGoods> list = list(wrapper);
         
@@ -798,7 +800,9 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
                 .eq("shelf_status", 1)
                 .eq("audit_status", 1)
                 .in("goods_status", 0, 1)
-                .orderByDesc("view_count");
+                // 系统自动热门：按点击量 + 参拍人数（bid_count）排序
+                .orderByDesc("view_count")
+                .orderByDesc("bid_count");
         List<AuctionGoods> list = list(wrapper);
         if (list.isEmpty()) {
             PageHelper.startPage(current, pageSize);
@@ -806,7 +810,8 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
             wrapper.eq("del_flag", 0)
                     .eq("shelf_status", 1)
                     .eq("audit_status", 1)
-                    .orderByDesc("view_count");
+                    .orderByDesc("view_count")
+                    .orderByDesc("bid_count");
             list = list(wrapper);
         }
         for (AuctionGoods goods : list) {

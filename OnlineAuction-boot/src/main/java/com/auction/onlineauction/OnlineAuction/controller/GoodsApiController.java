@@ -5,6 +5,8 @@ import com.auction.onlineauction.OnlineAuction.entity.AuctionGoods;
 import com.auction.onlineauction.OnlineAuction.service.IAuctionGoodsService;
 import com.github.pagehelper.PageInfo;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -83,6 +85,35 @@ public class GoodsApiController extends BaseApiController {
         try {
             PageInfo<AuctionGoods> pageInfo = goodsService.getHotGoodsPage(current);
             return Result.success("查询成功", pageInfo);
+        } catch (Exception e) {
+            return Result.error("查询失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 批量获取商品详情（前台推荐用，不会增加点击量）
+     * @param ids 逗号分隔商品ID，如：1,2,3
+     */
+    @GetMapping("/batch")
+    public Result<List<AuctionGoods>> getGoodsBatch(@RequestParam String ids) {
+        try {
+            if (ids == null || ids.trim().isEmpty()) {
+                return Result.success("查询成功", new ArrayList<>());
+            }
+            List<AuctionGoods> result = new ArrayList<>();
+            Arrays.stream(ids.split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .forEach(s -> {
+                        try {
+                            Long id = Long.valueOf(s);
+                            AuctionGoods goods = goodsService.getGoodsByIdForPublic(id);
+                            result.add(goods);
+                        } catch (Exception ignore) {
+                            // 跳过不存在/不可见的商品
+                        }
+                    });
+            return Result.success("查询成功", result);
         } catch (Exception e) {
             return Result.error("查询失败：" + e.getMessage());
         }

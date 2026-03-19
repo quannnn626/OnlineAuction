@@ -76,6 +76,19 @@ export function getHotGoods(current = 1) {
 }
 
 /**
+ * 批量获取商品详情（前台推荐用：不会增加点击量）
+ * @param ids 数组，如：[1,2,3]
+ */
+export function getGoodsBatch(ids = []) {
+  const list = Array.isArray(ids) ? ids : [];
+  return request({
+    url: "/goods/batch",
+    method: "get",
+    params: { ids: list.join(",") },
+  });
+}
+
+/**
  * 获取商品详情
  */
 export function getGoodsDetail(id) {

@@ -144,7 +144,64 @@
 
     <!-- 猜你喜欢商品列表区域 -->
     <div class="goods-section">
-      <div class="goods-title"><i class="el-icon-thumb"></i> 热门商品</div>
+      <div class="goods-title">
+        <i class="el-icon-star-on"></i> 平台推荐
+      </div>
+      <div
+        class="goods-list"
+        v-loading="manualGoodsLoading"
+        v-if="manualGoodsList.length > 0"
+      >
+        <div
+          v-for="goods in manualGoodsList"
+          :key="goods.id"
+          class="goods-item"
+          @click="handleGoodsClick(goods)"
+        >
+          <div class="goods-item-content">
+            <div class="goods-item-info">
+              <div class="goods-item-title">{{ goods.goodsName }}</div>
+              <div class="goods-item-desc">
+                {{ goods.goodsDesc || "暂无描述" }}
+              </div>
+              <div class="goods-item-price">
+                <span class="goods-item-price-label">起拍价：</span>
+                ¥{{ goods.basePrice }}
+              </div>
+            </div>
+            <div class="goods-item-image">
+              <img
+                :src="getGoodsImageUrl(goods)"
+                :alt="goods.goodsName"
+                @error="handleImageError"
+              />
+            </div>
+          </div>
+          <div class="goods-item-footer">
+            <span>
+              <i class="el-icon-time"></i>
+              {{ formatTime(goods.startTime) }} -
+              {{ formatTime(goods.endTime) }}
+            </span>
+            <span
+              class="goods-status"
+              :class="getGoodsStatusClass(goods.goodsStatus)"
+            >
+              {{ getGoodsStatusText(goods.goodsStatus) }}
+            </span>
+          </div>
+        </div>
+      </div>
+      <el-empty
+        v-else-if="!manualGoodsLoading"
+        description="暂无运营推荐商品"
+      ></el-empty>
+    </div>
+
+    <div class="goods-section">
+      <div class="goods-title">
+        <i class="el-icon-thumb"></i> 热门商品
+      </div>
       <div class="goods-list" v-loading="goodsLoading" v-if="goodsList.length > 0">
         <div
           v-for="goods in goodsList"
@@ -203,7 +260,8 @@
 <script>
 import { getCategoryTreeForHome } from "@/api/category";
 import { getBannerList } from "@/api/banner";
-import { getHotGoods } from "@/api/goods";
+import { getHotGoods, getGoodsBatch } from "@/api/goods";
+import { getRecommendList } from "@/api/recommend";
 
 export default {
   name: "Home",
@@ -219,6 +277,8 @@ export default {
       dropdownTimer: null, // 用于延迟隐藏下拉面板
       goodsList: [],
       goodsLoading: false,
+      manualGoodsList: [],
+      manualGoodsLoading: false,
       hotCurrentPage: 1,
       hotTotal: 0,
     };
@@ -226,9 +286,31 @@ export default {
   mounted() {
     this.loadCategories();
     this.loadBanners();
+    this.loadManualRecommend();
     this.loadHotGoods(1);
   },
   methods: {
+    async loadManualRecommend() {
+      this.manualGoodsLoading = true;
+      try {
+        const recs = await getRecommendList("home", 0);
+        const rows = Array.isArray(recs) ? recs : [];
+        const goodsIds = rows.map((r) => r.goodsId).filter((id) => id != null);
+        if (goodsIds.length === 0) {
+          this.manualGoodsList = [];
+          return;
+        }
+        const goodsList = await getGoodsBatch(goodsIds);
+        const list = Array.isArray(goodsList) ? goodsList : [];
+        const map = new Map(list.map((g) => [g.id, g]));
+        // 回填并保持推荐位的 sort_order 顺序
+        this.manualGoodsList = rows.map((r) => map.get(r.goodsId)).filter(Boolean);
+      } catch (e) {
+        this.manualGoodsList = [];
+      } finally {
+        this.manualGoodsLoading = false;
+      }
+    },
     async loadHotGoods(page = 1) {
       this.goodsLoading = true;
       try {
