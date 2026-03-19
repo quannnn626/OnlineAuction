@@ -8,10 +8,10 @@
       <el-table-column prop="id" label="商品ID" width="80" />
       <el-table-column prop="goodsName" label="商品名称" min-width="180" show-overflow-tooltip />
       <el-table-column label="开始时间" width="170">
-        <template slot-scope="scope">{{ formatTime(scope.row.startTime) }}</template>
+        <template slot-scope="scope">{{ formatTimeDisplay(scope.row.startTime) }}</template>
       </el-table-column>
       <el-table-column label="结束时间" width="170">
-        <template slot-scope="scope">{{ formatTime(scope.row.endTime) }}</template>
+        <template slot-scope="scope">{{ formatTimeDisplay(scope.row.endTime) }}</template>
       </el-table-column>
       <el-table-column label="操作" width="120" fixed="right">
         <template slot-scope="scope">
@@ -91,15 +91,40 @@ export default {
         this.loading = false;
       }
     },
-    formatTime(v) {
+    // 表格展示用：本地化友好显示
+    formatTimeDisplay(v) {
       if (!v) return "-";
       const d = new Date(v);
       return isNaN(d.getTime()) ? v : d.toLocaleString("zh-CN", { hour12: false });
     },
+
+    // 提交给后端解析用：统一成 `yyyy-MM-dd HH:mm:ss`
+    toApiDateTime(v) {
+      if (!v) return "";
+      const d = new Date(v);
+      if (!isNaN(d.getTime())) {
+        const pad = (n) => String(n).padStart(2, "0");
+        const yyyy = d.getFullYear();
+        const MM = pad(d.getMonth() + 1);
+        const DD = pad(d.getDate());
+        const HH = pad(d.getHours());
+        const mm = pad(d.getMinutes());
+        const ss = pad(d.getSeconds());
+        return `${yyyy}-${MM}-${DD} ${HH}:${mm}:${ss}`;
+      }
+
+      // 兼容字符串：尽量截取前 19 位
+      const s = String(v).trim();
+      if (!s) return "";
+      // ISO: 2026-03-19T15:49:51Z
+      const normalized = s.replace("T", " ").replace("Z", "");
+      return normalized.length >= 19 ? normalized.substring(0, 19) : normalized;
+    },
     openEdit(row) {
       this.form.id = row.id;
-      this.form.startTime = row.startTime ? this.formatTime(row.startTime) : "";
-      this.form.endTime = row.endTime ? this.formatTime(row.endTime) : "";
+      // 表单里要提交给后端的时间格式必须可解析
+      this.form.startTime = row.startTime ? this.toApiDateTime(row.startTime) : "";
+      this.form.endTime = row.endTime ? this.toApiDateTime(row.endTime) : "";
       this.dialogVisible = true;
     },
     async submitTime() {
