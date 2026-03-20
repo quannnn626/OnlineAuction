@@ -39,7 +39,7 @@
           <span v-else class="text-muted">-</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="180">
+      <el-table-column label="操作" width="260">
         <template slot-scope="scope">
           <template v-if="roleType === 'buyer'">
             <el-button v-if="scope.row.orderStatus === 0" size="mini" type="primary" @click="handlePay(scope.row)">
@@ -54,6 +54,9 @@
               发货
             </el-button>
           </template>
+          <el-button size="mini" type="text" @click="openComplaintDialog(scope.row)">
+            投诉
+          </el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -70,6 +73,27 @@
       <span slot="footer">
         <el-button @click="shipVisible = false">取消</el-button>
         <el-button type="primary" :loading="shipLoading" @click="submitShip">确认发货</el-button>
+      </span>
+    </el-dialog>
+    <el-dialog title="订单投诉" :visible.sync="complaintVisible" width="520px">
+      <el-form :model="complaintForm" label-width="100px">
+        <el-form-item label="订单号">
+          <span>{{ complaintForm.orderNo || "-" }}</span>
+        </el-form-item>
+        <el-form-item label="投诉内容">
+          <el-input
+            v-model="complaintForm.complaintContent"
+            type="textarea"
+            :rows="5"
+            maxlength="500"
+            show-word-limit
+            placeholder="请说明订单相关问题"
+          />
+        </el-form-item>
+      </el-form>
+      <span slot="footer">
+        <el-button @click="complaintVisible = false">取消</el-button>
+        <el-button type="primary" :loading="complaintLoading" @click="submitOrderComplaint">提交投诉</el-button>
       </span>
     </el-dialog>
     <el-empty v-if="!loading && tableData.length === 0" description="暂无订单"></el-empty>
@@ -89,6 +113,7 @@
 
 <script>
 import { getMyOrderPage, payOrder, confirmReceipt, shipOrder } from "@/api/order";
+import { submitComplaint } from "@/api/complaint";
 
 export default {
   name: "ProfileOrder",
@@ -102,6 +127,14 @@ export default {
       shipVisible: false,
       shipLoading: false,
       shipForm: { orderId: null, orderNo: "", expressCompany: "", expressNo: "" },
+      complaintVisible: false,
+      complaintLoading: false,
+      complaintForm: {
+        orderId: null,
+        orderNo: "",
+        goodsId: null,
+        complaintContent: "",
+      },
     };
   },
   mounted() {
@@ -213,6 +246,42 @@ export default {
         this.$message.error(e.message || "发货失败");
       } finally {
         this.shipLoading = false;
+      }
+    },
+    openComplaintDialog(row) {
+      this.complaintForm = {
+        orderId: row.id,
+        orderNo: row.orderNo || "",
+        goodsId: row.goodsId || null,
+        complaintContent: "",
+      };
+      this.complaintVisible = true;
+    },
+    async submitOrderComplaint() {
+      const content = (this.complaintForm.complaintContent || "").trim();
+      if (!this.complaintForm.orderId) {
+        this.$message.warning("订单信息异常");
+        return;
+      }
+      if (!content) {
+        this.$message.warning("请填写投诉内容");
+        return;
+      }
+      this.complaintLoading = true;
+      try {
+        await submitComplaint({
+          complaintType: "order",
+          targetId: this.complaintForm.orderId,
+          relatedOrderId: this.complaintForm.orderId,
+          relatedGoodsId: this.complaintForm.goodsId,
+          complaintContent: content,
+        });
+        this.$message.success("投诉提交成功");
+        this.complaintVisible = false;
+      } catch (e) {
+        this.$message.error(e.message || "投诉提交失败");
+      } finally {
+        this.complaintLoading = false;
       }
     },
   },

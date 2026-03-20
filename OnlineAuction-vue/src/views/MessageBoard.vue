@@ -41,6 +41,11 @@
               删除
             </el-button>
           </div>
+          <div class="message-actions" v-else>
+            <el-button type="text" icon="el-icon-warning-outline" @click="openMessageComplaint(message)">
+              投诉
+            </el-button>
+          </div>
         </div>
         <div class="message-content">
           <p>{{ message.messageContent }}</p>
@@ -111,6 +116,28 @@
         </el-button>
       </div>
     </el-dialog>
+
+    <el-dialog title="投诉留言" :visible.sync="complaintVisible" width="520px">
+      <el-form :model="complaintForm" label-width="100px">
+        <el-form-item label="被投诉用户">
+          <span>{{ complaintForm.reportedUserName || "-" }}</span>
+        </el-form-item>
+        <el-form-item label="投诉内容">
+          <el-input
+            v-model="complaintForm.complaintContent"
+            type="textarea"
+            :rows="5"
+            maxlength="500"
+            show-word-limit
+            placeholder="请说明辱骂、人身攻击等问题"
+          />
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="complaintVisible = false">取消</el-button>
+        <el-button type="primary" :loading="complaintLoading" @click="submitMessageComplaint">提交投诉</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -121,6 +148,7 @@ import {
   updateMessage,
   deleteMessage,
 } from "@/api/message";
+import { submitComplaint } from "@/api/complaint";
 
 export default {
   name: "MessageBoard",
@@ -149,6 +177,14 @@ export default {
       },
       defaultAvatar: "",
       currentUserId: null,
+      complaintVisible: false,
+      complaintLoading: false,
+      complaintForm: {
+        messageId: null,
+        reportedUserId: null,
+        reportedUserName: "",
+        complaintContent: "",
+      },
     };
   },
   mounted() {
@@ -219,6 +255,42 @@ export default {
         .catch(() => {
           // 用户取消
         });
+    },
+    openMessageComplaint(message) {
+      this.complaintForm = {
+        messageId: message.id,
+        reportedUserId: message.userId || null,
+        reportedUserName: message.userName || "匿名用户",
+        complaintContent: "",
+      };
+      this.complaintVisible = true;
+    },
+    async submitMessageComplaint() {
+      const content = (this.complaintForm.complaintContent || "").trim();
+      if (!this.complaintForm.messageId) {
+        this.$message.warning("留言信息异常");
+        return;
+      }
+      if (!content) {
+        this.$message.warning("请填写投诉内容");
+        return;
+      }
+      this.complaintLoading = true;
+      try {
+        await submitComplaint({
+          complaintType: "message",
+          targetId: this.complaintForm.messageId,
+          relatedMessageId: this.complaintForm.messageId,
+          reportedUserId: this.complaintForm.reportedUserId,
+          complaintContent: content,
+        });
+        this.$message.success("投诉提交成功");
+        this.complaintVisible = false;
+      } catch (e) {
+        this.$message.error(e.message || "投诉提交失败");
+      } finally {
+        this.complaintLoading = false;
+      }
     },
     // 提交表单
     handleSubmit() {

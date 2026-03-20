@@ -113,6 +113,12 @@ const routes = [
         meta: { serviceOrders: true },
       },
       {
+        path: "work-order",
+        name: "WorkOrder",
+        component: () => import("@/views/WorkOrder.vue"),
+        meta: { workOrder: true },
+      },
+      {
         path: "admin",
         redirect: "/admin/profile",
       },
@@ -334,6 +340,15 @@ router.beforeEach((to, from, next) => {
     }
     if (!to.query.userId) {
       next("/message");
+      return;
+    }
+  }
+
+  // 工单处理/复核：客服(6)与管理员(3)可访问
+  if (to.path === "/work-order" && to.meta?.workOrder) {
+    const roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
+    if (!roles.includes("6") && !roles.includes("3")) {
+      next("/home");
       return;
     }
   }

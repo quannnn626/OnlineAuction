@@ -25,6 +25,18 @@
         </div>
       </div>
 
+      <div class="top-actions" v-if="canComplain">
+        <el-dropdown @command="handleComplaintCommand">
+          <el-button type="text" class="more-btn">
+            <i class="el-icon-more"></i>
+          </el-button>
+          <el-dropdown-menu slot="dropdown">
+            <el-dropdown-item command="goods">对商品投诉</el-dropdown-item>
+            <el-dropdown-item command="bid">对竞价行为投诉</el-dropdown-item>
+          </el-dropdown-menu>
+        </el-dropdown>
+      </div>
+
       <!-- 商品信息区 -->
       <div class="product-info">
         <h1 class="product-title">{{ goodsInfo.goodsName || "商品名称" }}</h1>
@@ -173,6 +185,32 @@
           您的浏览器不支持视频播放。
         </video>
       </div>
+
+      <el-dialog title="提交投诉" :visible.sync="complaintVisible" width="520px">
+        <el-form :model="complaintForm" label-width="100px">
+          <el-form-item label="投诉类型">
+            <el-tag type="warning">{{
+              complaintForm.complaintType === "bid" ? "竞价行为投诉" : "商品投诉"
+            }}</el-tag>
+          </el-form-item>
+          <el-form-item label="投诉内容">
+            <el-input
+              v-model="complaintForm.complaintContent"
+              type="textarea"
+              :rows="5"
+              maxlength="500"
+              show-word-limit
+              placeholder="请描述具体问题，如虚假描述、恶意抬价等"
+            />
+          </el-form-item>
+        </el-form>
+        <span slot="footer">
+          <el-button @click="complaintVisible = false">取消</el-button>
+          <el-button type="primary" :loading="complaintLoading" @click="submitGoodsComplaint">
+            提交投诉
+          </el-button>
+        </span>
+      </el-dialog>
     </div>
   </div>
 </template>
@@ -181,6 +219,7 @@
 import { getGoodsDetail } from "@/api/goods";
 import { getCategoryListForHome } from "@/api/category";
 import { submitBid, getRecordsByGoodsId } from "@/api/record";
+import { submitComplaint } from "@/api/complaint";
 
 export default {
   name: "GoodsDetail",
@@ -201,6 +240,12 @@ export default {
         bidPrice: [
           { required: true, message: "请输入出价金额", trigger: "blur" },
         ],
+      },
+      complaintVisible: false,
+      complaintLoading: false,
+      complaintForm: {
+        complaintType: "goods",
+        complaintContent: "",
       },
     };
   },
@@ -287,6 +332,9 @@ export default {
       } catch (e) {
         return false;
       }
+    },
+    canComplain() {
+      return this.canUseMessageCenter;
     },
   },
   mounted() {
@@ -378,6 +426,37 @@ export default {
         return;
       }
       this.$router.push({ path: "/message", query: { goodsId } });
+    },
+    handleComplaintCommand(command) {
+      this.complaintForm.complaintType = command === "bid" ? "bid" : "goods";
+      this.complaintForm.complaintContent = "";
+      this.complaintVisible = true;
+    },
+    async submitGoodsComplaint() {
+      const content = (this.complaintForm.complaintContent || "").trim();
+      if (!content) {
+        this.$message.warning("请填写投诉内容");
+        return;
+      }
+      if (!this.goodsInfo.id) {
+        this.$message.warning("商品信息异常");
+        return;
+      }
+      this.complaintLoading = true;
+      try {
+        await submitComplaint({
+          complaintType: this.complaintForm.complaintType,
+          targetId: this.goodsInfo.id,
+          relatedGoodsId: this.goodsInfo.id,
+          complaintContent: content,
+        });
+        this.$message.success("投诉提交成功");
+        this.complaintVisible = false;
+      } catch (e) {
+        this.$message.error(e.message || "投诉提交失败");
+      } finally {
+        this.complaintLoading = false;
+      }
     },
     // 加载分类列表（使用公开接口，普通用户无需管理员权限）
     async loadCategoryList() {
@@ -482,6 +561,18 @@ export default {
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.top-actions {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+}
+
+.more-btn {
+  font-size: 22px;
+  color: #606266;
 }
 
 .image-gallery {

@@ -178,6 +178,20 @@ export default {
             children: [],
           });
         }
+        // 客服/管理员兜底菜单：工单入口
+        if (user) {
+          const roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
+          const canWorkOrder = roles.includes("6") || roles.includes("3");
+          if (canWorkOrder && !this.menuExists(menuTree, "/work-order")) {
+            menuTree.push({
+              id: 99995,
+              menuName: roles.includes("3") ? "工单复核" : "工单处理",
+              menuPath: "/work-order",
+              menuIcon: "el-icon-tickets",
+              children: [],
+            });
+          }
+        }
         // 后台角色（管理员、超级管理员、拍卖师、客服、财务、运营）若无“个人中心/个人信息”菜单，则补充入口到 /admin/profile
         if (user) {
           const roles = user.userRole
