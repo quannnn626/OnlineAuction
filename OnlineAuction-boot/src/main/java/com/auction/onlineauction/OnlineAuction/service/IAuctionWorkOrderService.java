@@ -11,6 +11,11 @@ public interface IAuctionWorkOrderService extends IService<AuctionWorkOrder> {
 
     AuctionWorkOrder createWorkOrder(Long userId, String workType, Long relatedId, String title, String content);
 
+    /**
+     * 风控角色发起：账户冻结/解封（进入“待复核”，由管理员最终审批）
+     */
+    AuctionWorkOrder createRiskActionWorkOrder(Long riskOfficerId, String actionType, Long targetUserId, String remark);
+
     PageInfo<Map<String, Object>> getMyWorkOrders(Long userId, Integer current, Integer size);
 
     PageInfo<Map<String, Object>> getServiceWorkOrders(Long serviceId, Integer current, Integer size, Integer workStatus);

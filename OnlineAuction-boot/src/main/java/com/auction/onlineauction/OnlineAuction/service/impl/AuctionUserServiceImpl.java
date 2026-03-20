@@ -168,8 +168,8 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
         for (String role : roles) {
             role = role.trim();
             if (!role.equals("1") && !role.equals("2") && !role.equals("3") && !role.equals("4")
-                    && !role.equals("5") && !role.equals("6") && !role.equals("7") && !role.equals("8")) {
-                throw new RuntimeException("用户角色值无效（1=买方 2=卖方 3=管理员 4=超级管理员 5=拍卖师 6=客服 7=财务 8=运营）");
+                    && !role.equals("5") && !role.equals("6") && !role.equals("7") && !role.equals("8") && !role.equals("9")) {
+                throw new RuntimeException("用户角色值无效（1=买方 2=卖方 3=管理员 4=超级管理员 5=拍卖师 6=客服 7=财务 8=运营 9=风控）");
             }
         }
         
@@ -267,8 +267,8 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
             for (String role : roles) {
                 role = role.trim();
                 if (!role.equals("1") && !role.equals("2") && !role.equals("3") && !role.equals("4")
-                        && !role.equals("5") && !role.equals("6") && !role.equals("7") && !role.equals("8")) {
-                    throw new RuntimeException("用户角色值无效（1=买方 2=卖方 3=管理员 4=超级管理员 5=拍卖师 6=客服 7=财务 8=运营）");
+                        && !role.equals("5") && !role.equals("6") && !role.equals("7") && !role.equals("8") && !role.equals("9")) {
+                    throw new RuntimeException("用户角色值无效（1=买方 2=卖方 3=管理员 4=超级管理员 5=拍卖师 6=客服 7=财务 8=运营 9=风控）");
                 }
             }
             

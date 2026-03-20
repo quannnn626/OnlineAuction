@@ -33,6 +33,7 @@
         <el-option label="订单" value="order"></el-option>
         <el-option label="竞拍" value="bid"></el-option>
         <el-option label="留言" value="message"></el-option>
+        <el-option label="风控" value="risk"></el-option>
         <el-option label="其他" value="other"></el-option>
       </el-select>
       <el-button size="small" icon="el-icon-refresh" @click="loadData">刷新</el-button>
@@ -129,6 +130,7 @@
             <el-option label="警告" value="WARN"></el-option>
             <el-option label="扣保证金" value="DEDUCT_DEPOSIT"></el-option>
             <el-option label="禁用账号" value="BAN_USER"></el-option>
+            <el-option label="解封账号" value="UNBAN_USER"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item v-if="reviewForm.approve" label="处罚对象ID">
@@ -276,7 +278,7 @@ export default {
       }
     },
     getTypeText(type) {
-      const m = { goods: "商品", order: "订单", bid: "竞拍", message: "留言", other: "其他" };
+      const m = { goods: "商品", order: "订单", bid: "竞拍", message: "留言", risk: "风控", other: "其他" };
       return m[type] || "其他";
     },
     getStatusText(status) {

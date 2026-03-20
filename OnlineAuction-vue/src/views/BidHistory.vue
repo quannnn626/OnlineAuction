@@ -128,12 +128,18 @@
 </template>
 
 <script>
-import { getMyBidGoodsPage, getMyBidRecordsByGoodsPage } from "@/api/record";
+import {
+  getMyBidGoodsPage,
+  getMyBidRecordsByGoodsPage,
+  getAdminBidGoodsPage,
+  getAdminBidRecordsByGoodsPage,
+} from "@/api/record";
 
 export default {
   name: "BidHistory",
   data() {
     return {
+      isRiskRole: false,
       loading: false,
       keyword: "",
       tableData: [],
@@ -155,6 +161,13 @@ export default {
     };
   },
   created() {
+    try {
+      const user = JSON.parse(localStorage.getItem("userInfo") || "{}");
+      const roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
+      this.isRiskRole = roles.includes("9");
+    } catch (e) {
+      this.isRiskRole = false;
+    }
     this.loadData();
   },
   methods: {
@@ -166,8 +179,18 @@ export default {
           size: this.pagination.size,
           keyword: this.keyword || undefined,
         };
-        const result = await getMyBidGoodsPage(params);
-        this.tableData = result.list || [];
+        const result = this.isRiskRole
+          ? await getAdminBidGoodsPage(params)
+          : await getMyBidGoodsPage(params);
+        const rows = result.list || [];
+        // 兼容当前页面字段：风控走后台接口时，将总次数映射为“我的出价次数”列
+        this.tableData = this.isRiskRole
+          ? rows.map((r) => ({
+              ...r,
+              myBidCount: r.totalBidCount,
+              myHighestBid: r.currentHighestPrice,
+            }))
+          : rows;
         this.pagination.total = result.total || 0;
       } catch (e) {
         this.$message.error("加载历史竞拍失败");
@@ -183,10 +206,9 @@ export default {
           current: this.detailPagination.current,
           size: this.detailPagination.size,
         };
-        const result = await getMyBidRecordsByGoodsPage(
-          this.detailGoodsId,
-          params,
-        );
+        const result = this.isRiskRole
+          ? await getAdminBidRecordsByGoodsPage(this.detailGoodsId, params)
+          : await getMyBidRecordsByGoodsPage(this.detailGoodsId, params);
         this.detailData = result.list || [];
         this.detailPagination.total = result.total || 0;
       } catch (e) {

@@ -88,9 +88,9 @@ public class AuctionUser implements Serializable {
 
     /**
      * 用户角色（多个角色用逗号分隔）：
-     * 1=买方 2=卖方 3=管理员 4=超级管理员 5=拍卖师 6=客服 7=财务 8=运营
+     * 1=买方 2=卖方 3=管理员 4=超级管理员 5=拍卖师 6=客服 7=财务 8=运营 9=风控
      * 3=管理员 4=超级管理员
-     * 5=拍卖师 6=客服 7=财务 8=运营
+     * 5=拍卖师 6=客服 7=财务 8=运营 9=风控
      *
      * 是否具备卖家资格由 seller_audit_status 等字段决定，而非单独的“卖家角色”。
      */
@@ -138,6 +138,12 @@ public class AuctionUser implements Serializable {
      */
     @TableField("user_status")
     private Integer userStatus;
+
+    /**
+     * 用户风险等级标记：0=正常 1=低风险 2=中风险 3=高风险
+     */
+    @TableField("risk_level")
+    private Integer riskLevel;
 
     /**
      * 最后登录IP

@@ -119,6 +119,12 @@ const routes = [
         meta: { workOrder: true },
       },
       {
+        path: "risk-dashboard",
+        name: "RiskDashboard",
+        component: () => import("@/views/RiskDashboard.vue"),
+        meta: { risk: true },
+      },
+      {
         path: "admin",
         redirect: "/admin/profile",
       },
@@ -348,6 +354,15 @@ router.beforeEach((to, from, next) => {
   if (to.path === "/work-order" && to.meta?.workOrder) {
     const roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
     if (!roles.includes("6") && !roles.includes("3")) {
+      next("/home");
+      return;
+    }
+  }
+
+  // 风控中心：仅风控角色(9)可访问
+  if (to.path === "/risk-dashboard" && to.meta?.risk) {
+    const roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
+    if (!roles.includes("9")) {
       next("/home");
       return;
     }

@@ -109,4 +109,30 @@ public interface AuctionRecordMapper extends BaseMapper<AuctionRecord> {
 
     /** 按买方分页查询竞拍记录（含商品名） */
     List<AuctionRecord> selectRecordsByBuyerIdPage(@Param("buyerId") Long buyerId);
+
+    /**
+     * 风控：异常出价监控（abnormal_type）
+     */
+    List<AuctionRecord> selectAbnormalBidRecordsForRisk(
+            @Param("goodsId") Long goodsId,
+            @Param("buyerId") Long buyerId,
+            @Param("abnormalType") Integer abnormalType
+    );
+
+    /**
+     * 风控：恶意参拍汇总（按买家）
+     */
+    List<Map<String, Object>> selectMaliciousBiddersForRisk(
+            @Param("goodsId") Long goodsId,
+            @Param("windowMinutes") Integer windowMinutes
+    );
+
+    /**
+     * 风控：疑似围标/刷价（同一买家在窗口期内高频出价）
+     */
+    List<Map<String, Object>> selectSuspectedRingBiddersForRisk(
+            @Param("goodsId") Long goodsId,
+            @Param("windowMinutes") Integer windowMinutes,
+            @Param("minBidCount") Integer minBidCount
+    );
 }

@@ -4,6 +4,8 @@ import com.auction.onlineauction.OnlineAuction.common.Result;
 import com.auction.onlineauction.OnlineAuction.dto.LoginDTO;
 import com.auction.onlineauction.OnlineAuction.service.IAuctionUserService;
 import com.auction.onlineauction.OnlineAuction.service.IAuctionFileService;
+import com.auction.onlineauction.OnlineAuction.service.IAuctionOperLogService;
+import com.auction.onlineauction.OnlineAuction.entity.AuctionOperLog;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +15,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.util.HashMap;
 import java.util.Map;
+import java.time.LocalDateTime;
 
 /**
  * <p>
@@ -31,6 +34,9 @@ public class AuthController {
     
     @Autowired
     private IAuctionFileService fileService;
+
+    @Autowired
+    private IAuctionOperLogService operLogService;
 
     /**
      * 用户登录
@@ -57,6 +63,20 @@ public class AuthController {
             session.setAttribute("isSuperAdmin", loginDTO.getIsSuperAdmin());
             session.setAttribute("isBuyer", loginDTO.getIsBuyer());
             session.setAttribute("isSeller", loginDTO.getIsSeller());
+
+            // 写入登录审计日志（用于风控日志审计：登录/IP/关键操作）
+            try {
+                AuctionOperLog log = new AuctionOperLog();
+                log.setOperUserId(loginDTO.getId());
+                log.setOperModule("auth");
+                log.setOperType("login");
+                log.setOperContent("用户登录：" + (loginDTO.getUserName() != null ? loginDTO.getUserName() : userName));
+                log.setOperIp(loginIp);
+                log.setCreateTime(LocalDateTime.now());
+                operLogService.save(log);
+            } catch (Exception ignored) {
+                // 日志写入失败不影响登录
+            }
             
             // 构建返回数据
             Map<String, Object> result = new HashMap<>();

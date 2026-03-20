@@ -17,6 +17,7 @@
         <result column="seller_audit_status" property="sellerAuditStatus" />
         <result column="seller_audit_remark" property="sellerAuditRemark" />
         <result column="user_status" property="userStatus" />
+    <result column="risk_level" property="riskLevel" />
         <result column="login_ip" property="loginIp" />
         <result column="login_date" property="loginDate" />
         <result column="create_time" property="createTime" />

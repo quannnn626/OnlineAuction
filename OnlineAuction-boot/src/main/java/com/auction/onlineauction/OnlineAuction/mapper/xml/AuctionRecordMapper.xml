@@ -77,4 +77,58 @@
         ORDER BY ar.bid_time DESC
     </select>
 
+    <!-- 风控：异常出价监控（abnormal_type） -->
+    <select id="selectAbnormalBidRecordsForRisk" resultMap="RecordWithGoodsMap">
+        SELECT ar.*,
+               u.nick_name AS buyer_name,
+               g.goods_name AS goods_name
+        FROM auction_record ar
+        LEFT JOIN auction_user u ON ar.buyer_id = u.id
+        LEFT JOIN auction_goods g ON ar.goods_id = g.id
+        WHERE ar.del_flag = 0
+          AND ar.abnormal_type = #{abnormalType}
+        <if test="goodsId != null">
+            AND ar.goods_id = #{goodsId}
+        </if>
+        <if test="buyerId != null">
+            AND ar.buyer_id = #{buyerId}
+        </if>
+        ORDER BY ar.bid_time DESC
+    </select>
+
+    <!-- 风控：恶意参拍汇总（按买家） -->
+    <select id="selectMaliciousBiddersForRisk" resultType="java.util.Map">
+        SELECT ar.buyer_id AS buyerId,
+               u.nick_name AS buyerName,
+               COUNT(ar.id) AS bidCount
+        FROM auction_record ar
+        LEFT JOIN auction_user u ON ar.buyer_id = u.id
+        WHERE ar.del_flag = 0
+          AND ar.abnormal_type = 1
+          AND ar.bid_time &gt;= DATE_SUB(NOW(), INTERVAL #{windowMinutes} MINUTE)
+        <if test="goodsId != null">
+            AND ar.goods_id = #{goodsId}
+        </if>
+        GROUP BY ar.buyer_id, u.nick_name
+        ORDER BY bidCount DESC
+    </select>
+
+    <!-- 风控：疑似围标/刷价汇总（同一买家窗口期高频出价） -->
+    <select id="selectSuspectedRingBiddersForRisk" resultType="java.util.Map">
+        SELECT ar.buyer_id AS buyerId,
+               u.nick_name AS buyerName,
+               COUNT(ar.id) AS bidCount
+        FROM auction_record ar
+        LEFT JOIN auction_user u ON ar.buyer_id = u.id
+        WHERE ar.del_flag = 0
+          AND ar.is_agent = 1
+          AND ar.bid_time &gt;= DATE_SUB(NOW(), INTERVAL #{windowMinutes} MINUTE)
+        <if test="goodsId != null">
+            AND ar.goods_id = #{goodsId}
+        </if>
+        GROUP BY ar.buyer_id, u.nick_name
+        HAVING COUNT(ar.id) &gt;= #{minBidCount}
+        ORDER BY bidCount DESC
+    </select>
+
 </mapper>

@@ -43,6 +43,7 @@
             <el-option label="客服" :value="6"></el-option>
             <el-option label="财务" :value="7"></el-option>
             <el-option label="运营" :value="8"></el-option>
+            <el-option label="风控" :value="9"></el-option>
           </el-select>
         </el-col>
         <el-col :span="4">
@@ -75,11 +76,31 @@
       >
         <el-table-column type="selection" width="55"></el-table-column>
         <el-table-column prop="id" label="ID" width="80"></el-table-column>
-        <el-table-column prop="userName" label="用户名" width="150"></el-table-column>
-        <el-table-column prop="realName" label="真实姓名" width="120"></el-table-column>
-        <el-table-column prop="nickName" label="昵称" width="120"></el-table-column>
-        <el-table-column prop="phone" label="手机号" width="130"></el-table-column>
-        <el-table-column prop="email" label="邮箱" width="180"></el-table-column>
+        <el-table-column
+          prop="userName"
+          label="用户名"
+          width="150"
+        ></el-table-column>
+        <el-table-column
+          prop="realName"
+          label="真实姓名"
+          width="120"
+        ></el-table-column>
+        <el-table-column
+          prop="nickName"
+          label="昵称"
+          width="120"
+        ></el-table-column>
+        <el-table-column
+          prop="phone"
+          label="手机号"
+          width="130"
+        ></el-table-column>
+        <el-table-column
+          prop="email"
+          label="邮箱"
+          width="180"
+        ></el-table-column>
         <el-table-column prop="userRole" label="角色" width="120">
           <template slot-scope="scope">
             <el-tag :type="getRoleTagType(scope.row.userRole)">
@@ -128,7 +149,9 @@
             <el-button
               size="mini"
               :type="scope.row.userStatus === 0 ? 'warning' : 'success'"
-              :icon="scope.row.userStatus === 0 ? 'el-icon-lock' : 'el-icon-unlock'"
+              :icon="
+                scope.row.userStatus === 0 ? 'el-icon-lock' : 'el-icon-unlock'
+              "
               @click="handleToggleStatus(scope.row)"
             >
               {{ scope.row.userStatus === 0 ? "禁用" : "恢复" }}
@@ -205,28 +228,54 @@
           >
             <el-option label="买方用户" :value="1"></el-option>
             <el-option label="卖方用户" :value="2"></el-option>
-            <el-option v-if="isSuperAdmin" label="管理员" :value="3"></el-option>
-            <el-option v-if="isSuperAdmin" label="超级管理员" :value="4"></el-option>
+            <el-option label="风控" :value="9"></el-option>
+            <el-option
+              v-if="isSuperAdmin"
+              label="管理员"
+              :value="3"
+            ></el-option>
+            <el-option
+              v-if="isSuperAdmin"
+              label="超级管理员"
+              :value="4"
+            ></el-option>
             <el-option label="拍卖师" :value="5"></el-option>
             <el-option label="客服" :value="6"></el-option>
             <el-option label="财务" :value="7"></el-option>
             <el-option label="运营" :value="8"></el-option>
           </el-select>
-          <div v-if="!isSuperAdmin" style="color: #909399; font-size: 12px; margin-top: 5px;">
-            提示：管理员只能{{ isEdit ? '修改为' : '创建' }}买方、卖方及运营岗位（拍卖师/客服/财务/运营）账号
+          <div
+            v-if="!isSuperAdmin"
+            style="color: #909399; font-size: 12px; margin-top: 5px"
+          >
+            提示：管理员只能{{
+              isEdit ? "修改为" : "创建"
+            }}买方、卖方及运营岗位（拍卖师/客服/财务/运营/风控）账号
           </div>
         </el-form-item>
         <el-form-item label="真实姓名" prop="realName">
-          <el-input v-model="formData.realName" placeholder="请输入真实姓名"></el-input>
+          <el-input
+            v-model="formData.realName"
+            placeholder="请输入真实姓名"
+          ></el-input>
         </el-form-item>
         <el-form-item label="昵称" prop="nickName">
-          <el-input v-model="formData.nickName" placeholder="请输入昵称"></el-input>
+          <el-input
+            v-model="formData.nickName"
+            placeholder="请输入昵称"
+          ></el-input>
         </el-form-item>
         <el-form-item label="手机号" prop="phone">
-          <el-input v-model="formData.phone" placeholder="请输入手机号"></el-input>
+          <el-input
+            v-model="formData.phone"
+            placeholder="请输入手机号"
+          ></el-input>
         </el-form-item>
         <el-form-item label="邮箱" prop="email">
-          <el-input v-model="formData.email" placeholder="请输入邮箱"></el-input>
+          <el-input
+            v-model="formData.email"
+            placeholder="请输入邮箱"
+          ></el-input>
         </el-form-item>
         <el-form-item label="性别" prop="sex">
           <el-radio-group v-model="formData.sex">
@@ -260,7 +309,9 @@
         <el-form-item label="用户信息">
           <div>
             <p><strong>用户名：</strong>{{ auditData.userName }}</p>
-            <p><strong>真实姓名：</strong>{{ auditData.realName || "未填写" }}</p>
+            <p>
+              <strong>真实姓名：</strong>{{ auditData.realName || "未填写" }}
+            </p>
             <p><strong>手机号：</strong>{{ auditData.phone }}</p>
           </div>
         </el-form-item>
@@ -407,7 +458,9 @@ export default {
       // 如果表格中有卖方用户或曾申请过卖方的用户，显示资质审核列
       return this.tableData.some((user) => {
         const roles = this.parseUserRole(user.userRole);
-        return roles.includes("2") || [1, 2, 3].includes(user.sellerAuditStatus);
+        return (
+          roles.includes("2") || [1, 2, 3].includes(user.sellerAuditStatus)
+        );
       });
     },
     isSuperAdmin() {
@@ -436,8 +489,14 @@ export default {
           current: this.pagination.current,
           size: this.pagination.size,
           userName: this.searchForm.userName || undefined,
-          userRole: this.searchForm.userRole !== "" ? this.searchForm.userRole : undefined,
-          userStatus: this.searchForm.userStatus !== "" ? this.searchForm.userStatus : undefined,
+          userRole:
+            this.searchForm.userRole !== ""
+              ? this.searchForm.userRole
+              : undefined,
+          userStatus:
+            this.searchForm.userStatus !== ""
+              ? this.searchForm.userStatus
+              : undefined,
         };
         const result = await getUserPage(params);
         if (result && result.list) {
@@ -495,7 +554,7 @@ export default {
           let userRole = result.userRole;
           if (typeof userRole === "string" && userRole.includes(",")) {
             // 多角色时，优先显示最高权限角色
-            const roles = userRole.split(",").map(r => r.trim());
+            const roles = userRole.split(",").map((r) => r.trim());
             if (roles.includes("4")) {
               userRole = 4; // 超级管理员
             } else if (roles.includes("3")) {
@@ -516,7 +575,7 @@ export default {
           } else if (typeof userRole === "string") {
             userRole = parseInt(userRole) || 1;
           }
-          
+
           this.formData = {
             ...result,
             userRole: userRole || 1, // 默认买方
@@ -540,7 +599,7 @@ export default {
             confirmButtonText: "确定",
             cancelButtonText: "取消",
             type: "warning",
-          }
+          },
         );
         await updateUserStatus(user.id, newStatus);
         this.$message.success(`${action}成功`);
@@ -574,7 +633,7 @@ export default {
         await auditSeller(
           this.auditData.userId,
           this.auditData.auditStatus,
-          this.auditData.auditRemark
+          this.auditData.auditRemark,
         );
         this.$message.success("审核成功");
         this.auditDialogVisible = false;
@@ -638,7 +697,8 @@ export default {
           this.dialogVisible = false;
           this.loadData();
         } catch (error) {
-          const errorMessage = error.response?.data?.message || error.message || "提交失败";
+          const errorMessage =
+            error.response?.data?.message || error.message || "提交失败";
           this.$message.error(errorMessage);
         } finally {
           this.submitLoading = false;
@@ -655,20 +715,24 @@ export default {
       if (typeof roleStr === "number") {
         return [String(roleStr)];
       }
-      return roleStr.toString().split(",").map((r) => r.trim());
+      return roleStr
+        .toString()
+        .split(",")
+        .map((r) => r.trim());
     },
     // 获取角色文本（支持多角色）
     getRoleText(role) {
       const roles = this.parseUserRole(role);
       const roleMap = {
-        "1": "买方",
-        "2": "卖方",
-        "3": "管理员",
-        "4": "超级管理员",
-        "5": "拍卖师",
-        "6": "客服",
-        "7": "财务",
-        "8": "运营",
+        1: "买方",
+        2: "卖方",
+        3: "管理员",
+        4: "超级管理员",
+        5: "拍卖师",
+        6: "客服",
+        7: "财务",
+        8: "运营",
+        9: "风控",
       };
       if (roles.length === 0) return "未知";
       if (roles.length === 1) {
@@ -688,6 +752,7 @@ export default {
       if (roles.includes("7")) return "info"; // 财务
       if (roles.includes("6")) return "info"; // 客服
       if (roles.includes("5")) return "info"; // 拍卖师
+      if (roles.includes("9")) return "info"; // 风控
       return "info";
     },
     // 获取卖方审核状态文本

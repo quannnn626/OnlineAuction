@@ -192,6 +192,20 @@ export default {
             });
           }
         }
+        // 风控兜底菜单：风控中心入口
+        if (user) {
+          const roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
+          const canRisk = roles.includes("9");
+          if (canRisk && !this.menuExists(menuTree, "/risk-dashboard")) {
+            menuTree.push({
+              id: 99996,
+              menuName: "风控中心",
+              menuPath: "/risk-dashboard",
+              menuIcon: "el-icon-warning",
+              children: [],
+            });
+          }
+        }
         // 后台角色（管理员、超级管理员、拍卖师、客服、财务、运营）若无“个人中心/个人信息”菜单，则补充入口到 /admin/profile
         if (user) {
           const roles = user.userRole
@@ -223,7 +237,7 @@ export default {
                 .map((r) => r.trim())
             : [];
           const onlyStaffNoAdmin =
-            [5, 6, 7].some((r) => roles.includes(String(r))) &&
+            [5, 6, 7, 9].some((r) => roles.includes(String(r))) &&
             ![3, 4].some((r) => roles.includes(String(r)));
           if (onlyStaffNoAdmin) {
             menuTree = this.filterMenu(menuTree, (m) => {

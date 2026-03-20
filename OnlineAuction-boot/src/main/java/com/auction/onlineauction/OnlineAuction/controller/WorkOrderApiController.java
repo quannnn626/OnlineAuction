@@ -3,6 +3,8 @@ package com.auction.onlineauction.OnlineAuction.controller;
 import com.auction.onlineauction.OnlineAuction.common.Result;
 import com.auction.onlineauction.OnlineAuction.common.RoleCheckHelper;
 import com.auction.onlineauction.OnlineAuction.entity.AuctionWorkOrder;
+import com.auction.onlineauction.OnlineAuction.entity.AuctionOperLog;
+import com.auction.onlineauction.OnlineAuction.service.IAuctionOperLogService;
 import com.auction.onlineauction.OnlineAuction.service.IAuctionWorkOrderService;
 import com.github.pagehelper.PageInfo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Map;
 
 @RestController
@@ -19,6 +22,9 @@ public class WorkOrderApiController {
 
     @Autowired
     private IAuctionWorkOrderService workOrderService;
+
+    @Autowired
+    private IAuctionOperLogService operLogService;
 
     @PostMapping
     public Result<AuctionWorkOrder> create(@RequestBody Map<String, Object> body, HttpServletRequest request) {
@@ -126,12 +132,57 @@ public class WorkOrderApiController {
             String penaltyType = body.get("penaltyType") == null ? null : body.get("penaltyType").toString();
             Long penaltyTargetUserId = body.get("penaltyTargetUserId") == null ? null : Long.valueOf(body.get("penaltyTargetUserId").toString());
             BigDecimal penaltyAmount = body.get("penaltyAmount") == null ? null : new BigDecimal(body.get("penaltyAmount").toString());
+
+            AuctionWorkOrder before = workOrderService.getById(id);
+            String workType = before != null ? before.getWorkType() : null;
+
             workOrderService.adminReviewWorkOrder(
                     id, adminId, approve, reviewResult, penaltyType, penaltyTargetUserId, penaltyAmount
             );
+
+            // 风控工单复核：写入操作审计
+            if ("risk".equalsIgnoreCase(workType)) {
+                try {
+                    AuctionOperLog log = new AuctionOperLog();
+                    log.setOperUserId(adminId);
+                    log.setOperModule("risk-work-order");
+                    log.setOperType(approve != null && approve ? "approve" : "reject");
+                    log.setOperContent("workOrderId=" + id + ", penaltyType=" + penaltyType + ", targetUserId=" + penaltyTargetUserId);
+                    log.setOperIp(getClientIp(request));
+                    log.setCreateTime(LocalDateTime.now());
+                    operLogService.save(log);
+                } catch (Exception ignored) {
+                }
+            }
             return Result.success("复核完成", null);
         } catch (Exception e) {
             return Result.error(e.getMessage());
         }
+    }
+
+    /**
+     * 获取客户端IP地址
+     */
+    private String getClientIp(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("Proxy-Client-IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("WL-Proxy-Client-IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("HTTP_CLIENT_IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("HTTP_X_FORWARDED_FOR");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getRemoteAddr();
+        }
+        if (ip != null && ip.contains(",")) {
+            ip = ip.split(",")[0].trim();
+        }
+        return ip != null ? ip : "unknown";
     }
 }

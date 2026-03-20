@@ -3,7 +3,7 @@ package com.auction.onlineauction.OnlineAuction.common;
 import javax.servlet.http.HttpSession;
 /**
  * 角色校验工具
- * 角色：1=买方 2=卖方 3=管理员 4=超级管理员 5=拍卖师 6=客服 7=财务 8=运营
+ * 角色：1=买方 2=卖方 3=管理员 4=超级管理员 5=拍卖师 6=客服 7=财务 8=运营 9=风控
  */
 public final class RoleCheckHelper {
 
@@ -232,10 +232,10 @@ public final class RoleCheckHelper {
     }
 
     /**
-     * 可查看后台历史竞拍管理（管理员、超级管理员、拍卖师、财务）
+     * 可查看后台历史竞拍管理（管理员、超级管理员、拍卖师、财务、风控）
      */
     public static boolean canViewAuctionHistoryAdmin(HttpSession session) {
-        return hasAnyRole(session, 3, 4, 5, 7);
+        return hasAnyRole(session, 3, 4, 5, 7, 9);
     }
 
     /** 消息中心：买方、卖方、管理员、超级管理员、客服、拍卖师、财务、运营可查看（权限细分在会话类型） */
@@ -271,5 +271,12 @@ public final class RoleCheckHelper {
     /** 是否为可被管理员沟通的内部角色（卖方、客服、拍卖师、财务、运营，不含买方） */
     public static boolean isStaffRole(int roleType) {
         return roleType == 2 || roleType == 5 || roleType == 6 || roleType == 7 || roleType == 8;
+    }
+
+    /**
+     * 风控角色：异常出价监控/用户风险标记/冻结解封申请/日志审计
+     */
+    public static boolean isRiskControl(HttpSession session) {
+        return hasAnyRole(session, 9);
     }
 }

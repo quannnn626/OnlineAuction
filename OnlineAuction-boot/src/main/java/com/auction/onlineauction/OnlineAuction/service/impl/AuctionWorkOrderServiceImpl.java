@@ -75,6 +75,54 @@ public class AuctionWorkOrderServiceImpl extends ServiceImpl<AuctionWorkOrderMap
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public AuctionWorkOrder createRiskActionWorkOrder(Long riskOfficerId, String actionType, Long targetUserId, String remark) {
+        if (riskOfficerId == null) throw new RuntimeException("请先登录");
+        if (targetUserId == null) throw new RuntimeException("目标用户不能为空");
+        if (actionType == null || actionType.trim().isEmpty()) throw new RuntimeException("操作类型不能为空");
+        if (remark == null || remark.trim().isEmpty()) throw new RuntimeException("申请说明不能为空");
+
+        String action = actionType.trim().toLowerCase();
+        String penaltyType;
+        String title;
+        if ("freeze".equals(action)) {
+            penaltyType = "BAN_USER";
+            title = "风控申请：冻结账号";
+        } else if ("unfreeze".equals(action)) {
+            penaltyType = "UNBAN_USER";
+            title = "风控申请：解封账号";
+        } else {
+            throw new RuntimeException("操作类型无效（freeze/unfreeze）");
+        }
+
+        AuctionWorkOrder w = new AuctionWorkOrder();
+        w.setWorkNo(genWorkNo());
+        w.setUserId(riskOfficerId);   // 提交人
+        w.setServiceId(null);         // 风控申请无需分配客服会话
+        w.setWorkType("risk");
+        w.setRelatedId(targetUserId);
+        w.setTitle(title);
+        w.setContent(remark.trim());
+        w.setWorkStatus(2); // 待复核
+
+        w.setHandleResult(null);
+        w.setHandleTime(null);
+        w.setReviewResult(null);
+        w.setReviewAdminId(null);
+        w.setReviewTime(null);
+
+        w.setPenaltyType(penaltyType);
+        w.setPenaltyTargetUserId(targetUserId);
+        w.setPenaltyAmount(null);
+
+        w.setCreateTime(LocalDateTime.now());
+        w.setUpdateTime(LocalDateTime.now());
+        w.setDelFlag(0);
+        save(w);
+        return w;
+    }
+
+    @Override
     public PageInfo<Map<String, Object>> getMyWorkOrders(Long userId, Integer current, Integer size) {
         PageHelper.startPage(current, size);
         QueryWrapper<AuctionWorkOrder> q = new QueryWrapper<>();
@@ -185,6 +233,8 @@ public class AuctionWorkOrderServiceImpl extends ServiceImpl<AuctionWorkOrderMap
     }
 
     private void notifyUserByMessageCenter(AuctionWorkOrder w, Long serviceId, String resultText) {
+        // 风控工单不走消息中心通知（避免“聊天会话”语义不匹配）
+        if (w != null && "risk".equalsIgnoreCase(w.getWorkType())) return;
         if (w == null || w.getUserId() == null || serviceId == null) return;
         QueryWrapper<AuctionMessageSession> sq = new QueryWrapper<>();
         sq.eq("session_type", 1)
@@ -235,7 +285,7 @@ public class AuctionWorkOrderServiceImpl extends ServiceImpl<AuctionWorkOrderMap
 
     private String normalizePenaltyType(String penaltyType) {
         String p = penaltyType == null ? "NONE" : penaltyType.trim().toUpperCase();
-        if (!Arrays.asList("NONE", "WARN", "DEDUCT_DEPOSIT", "BAN_USER").contains(p)) {
+        if (!Arrays.asList("NONE", "WARN", "DEDUCT_DEPOSIT", "BAN_USER", "UNBAN_USER").contains(p)) {
             return "NONE";
         }
         return p;
@@ -256,6 +306,13 @@ public class AuctionWorkOrderServiceImpl extends ServiceImpl<AuctionWorkOrderMap
             AuctionUser u = userService.getById(targetUserId);
             if (u == null || u.getDelFlag() == 1) throw new RuntimeException("目标用户不存在");
             u.setUserStatus(1); // 禁用账号
+            userService.updateById(u);
+        }
+
+        if ("UNBAN_USER".equals(penaltyType)) {
+            AuctionUser u = userService.getById(targetUserId);
+            if (u == null || u.getDelFlag() == 1) throw new RuntimeException("目标用户不存在");
+            u.setUserStatus(0); // 恢复账号
             userService.updateById(u);
         }
     }
