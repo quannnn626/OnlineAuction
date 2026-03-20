@@ -48,11 +48,38 @@ public class AuctionRecordController {
             Long goodsId = Long.valueOf(params.get("goodsId").toString());
             BigDecimal bidPrice = new BigDecimal(params.get("bidPrice").toString());
 
-            AuctionRecord record = recordService.submitBid(goodsId, buyerId, bidPrice);
+            String bidIp = getClientIp(request);
+            AuctionRecord record = recordService.submitBid(goodsId, buyerId, bidPrice, bidIp);
             return Result.success("出价成功", record);
         } catch (Exception e) {
             return Result.error("出价失败：" + e.getMessage());
         }
+    }
+
+    /**
+     * 获取客户端 IP（兼容代理）
+     */
+    private String getClientIp(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("Proxy-Client-IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("WL-Proxy-Client-IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("HTTP_CLIENT_IP");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("HTTP_X_FORWARDED_FOR");
+        }
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getRemoteAddr();
+        }
+        if (ip != null && ip.contains(",")) {
+            ip = ip.split(",")[0].trim();
+        }
+        return ip != null ? ip : "unknown";
     }
 
     /**

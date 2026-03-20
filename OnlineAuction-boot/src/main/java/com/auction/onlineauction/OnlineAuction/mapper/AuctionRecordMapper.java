@@ -70,7 +70,7 @@ public interface AuctionRecordMapper extends BaseMapper<AuctionRecord> {
             "COUNT(r.id) AS myBidCount, MAX(r.bid_time) AS latestBidTime, MAX(r.bid_price) AS myHighestBid " +
             "FROM auction_record r " +
             "INNER JOIN auction_goods g ON r.goods_id = g.id " +
-            "WHERE r.del_flag = 0 AND g.del_flag = 0 AND r.buyer_id = #{buyerId} " +
+            "WHERE r.del_flag = 0 AND r.bid_status = 1 AND g.del_flag = 0 AND r.buyer_id = #{buyerId} " +
             "<if test='keyword != null and keyword != \"\"'> " +
             "AND g.goods_name LIKE CONCAT('%', #{keyword}, '%') " +
             "</if> " +
@@ -84,7 +84,7 @@ public interface AuctionRecordMapper extends BaseMapper<AuctionRecord> {
             "g.start_time AS startTime, g.end_time AS endTime, g.goods_status AS goodsStatus, " +
             "u.nick_name AS sellerName, COUNT(r.id) AS totalBidCount, MAX(r.bid_time) AS latestBidTime " +
             "FROM auction_goods g " +
-            "INNER JOIN auction_record r ON r.goods_id = g.id AND r.del_flag = 0 " +
+            "INNER JOIN auction_record r ON r.goods_id = g.id AND r.del_flag = 0 AND r.bid_status = 1 " +
             "LEFT JOIN auction_user u ON g.seller_id = u.id " +
             "WHERE g.del_flag = 0 " +
             "<if test='keyword != null and keyword != \"\"'> " +
@@ -97,13 +97,13 @@ public interface AuctionRecordMapper extends BaseMapper<AuctionRecord> {
 
     @Select("SELECT ar.*, u.nick_name as buyer_name FROM auction_record ar " +
             "LEFT JOIN auction_user u ON ar.buyer_id = u.id " +
-            "WHERE ar.goods_id = #{goodsId} AND ar.del_flag = 0 " +
+            "WHERE ar.goods_id = #{goodsId} AND ar.del_flag = 0 AND ar.bid_status = 1 " +
             "ORDER BY ar.bid_time DESC")
     List<AuctionRecord> selectRecordsPageByGoodsId(@Param("goodsId") Long goodsId);
 
     @Select("SELECT ar.*, u.nick_name as buyer_name FROM auction_record ar " +
             "LEFT JOIN auction_user u ON ar.buyer_id = u.id " +
-            "WHERE ar.goods_id = #{goodsId} AND ar.buyer_id = #{buyerId} AND ar.del_flag = 0 " +
+            "WHERE ar.goods_id = #{goodsId} AND ar.buyer_id = #{buyerId} AND ar.del_flag = 0 AND ar.bid_status = 1 " +
             "ORDER BY ar.bid_time DESC")
     List<AuctionRecord> selectMyRecordsPageByGoodsId(@Param("goodsId") Long goodsId, @Param("buyerId") Long buyerId);
 
@@ -135,4 +135,16 @@ public interface AuctionRecordMapper extends BaseMapper<AuctionRecord> {
             @Param("windowMinutes") Integer windowMinutes,
             @Param("minBidCount") Integer minBidCount
     );
+
+    /** 风控：统计同一商品同一 IP 下，不同买家出价的去重人数（围标嫌疑） */
+    @Select("SELECT COUNT(DISTINCT buyer_id) FROM auction_record " +
+            "WHERE del_flag = 0 AND bid_status = 1 AND goods_id = #{goodsId} AND bid_ip = #{bidIp}")
+    Long countDistinctBuyersByGoodsIdAndBidIp(@Param("goodsId") Long goodsId, @Param("bidIp") String bidIp);
+
+    /** 风控：判断某买家在同一商品同一 IP 下是否已有出价记录 */
+    @Select("SELECT COUNT(1) FROM auction_record " +
+            "WHERE del_flag = 0 AND bid_status = 1 AND goods_id = #{goodsId} AND buyer_id = #{buyerId} AND bid_ip = #{bidIp}")
+    Long countByGoodsIdBuyerIdAndBidIp(@Param("goodsId") Long goodsId,
+                                         @Param("buyerId") Long buyerId,
+                                         @Param("bidIp") String bidIp);
 }

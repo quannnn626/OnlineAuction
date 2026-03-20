@@ -38,9 +38,12 @@ public class AuctionRecordServiceImpl extends ServiceImpl<AuctionRecordMapper, A
     @Autowired
     private IAuctionDepositService depositService;
 
+    @Autowired
+    private AuctionRiskBidAttemptLogService riskBidAttemptLogService;
+
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public AuctionRecord submitBid(Long goodsId, Long buyerId, BigDecimal bidPrice) {
+    public AuctionRecord submitBid(Long goodsId, Long buyerId, BigDecimal bidPrice, String bidIp) {
         // 1. 使用SELECT FOR UPDATE锁定商品记录，保证原子性
         // 这样可以防止多个用户同时出价时出现竞态条件
         AuctionGoods goods = recordMapper.selectGoodsForUpdate(goodsId);
@@ -81,6 +84,8 @@ public class AuctionRecordServiceImpl extends ServiceImpl<AuctionRecordMapper, A
 
         // 5. 验证出价金额（在锁定状态下验证，保证原子性）
         BigDecimal currentHighestPrice = goods.getCurrentHighestPrice();
+        // “当前价格”用于大跳价判定：不存在时退回起拍价
+        BigDecimal currentPrice = currentHighestPrice != null ? currentHighestPrice : goods.getBasePrice();
         BigDecimal minBidPrice = currentHighestPrice != null 
             ? currentHighestPrice.add(goods.getAddPrice()) 
             : goods.getBasePrice();
@@ -94,10 +99,106 @@ public class AuctionRecordServiceImpl extends ServiceImpl<AuctionRecordMapper, A
             throw new RuntimeException("不能竞拍自己发布的商品");
         }
 
+        // ========= 风控实时检测（在冻结保证金/写最高价前执行） =========
+        // 规则1：秒速出价（1秒内同一用户同一商品>=3次）-> 拦截拒绝
+        long last1sCnt = count(new QueryWrapper<AuctionRecord>()
+                .eq("goods_id", goodsId)
+                .eq("buyer_id", buyerId)
+                .eq("del_flag", 0)
+                .ge("bid_time", now.minusSeconds(1)));
+
+        // 规则2：超大额跳价（单次加价>=当前价格50%）-> 拦截拒绝
+        boolean bigJumpAbnormal = false;
+        if (currentPrice != null && currentPrice.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal delta = bidPrice.subtract(currentPrice);
+            BigDecimal threshold = currentPrice.multiply(new BigDecimal("0.5"));
+            bigJumpAbnormal = delta.compareTo(threshold) >= 0;
+        }
+
+        // 规则4：倒计时疯狂加价（最后30秒内同一用户同一商品>=5次）-> 拦截拒绝
+        boolean countdownSpamAbnormal = false;
+        if (goods.getEndTime() != null) {
+            LocalDateTime start = goods.getEndTime().minusSeconds(30);
+            if (!now.isBefore(start) && now.isBefore(goods.getEndTime())) {
+                long last30sCnt = count(new QueryWrapper<AuctionRecord>()
+                        .eq("goods_id", goodsId)
+                        .eq("buyer_id", buyerId)
+                        .eq("del_flag", 0)
+                        .ge("bid_time", start));
+                countdownSpamAbnormal = (last30sCnt + 1) >= 5;
+            }
+        }
+
+        boolean intercept = false;
+        String interceptReason = null;
+        int interceptRiskRuleType = 0;
+        if ((last1sCnt + 1) >= 3) {
+            intercept = true;
+            interceptReason = "秒速出价（1秒内>=3次）";
+            interceptRiskRuleType = 1;
+        } else if (bigJumpAbnormal) {
+            intercept = true;
+            interceptReason = "超大额跳价（单次加价>=当前价格50%）";
+            interceptRiskRuleType = 2;
+        } else if (countdownSpamAbnormal) {
+            intercept = true;
+            interceptReason = "倒计时疯狂加价（最后30秒内>=5次）";
+            interceptRiskRuleType = 3;
+        }
+
+        if (intercept) {
+            // 记录被拒绝的出价尝试（用于风控查看）
+            try {
+                riskBidAttemptLogService.logRejectedBidAttempt(
+                        goodsId, buyerId, bidPrice, now, bidIp,
+                        1, // abnormal_type：沿用“恶意出价”口径
+                        interceptRiskRuleType
+                );
+            } catch (Exception ignored) {
+                // 不影响拦截结果
+            }
+            throw new RuntimeException("出价被风控拦截：" + interceptReason);
+        }
+
+        // 规则3：频繁顶价（同一用户同一商品>=10次）-> 允许出价，标记风险
+        long totalBidCntPrev = count(new QueryWrapper<AuctionRecord>()
+                .eq("goods_id", goodsId)
+                .eq("buyer_id", buyerId)
+                .eq("del_flag", 0)
+                .eq("bid_status", 1));
+        boolean frequentAbnormal = (totalBidCntPrev + 1) >= 10;
+
+        // 规则6：多账号同 IP 竞拍同商品（同一IP下不同账号>=3人）-> 允许出价，标记围标嫌疑
+        boolean ringAbnormal = false;
+        if (bidIp != null && !bidIp.trim().isEmpty() && !"unknown".equalsIgnoreCase(bidIp.trim())) {
+            Long distinctBuyerCnt = recordMapper.countDistinctBuyersByGoodsIdAndBidIp(goodsId, bidIp.trim());
+            Long buyerExistCnt = recordMapper.countByGoodsIdBuyerIdAndBidIp(goodsId, buyerId, bidIp.trim());
+            long totalDistinct = (buyerExistCnt != null && buyerExistCnt > 0)
+                    ? (distinctBuyerCnt != null ? distinctBuyerCnt : 0)
+                    : (distinctBuyerCnt != null ? distinctBuyerCnt + 1 : 1);
+            ringAbnormal = totalDistinct >= 3;
+        }
+
+        // 预警规则：允许出价，标记风险（写入 risk_rule_type 用于区分 5 种异常行为）
+        int abnormalType = 0; // abnormal_type：沿用“恶意出价”口径（1=恶意）
+        int riskRuleType = 0; // risk_rule_type：1~5 对应你的5种触发规则
+        if (frequentAbnormal) {
+            abnormalType = 1;
+            riskRuleType = 4; // 频繁顶价
+        } else if (ringAbnormal) {
+            abnormalType = 1;
+            riskRuleType = 5; // 围标嫌疑
+        }
+
         // 6.5 首次出价时冻结该商品设定的保证金
         BigDecimal depositRequired = goods.getDepositRequired() != null ? goods.getDepositRequired() : BigDecimal.ZERO;
         if (depositRequired.compareTo(BigDecimal.ZERO) > 0) {
-            long existBidCount = count(new QueryWrapper<AuctionRecord>().eq("goods_id", goodsId).eq("buyer_id", buyerId).eq("del_flag", 0));
+            // 首次冻结应以“已接受出价”作为口径，避免风控拒绝尝试污染保证金冻结逻辑
+            long existBidCount = count(new QueryWrapper<AuctionRecord>()
+                    .eq("goods_id", goodsId)
+                    .eq("buyer_id", buyerId)
+                    .eq("del_flag", 0)
+                    .eq("bid_status", 1));
             if (existBidCount == 0) {
                 depositService.freezeForBid(buyerId, depositRequired, goodsId);
             }
@@ -115,6 +216,10 @@ public class AuctionRecordServiceImpl extends ServiceImpl<AuctionRecordMapper, A
         record.setIsAgent(0); // 手动出价
         record.setBidTime(LocalDateTime.now());
         record.setIsHighest(1); // 当前最高价
+        record.setAbnormalType(abnormalType);
+        record.setBidIp(bidIp);
+        record.setBidStatus(1); // 1=已接受出价
+        record.setRiskRuleType(riskRuleType);
         record.setDelFlag(0);
 
         // 9. 保存竞拍记录（在事务中，保证原子性）

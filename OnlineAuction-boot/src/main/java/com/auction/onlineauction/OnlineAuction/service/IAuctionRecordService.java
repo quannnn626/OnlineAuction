@@ -25,7 +25,7 @@ public interface IAuctionRecordService extends IService<AuctionRecord> {
      * @param bidPrice 出价金额
      * @return 竞拍记录
      */
-    AuctionRecord submitBid(Long goodsId, Long buyerId, BigDecimal bidPrice);
+    AuctionRecord submitBid(Long goodsId, Long buyerId, BigDecimal bidPrice, String bidIp);
 
     /**
      * 查询商品的竞拍记录列表

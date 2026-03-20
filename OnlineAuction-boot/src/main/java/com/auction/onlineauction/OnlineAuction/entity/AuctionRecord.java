@@ -82,6 +82,24 @@ public class AuctionRecord implements Serializable {
     private Integer abnormalType;
 
     /**
+     * 出价IP地址（风控用于判定围标等）
+     */
+    @TableField("bid_ip")
+    private String bidIp;
+
+    /**
+     * 竞拍状态：0=已拒绝 1=已接受（风控拦截的出价尝试不影响正常历史/成交口径）
+     */
+    @TableField("bid_status")
+    private Integer bidStatus;
+
+    /**
+     * 风控规则类型：1秒内>=3次/2超大跳价/3倒计时疯狂加价/4频繁顶价/5围标嫌疑
+     */
+    @TableField("risk_rule_type")
+    private Integer riskRuleType;
+
+    /**
      * 逻辑删除：0=未删除 1=已删除
      */
     @TableField("del_flag")

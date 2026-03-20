@@ -16,8 +16,11 @@
           </el-form-item>
           <el-form-item label="异常类型">
             <el-select v-model="abnormalQuery.abnormalType" placeholder="选择" style="width:160px">
-              <el-option label="恶意出价（1）" :value="1"></el-option>
-              <el-option label="机器人（2）" :value="2"></el-option>
+              <el-option label="秒速出价（1）" :value="1"></el-option>
+              <el-option label="超大额跳价（2）" :value="2"></el-option>
+              <el-option label="倒计时疯狂加价（3）" :value="3"></el-option>
+              <el-option label="频繁顶价（4）" :value="4"></el-option>
+              <el-option label="围标嫌疑（5）" :value="5"></el-option>
             </el-select>
           </el-form-item>
           <el-button type="primary" size="small" @click="loadAbnormal">查询</el-button>
@@ -75,7 +78,7 @@
               <el-form-item label="窗口(分钟)">
                 <el-input-number v-model="ringQuery.windowMinutes" :min="1" :max="1440" />
               </el-form-item>
-              <el-form-item label="阈值(次)">
+              <el-form-item label="阈值(人)">
                 <el-input-number v-model="ringQuery.minBidCount" :min="1" :max="1000" />
               </el-form-item>
               <el-button size="small" type="primary" @click="loadRing">查询</el-button>
@@ -221,7 +224,7 @@ export default {
       ringQuery: {
         goodsId: "",
         windowMinutes: 30,
-        minBidCount: 5,
+        minBidCount: 3,
       },
 
       riskLevelForm: {

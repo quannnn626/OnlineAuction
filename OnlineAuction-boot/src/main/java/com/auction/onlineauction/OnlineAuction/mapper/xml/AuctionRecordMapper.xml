@@ -13,6 +13,9 @@
         <result column="bid_time" property="bidTime" />
         <result column="is_highest" property="isHighest" />
         <result column="abnormal_type" property="abnormalType" />
+        <result column="bid_ip" property="bidIp" />
+        <result column="bid_status" property="bidStatus" />
+        <result column="risk_rule_type" property="riskRuleType" />
         <result column="del_flag" property="delFlag" />
         <result column="buyerName" property="buyerName" />
     </resultMap>
@@ -49,7 +52,7 @@
         SELECT ar.*, u.nick_name as buyerName
         FROM auction_record ar
         LEFT JOIN auction_user u ON ar.buyer_id = u.id
-        WHERE ar.goods_id = #{goodsId} AND ar.del_flag = 0
+        WHERE ar.goods_id = #{goodsId} AND ar.del_flag = 0 AND ar.bid_status = 1
         ORDER BY ar.bid_time DESC
         LIMIT #{limit}
     </select>
@@ -64,6 +67,9 @@
         <result column="bid_time" property="bidTime" />
         <result column="is_highest" property="isHighest" />
         <result column="abnormal_type" property="abnormalType" />
+        <result column="bid_ip" property="bidIp" />
+        <result column="bid_status" property="bidStatus" />
+        <result column="risk_rule_type" property="riskRuleType" />
         <result column="del_flag" property="delFlag" />
         <result column="buyer_name" property="buyerName" />
         <result column="goods_name" property="goodsName" />
@@ -73,7 +79,7 @@
         FROM auction_record ar
         LEFT JOIN auction_user u ON ar.buyer_id = u.id
         LEFT JOIN auction_goods g ON ar.goods_id = g.id
-        WHERE ar.buyer_id = #{buyerId} AND ar.del_flag = 0
+        WHERE ar.buyer_id = #{buyerId} AND ar.del_flag = 0 AND ar.bid_status = 1
         ORDER BY ar.bid_time DESC
     </select>
 
@@ -86,7 +92,7 @@
         LEFT JOIN auction_user u ON ar.buyer_id = u.id
         LEFT JOIN auction_goods g ON ar.goods_id = g.id
         WHERE ar.del_flag = 0
-          AND ar.abnormal_type = #{abnormalType}
+          AND ar.risk_rule_type = #{abnormalType}
         <if test="goodsId != null">
             AND ar.goods_id = #{goodsId}
         </if>
@@ -104,7 +110,7 @@
         FROM auction_record ar
         LEFT JOIN auction_user u ON ar.buyer_id = u.id
         WHERE ar.del_flag = 0
-          AND ar.abnormal_type = 1
+          AND ar.risk_rule_type IN (1,2,3)
           AND ar.bid_time &gt;= DATE_SUB(NOW(), INTERVAL #{windowMinutes} MINUTE)
         <if test="goodsId != null">
             AND ar.goods_id = #{goodsId}
@@ -113,7 +119,7 @@
         ORDER BY bidCount DESC
     </select>
 
-    <!-- 风控：疑似围标/刷价汇总（同一买家窗口期高频出价） -->
+    <!-- 风控：疑似围标/刷价汇总（同一 IP 下 >=minBidCount 个不同账号竞拍同商品） -->
     <select id="selectSuspectedRingBiddersForRisk" resultType="java.util.Map">
         SELECT ar.buyer_id AS buyerId,
                u.nick_name AS buyerName,
@@ -121,13 +127,21 @@
         FROM auction_record ar
         LEFT JOIN auction_user u ON ar.buyer_id = u.id
         WHERE ar.del_flag = 0
-          AND ar.is_agent = 1
           AND ar.bid_time &gt;= DATE_SUB(NOW(), INTERVAL #{windowMinutes} MINUTE)
+          AND ar.bid_ip IS NOT NULL
+          AND ar.bid_ip &lt;&gt; ''
         <if test="goodsId != null">
             AND ar.goods_id = #{goodsId}
         </if>
+          AND (
+            SELECT COUNT(DISTINCT sub.buyer_id)
+            FROM auction_record sub
+            WHERE sub.del_flag = 0
+              AND sub.goods_id = ar.goods_id
+              AND sub.bid_ip = ar.bid_ip
+              AND sub.bid_time &gt;= DATE_SUB(NOW(), INTERVAL #{windowMinutes} MINUTE)
+          ) &gt;= #{minBidCount}
         GROUP BY ar.buyer_id, u.nick_name
-        HAVING COUNT(ar.id) &gt;= #{minBidCount}
         ORDER BY bidCount DESC
     </select>
 
