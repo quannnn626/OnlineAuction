@@ -83,7 +83,7 @@
         ORDER BY ar.bid_time DESC
     </select>
 
-    <!-- 风控：异常出价监控（abnormal_type） -->
+    <!-- 风控：异常出价监控（risk_rule_type；abnormalType 为空则全部异常类型 risk_rule_type>0） -->
     <select id="selectAbnormalBidRecordsForRisk" resultMap="RecordWithGoodsMap">
         SELECT ar.*,
                u.nick_name AS buyer_name,
@@ -92,12 +92,12 @@
         LEFT JOIN auction_user u ON ar.buyer_id = u.id
         LEFT JOIN auction_goods g ON ar.goods_id = g.id
         WHERE ar.del_flag = 0
-          AND ar.risk_rule_type = #{abnormalType}
+          AND ar.risk_rule_type &gt; 0
+        <if test="abnormalType != null">
+            AND ar.risk_rule_type = #{abnormalType}
+        </if>
         <if test="goodsId != null">
             AND ar.goods_id = #{goodsId}
-        </if>
-        <if test="buyerId != null">
-            AND ar.buyer_id = #{buyerId}
         </if>
         ORDER BY ar.bid_time DESC
     </select>
@@ -112,9 +112,6 @@
         WHERE ar.del_flag = 0
           AND ar.risk_rule_type IN (1,2,3)
           AND ar.bid_time &gt;= DATE_SUB(NOW(), INTERVAL #{windowMinutes} MINUTE)
-        <if test="goodsId != null">
-            AND ar.goods_id = #{goodsId}
-        </if>
         GROUP BY ar.buyer_id, u.nick_name
         ORDER BY bidCount DESC
     </select>
@@ -130,9 +127,6 @@
           AND ar.bid_time &gt;= DATE_SUB(NOW(), INTERVAL #{windowMinutes} MINUTE)
           AND ar.bid_ip IS NOT NULL
           AND ar.bid_ip &lt;&gt; ''
-        <if test="goodsId != null">
-            AND ar.goods_id = #{goodsId}
-        </if>
           AND (
             SELECT COUNT(DISTINCT sub.buyer_id)
             FROM auction_record sub

@@ -107,4 +107,14 @@ public interface IAuctionUserService extends IService<AuctionUser> {
      * @return 更新后的用户信息
      */
     AuctionUser updateAvatar(Long userId, Long avatarFileId);
+
+    /**
+     * 风控：批量更新用户风险等级（仅已存在的未删除用户）
+     */
+    void batchUpdateRiskLevelForRisk(List<Long> userIds, Integer riskLevel);
+
+    /**
+     * 风控：有风险行为的用户列表（用于勾选标记）
+     */
+    List<Map<String, Object>> listUsersWithRiskActivityForRisk();
 }

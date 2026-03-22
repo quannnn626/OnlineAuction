@@ -25,4 +25,23 @@
         <result column="del_flag" property="delFlag" />
     </resultMap>
 
+    <!-- 风控：有风险行为的用户（曾触发风控出价规则 或 已标记风险等级） -->
+    <select id="selectUsersWithRiskActivityForRisk" resultType="java.util.HashMap">
+        SELECT u.id AS userId,
+               u.user_name AS userName,
+               u.nick_name AS nickName,
+               u.risk_level AS riskLevel,
+               COALESCE(rc.cnt, 0) AS riskBidCount
+        FROM auction_user u
+        LEFT JOIN (
+            SELECT buyer_id, COUNT(*) AS cnt
+            FROM auction_record
+            WHERE del_flag = 0 AND risk_rule_type &gt; 0
+            GROUP BY buyer_id
+        ) rc ON rc.buyer_id = u.id
+        WHERE u.del_flag = 0
+          AND (COALESCE(u.risk_level, 0) &gt; 0 OR COALESCE(rc.cnt, 0) &gt; 0)
+        ORDER BY COALESCE(rc.cnt, 0) DESC, u.id DESC
+    </select>
+
 </mapper>

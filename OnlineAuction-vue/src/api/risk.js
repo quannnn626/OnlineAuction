@@ -39,6 +39,23 @@ export function updateUserRiskLevel(id, data) {
   });
 }
 
+/** 有风险行为的用户分页（勾选后批量操作） */
+export function getRiskActivityUsersPage(params) {
+  return request({
+    url: "/risk/users/risk-activity/page",
+    method: "get",
+    params,
+  });
+}
+
+export function updateUserRiskLevelBatch(data) {
+  return request({
+    url: "/risk/users/risk-level/batch",
+    method: "post",
+    data,
+  });
+}
+
 export function applyUserStatus(data) {
   return request({
     url: "/risk/user-status/apply",
@@ -47,11 +64,12 @@ export function applyUserStatus(data) {
   });
 }
 
-export function getOperLogsPage(params) {
+/** 批量提交冻结/解封工单（管理员复核） */
+export function applyUserStatusBatch(data) {
   return request({
-    url: "/risk/oper-logs/page",
-    method: "get",
-    params,
+    url: "/risk/user-status/apply-batch",
+    method: "post",
+    data,
   });
 }
 

@@ -123,6 +123,24 @@ public class AuctionWorkOrderServiceImpl extends ServiceImpl<AuctionWorkOrderMap
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<AuctionWorkOrder> createRiskActionWorkOrdersBatch(Long riskOfficerId, String actionType, List<Long> targetUserIds, String remark) {
+        if (targetUserIds == null || targetUserIds.isEmpty()) {
+            throw new RuntimeException("请选择用户");
+        }
+        List<Long> unique = new ArrayList<>(new LinkedHashSet<>(targetUserIds));
+        List<AuctionWorkOrder> out = new ArrayList<>();
+        for (Long uid : unique) {
+            if (uid == null) continue;
+            out.add(createRiskActionWorkOrder(riskOfficerId, actionType, uid, remark));
+        }
+        if (out.isEmpty()) {
+            throw new RuntimeException("请选择有效用户");
+        }
+        return out;
+    }
+
+    @Override
     public PageInfo<Map<String, Object>> getMyWorkOrders(Long userId, Integer current, Integer size) {
         PageHelper.startPage(current, size);
         QueryWrapper<AuctionWorkOrder> q = new QueryWrapper<>();

@@ -19,6 +19,9 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -110,22 +113,109 @@ public class RiskApiController {
     }
 
     /**
-     * 异常出价监控：列出异常出价记录（abnormal_type 默认 1=恶意出价）
+     * 有风险行为的用户：曾触发风控出价规则（risk_rule_type 大于 0）或当前风险等级大于 0
      */
-    @GetMapping("/abnormal-bids/page")
-    public Result<PageInfo<AuctionRecord>> abnormalBidsPage(
+    @GetMapping("/users/risk-activity/page")
+    public Result<PageInfo<Map<String, Object>>> riskActivityUsersPage(
             @RequestParam(defaultValue = "1") Integer current,
             @RequestParam(defaultValue = "10") Integer size,
-            @RequestParam(required = false) Long goodsId,
-            @RequestParam(required = false) Long buyerId,
-            @RequestParam(defaultValue = "1") Integer abnormalType,
             HttpServletRequest request
     ) {
         try {
             HttpSession session = request.getSession(false);
             if (session == null || !isRisk(session)) return Result.error("无权限");
             PageHelper.startPage(current, size);
-            List<AuctionRecord> list = recordMapper.selectAbnormalBidRecordsForRisk(goodsId, buyerId, abnormalType);
+            List<Map<String, Object>> list = userService.listUsersWithRiskActivityForRisk();
+            return Result.success("查询成功", new PageInfo<>(list));
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+    }
+
+    @PostMapping("/users/risk-level/batch")
+    public Result<Void> updateRiskLevelBatch(
+            @RequestBody Map<String, Object> body,
+            HttpServletRequest request
+    ) {
+        try {
+            HttpSession session = request.getSession(false);
+            if (session == null || !isRisk(session)) return Result.error("无权限");
+
+            List<Long> userIds = parseUserIds(body.get("userIds"));
+            if (userIds.isEmpty()) return Result.error("请选择用户");
+
+            Integer riskLevel = body.get("riskLevel") == null ? null : Integer.valueOf(body.get("riskLevel").toString());
+            if (riskLevel == null) return Result.error("风险等级不能为空");
+
+            userService.batchUpdateRiskLevelForRisk(userIds, riskLevel);
+            insertOperLog(session, request, "risk", "risk_level_batch", "userIds=" + userIds + ", riskLevel=" + riskLevel);
+            return Result.success("已更新选中用户的风险等级", null);
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+    }
+
+    @PostMapping("/user-status/apply-batch")
+    public Result<Map<String, Object>> applyUserStatusBatch(
+            @RequestBody Map<String, Object> body,
+            HttpServletRequest request
+    ) {
+        try {
+            HttpSession session = request.getSession(false);
+            if (session == null || !isRisk(session)) return Result.error("无权限");
+
+            Long riskOfficerId = (Long) session.getAttribute("userId");
+            if (riskOfficerId == null) return Result.error("请先登录");
+
+            List<Long> userIds = parseUserIds(body.get("userIds"));
+            if (userIds.isEmpty()) return Result.error("请选择用户");
+
+            String actionType = body.get("actionType") == null ? null : body.get("actionType").toString();
+            String remark = body.get("remark") == null ? null : body.get("remark").toString();
+
+            List<AuctionWorkOrder> orders = workOrderService.createRiskActionWorkOrdersBatch(riskOfficerId, actionType, userIds, remark);
+            insertOperLog(session, request, "risk", "risk_apply_batch", "actionType=" + actionType + ", count=" + orders.size());
+
+            Map<String, Object> data = new HashMap<>();
+            data.put("count", orders.size());
+            return Result.success("已提交 " + orders.size() + " 条申请，等待管理员复核", data);
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+    }
+
+    private static List<Long> parseUserIds(Object raw) {
+        if (!(raw instanceof List)) {
+            return new ArrayList<>();
+        }
+        LinkedHashSet<Long> set = new LinkedHashSet<>();
+        for (Object o : (List<?>) raw) {
+            if (o == null) continue;
+            try {
+                set.add(Long.valueOf(o.toString()));
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return new ArrayList<>(set);
+    }
+
+    /**
+     * 异常出价监控：列出异常出价记录。
+     * abnormalType 不传或为空：查看全部异常类型（risk_rule_type &gt; 0）；传入 1~5 则按规则筛选。
+     */
+    @GetMapping("/abnormal-bids/page")
+    public Result<PageInfo<AuctionRecord>> abnormalBidsPage(
+            @RequestParam(defaultValue = "1") Integer current,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(required = false) Long goodsId,
+            @RequestParam(required = false) Integer abnormalType,
+            HttpServletRequest request
+    ) {
+        try {
+            HttpSession session = request.getSession(false);
+            if (session == null || !isRisk(session)) return Result.error("无权限");
+            PageHelper.startPage(current, size);
+            List<AuctionRecord> list = recordMapper.selectAbnormalBidRecordsForRisk(goodsId, abnormalType);
             return Result.success("查询成功", new PageInfo<>(list));
         } catch (Exception e) {
             return Result.error(e.getMessage());
@@ -139,7 +229,6 @@ public class RiskApiController {
     public Result<PageInfo<Map<String, Object>>> maliciousBiddersPage(
             @RequestParam(defaultValue = "1") Integer current,
             @RequestParam(defaultValue = "10") Integer size,
-            @RequestParam(required = false) Long goodsId,
             @RequestParam(defaultValue = "60") Integer windowMinutes,
             HttpServletRequest request
     ) {
@@ -147,7 +236,7 @@ public class RiskApiController {
             HttpSession session = request.getSession(false);
             if (session == null || !isRisk(session)) return Result.error("无权限");
             PageHelper.startPage(current, size);
-            List<Map<String, Object>> list = recordMapper.selectMaliciousBiddersForRisk(goodsId, windowMinutes);
+            List<Map<String, Object>> list = recordMapper.selectMaliciousBiddersForRisk(windowMinutes);
             return Result.success("查询成功", new PageInfo<>(list));
         } catch (Exception e) {
             return Result.error(e.getMessage());
@@ -161,7 +250,6 @@ public class RiskApiController {
     public Result<PageInfo<Map<String, Object>>> ringBiddersPage(
             @RequestParam(defaultValue = "1") Integer current,
             @RequestParam(defaultValue = "10") Integer size,
-            @RequestParam(required = false) Long goodsId,
             @RequestParam(defaultValue = "30") Integer windowMinutes,
             @RequestParam(defaultValue = "5") Integer minBidCount,
             HttpServletRequest request
@@ -170,7 +258,7 @@ public class RiskApiController {
             HttpSession session = request.getSession(false);
             if (session == null || !isRisk(session)) return Result.error("无权限");
             PageHelper.startPage(current, size);
-            List<Map<String, Object>> list = recordMapper.selectSuspectedRingBiddersForRisk(goodsId, windowMinutes, minBidCount);
+            List<Map<String, Object>> list = recordMapper.selectSuspectedRingBiddersForRisk(windowMinutes, minBidCount);
             return Result.success("查询成功", new PageInfo<>(list));
         } catch (Exception e) {
             return Result.error(e.getMessage());
@@ -178,7 +266,7 @@ public class RiskApiController {
     }
 
     /**
-     * 日志审计：按 module / keyword / 时间段过滤（来自 auction_oper_log）
+     * 操作日志分页查询（auction_oper_log）
      */
     @GetMapping("/oper-logs/page")
     public Result<PageInfo<AuctionOperLog>> operLogsPage(

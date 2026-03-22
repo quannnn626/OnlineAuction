@@ -9,11 +9,14 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.DigestUtils;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -624,5 +627,37 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
         }
 
         return getUserByIdWithoutPassword(userId);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void batchUpdateRiskLevelForRisk(List<Long> userIds, Integer riskLevel) {
+        if (userIds == null || userIds.isEmpty()) {
+            throw new RuntimeException("请选择用户");
+        }
+        if (riskLevel == null) {
+            throw new RuntimeException("风险等级不能为空");
+        }
+        if (riskLevel < 0) riskLevel = 0;
+        if (riskLevel > 3) riskLevel = 3;
+        LinkedHashSet<Long> unique = new LinkedHashSet<>(userIds);
+        List<AuctionUser> users = listByIds(new ArrayList<>(unique));
+        List<AuctionUser> toUpdate = new ArrayList<>();
+        for (AuctionUser u : users) {
+            if (u.getDelFlag() != null && u.getDelFlag() == 1) {
+                continue;
+            }
+            u.setRiskLevel(riskLevel);
+            toUpdate.add(u);
+        }
+        if (toUpdate.isEmpty()) {
+            throw new RuntimeException("未找到可更新的用户");
+        }
+        updateBatchById(toUpdate);
+    }
+
+    @Override
+    public List<Map<String, Object>> listUsersWithRiskActivityForRisk() {
+        return baseMapper.selectUsersWithRiskActivityForRisk();
     }
 }

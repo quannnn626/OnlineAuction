@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.github.pagehelper.PageInfo;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 
 public interface IAuctionWorkOrderService extends IService<AuctionWorkOrder> {
@@ -15,6 +16,11 @@ public interface IAuctionWorkOrderService extends IService<AuctionWorkOrder> {
      * 风控角色发起：账户冻结/解封（进入“待复核”，由管理员最终审批）
      */
     AuctionWorkOrder createRiskActionWorkOrder(Long riskOfficerId, String actionType, Long targetUserId, String remark);
+
+    /**
+     * 风控：批量发起冻结/解封工单（每条进入待管理员复核）
+     */
+    List<AuctionWorkOrder> createRiskActionWorkOrdersBatch(Long riskOfficerId, String actionType, List<Long> targetUserIds, String remark);
 
     PageInfo<Map<String, Object>> getMyWorkOrders(Long userId, Integer current, Integer size);
 

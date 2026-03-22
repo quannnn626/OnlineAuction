@@ -111,11 +111,10 @@ public interface AuctionRecordMapper extends BaseMapper<AuctionRecord> {
     List<AuctionRecord> selectRecordsByBuyerIdPage(@Param("buyerId") Long buyerId);
 
     /**
-     * 风控：异常出价监控（abnormal_type）
+     * 风控：异常出价监控（risk_rule_type；abnormalType 为空则查全部 risk_rule_type>0）
      */
     List<AuctionRecord> selectAbnormalBidRecordsForRisk(
             @Param("goodsId") Long goodsId,
-            @Param("buyerId") Long buyerId,
             @Param("abnormalType") Integer abnormalType
     );
 
@@ -123,15 +122,13 @@ public interface AuctionRecordMapper extends BaseMapper<AuctionRecord> {
      * 风控：恶意参拍汇总（按买家）
      */
     List<Map<String, Object>> selectMaliciousBiddersForRisk(
-            @Param("goodsId") Long goodsId,
             @Param("windowMinutes") Integer windowMinutes
     );
 
     /**
-     * 风控：疑似围标/刷价（同一买家在窗口期内高频出价）
+     * 风控：疑似围标/刷价（同 IP 下同商品多账号，窗口内去重买家数达阈值）
      */
     List<Map<String, Object>> selectSuspectedRingBiddersForRisk(
-            @Param("goodsId") Long goodsId,
             @Param("windowMinutes") Integer windowMinutes,
             @Param("minBidCount") Integer minBidCount
     );
