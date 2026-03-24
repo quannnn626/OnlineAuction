@@ -56,9 +56,7 @@
                   <i class="el-icon-arrow-down"></i>
                 </span>
                 <el-dropdown-menu slot="dropdown">
-                  <el-dropdown-item command="profile"
-                    >个人中心</el-dropdown-item
-                  >
+                  <el-dropdown-item command="profile">个人信息</el-dropdown-item>
                   <el-dropdown-item divided command="logout"
                     >退出登录</el-dropdown-item
                   >
@@ -206,14 +204,28 @@ export default {
             });
           }
         }
-        // 后台角色（管理员、超级管理员、拍卖师、客服、财务、运营）若无“个人中心/个人信息”菜单，则补充入口到 /admin/profile
+        // 审计兜底菜单：审计中心入口（仅审计角色）
+        if (user) {
+          const roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
+          const canAudit = roles.includes("10");
+          if (canAudit && !this.menuExists(menuTree, "/audit-dashboard")) {
+            menuTree.push({
+              id: 99997,
+              menuName: "审计中心",
+              menuPath: "/audit-dashboard",
+              menuIcon: "el-icon-document-checked",
+              children: [],
+            });
+          }
+        }
+        // 后台角色（管理员、超级管理员、拍卖师、客服、财务、运营、风控、审计）若无“个人中心/个人信息”菜单，则补充入口到 /admin/profile
         if (user) {
           const roles = user.userRole
             ? String(user.userRole)
                 .split(",")
                 .map((r) => r.trim())
             : [];
-          const isStaff = [3, 4, 5, 6, 7, 8].some((r) =>
+          const isStaff = [3, 4, 5, 6, 7, 8, 9, 10].some((r) =>
             roles.includes(String(r)),
           );
           const hasProfileMenu =
@@ -237,7 +249,7 @@ export default {
                 .map((r) => r.trim())
             : [];
           const onlyStaffNoAdmin =
-            [5, 6, 7, 9].some((r) => roles.includes(String(r))) &&
+            [5, 6, 7, 9, 10].some((r) => roles.includes(String(r))) &&
             ![3, 4].some((r) => roles.includes(String(r)));
           if (onlyStaffNoAdmin) {
             menuTree = this.filterMenu(menuTree, (m) => {
@@ -273,8 +285,29 @@ export default {
         this.menuTree = menuTree;
         this.buildMenuMap(this.menuTree);
       } catch (error) {
-        this.menuTree = [];
-        this.$message.warning("菜单加载失败，请检查后端服务是否正常运行");
+        // 菜单接口失败时，至少给审计角色保留“审计中心”入口，避免左侧空白
+        const userInfo = localStorage.getItem("userInfo");
+        let fallbackMenus = [];
+        if (userInfo) {
+          try {
+            const user = JSON.parse(userInfo);
+            const roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
+            if (roles.includes("10") || roles.includes("4")) {
+              fallbackMenus.push({
+                id: 99997,
+                menuName: "审计中心",
+                menuPath: "/audit-dashboard",
+                menuIcon: "el-icon-document-checked",
+                children: [],
+              });
+            }
+          } catch (e) {
+            // ignore
+          }
+        }
+        this.menuTree = fallbackMenus;
+        this.buildMenuMap(this.menuTree);
+        this.$message.warning("菜单加载失败，已使用最小菜单");
       } finally {
         this.loading = false;
       }
@@ -415,7 +448,20 @@ export default {
       if (command === "logout") {
         this.handleLogout();
       } else if (command === "profile") {
-        this.$router.push("/profile");
+        const userInfo = localStorage.getItem("userInfo");
+        let roles = [];
+        if (userInfo) {
+          try {
+            const user = JSON.parse(userInfo);
+            roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
+          } catch (e) {
+            // ignore
+          }
+        }
+        const isBuyerOrSeller = roles.includes("1") || roles.includes("2");
+        const targetPath = isBuyerOrSeller ? "/profile" : "/admin/profile";
+        if (this.$route.path === targetPath) return;
+        this.$router.push(targetPath).catch(() => {});
       }
     },
     handleLogout() {

@@ -103,10 +103,12 @@ export default {
     },
     redirectByRole(user) {
       // 根据用户角色跳转到不同页面
-      if (user.isSuperAdmin || user.isAdmin) {
-        // 超级管理员和管理员跳转到后台管理首页
+      const roles = user && user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
+      const isBuyerOrSeller = roles.includes("1") || roles.includes("2");
+      if (!isBuyerOrSeller) {
+        // 管理岗位（3~10）统一进入账号管理页
         this.$router.push("/admin/profile");
-      } else if (user.isSeller) {
+      } else if (roles.includes("2")) {
         // 卖方用户跳转到我的商品页面
         this.$router.push("/my-goods");
       } else {

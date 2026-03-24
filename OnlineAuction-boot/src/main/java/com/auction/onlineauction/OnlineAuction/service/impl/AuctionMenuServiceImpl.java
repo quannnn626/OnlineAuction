@@ -22,6 +22,10 @@ public class AuctionMenuServiceImpl extends ServiceImpl<AuctionMenuMapper, Aucti
 
     @Override
     public List<AuctionMenu> getMenuTreeByRoleType(Integer roleType) {
+        // 角色4（超级管理员）菜单与角色3（管理员）一致
+        if (roleType != null && roleType == 4) {
+            roleType = 3;
+        }
         // 查询该角色下的所有菜单
         List<AuctionMenu> menuList = baseMapper.selectMenusByRoleType(roleType);
         
@@ -35,15 +39,11 @@ public class AuctionMenuServiceImpl extends ServiceImpl<AuctionMenuMapper, Aucti
             return new ArrayList<>();
         }
         
-        // 如果包含超级管理员（4），返回所有菜单，但排除留言板菜单（ID=8）
-        if (roleTypes.contains(4)) {
-            List<AuctionMenu> allMenus = baseMapper.selectAllMenus();
-            // 过滤掉留言板菜单（ID=8，路径为 /message-board）
-            allMenus = allMenus.stream()
-                    .filter(menu -> menu.getId() != 8 && !"/message-board".equals(menu.getMenuPath()))
-                    .collect(Collectors.toList());
-            return buildMenuTree(allMenus, 0L);
-        }
+        // 角色4（超级管理员）菜单与角色3（管理员）一致：将4映射为3后再做合并
+        roleTypes = roleTypes.stream()
+                .map(r -> r != null && r == 4 ? 3 : r)
+                .distinct()
+                .collect(Collectors.toList());
         
         // 合并所有角色的菜单（去重）
         Set<Long> menuIdSet = new HashSet<>();

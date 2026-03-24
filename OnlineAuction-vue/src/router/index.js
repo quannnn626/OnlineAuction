@@ -125,6 +125,12 @@ const routes = [
         meta: { risk: true },
       },
       {
+        path: "audit-dashboard",
+        name: "AuditDashboard",
+        component: () => import("@/views/AuditDashboard.vue"),
+        meta: { audit: true },
+      },
+      {
         path: "admin",
         redirect: "/admin/profile",
       },
@@ -242,9 +248,15 @@ router.beforeEach((to, from, next) => {
   if (to.path === "/login") {
     if (isLogin) {
       const user = JSON.parse(userInfo);
-      if (user.isAdmin) {
+      const roles = user.userRole
+        ? String(user.userRole)
+            .split(",")
+            .map((r) => r.trim())
+        : [];
+      const isBuyerOrSeller = roles.includes("1") || roles.includes("2");
+      if (!isBuyerOrSeller) {
         next("/admin/profile");
-      } else if (user.isSeller) {
+      } else if (roles.includes("2")) {
         next("/my-goods");
       } else {
         next("/home");
@@ -266,7 +278,15 @@ router.beforeEach((to, from, next) => {
 
   // 管理员页面权限检查
   if (to.path.startsWith("/admin")) {
-    if (!user.isAdmin && !user.isSuperAdmin) {
+    const roles = user.userRole
+      ? String(user.userRole)
+          .split(",")
+          .map((r) => r.trim())
+      : [];
+    const canAccessAdminPage = roles.some((r) =>
+      ["3", "4", "5", "6", "7", "8", "9", "10"].includes(r),
+    );
+    if (!canAccessAdminPage) {
       // 非管理员访问后台，跳转到首页
       next("/home");
       return;
@@ -277,6 +297,20 @@ router.beforeEach((to, from, next) => {
   if (to.path === "/my-goods" || to.path.startsWith("/seller")) {
     if (!user.isSeller && !user.isAdmin && !user.isSuperAdmin) {
       next("/home");
+      return;
+    }
+  }
+
+  // 个人中心（前台）仅买方/卖方可访问，管理角色统一走 /admin/profile
+  if (to.path === "/profile" || to.path.startsWith("/profile/")) {
+    const roles = user.userRole
+      ? String(user.userRole)
+          .split(",")
+          .map((r) => r.trim())
+      : [];
+    const isBuyerOrSeller = roles.includes("1") || roles.includes("2");
+    if (!isBuyerOrSeller) {
+      next("/admin/profile");
       return;
     }
   }
@@ -363,6 +397,15 @@ router.beforeEach((to, from, next) => {
   if (to.path === "/risk-dashboard" && to.meta?.risk) {
     const roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
     if (!roles.includes("9")) {
+      next("/home");
+      return;
+    }
+  }
+
+  // 审计中心：仅审计角色(10)可访问
+  if (to.path === "/audit-dashboard" && to.meta?.audit) {
+    const roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
+    if (!roles.includes("10")) {
       next("/home");
       return;
     }

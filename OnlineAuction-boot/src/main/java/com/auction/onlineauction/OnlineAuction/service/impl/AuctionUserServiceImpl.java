@@ -51,13 +51,14 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
                 if (isSuperAdmin) {
                     // 超级管理员：可以查看所有用户（包括其他管理员/超级管理员）
                 } else if (isAdmin || isCustomerService) {
-                    // 管理员/客服：只能查看普通用户及运营岗位角色（1,2,5,6,7,8），不包括管理员和超级管理员
+                    // 管理员/客服：只能查看普通用户及运营岗位角色，不包括管理员和超级管理员
                     wrapper.and(w -> w
                         .notLike("user_role", "3")
                         .notLike("user_role", "4")
                         .and(w2 -> w2.like("user_role", "1").or().like("user_role", "2")
                             .or().like("user_role", "5").or().like("user_role", "6")
-                            .or().like("user_role", "7").or().like("user_role", "8"))
+                            .or().like("user_role", "7").or().like("user_role", "8")
+                            .or().like("user_role", "9").or().like("user_role", "10"))
                     );
                 } else {
                     // 非管理员用户：不能查看用户列表（返回空列表）
@@ -171,17 +172,27 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
         for (String role : roles) {
             role = role.trim();
             if (!role.equals("1") && !role.equals("2") && !role.equals("3") && !role.equals("4")
-                    && !role.equals("5") && !role.equals("6") && !role.equals("7") && !role.equals("8") && !role.equals("9")) {
-                throw new RuntimeException("用户角色值无效（1=买方 2=卖方 3=管理员 4=超级管理员 5=拍卖师 6=客服 7=财务 8=运营 9=风控）");
+                    && !role.equals("5") && !role.equals("6") && !role.equals("7") && !role.equals("8")
+                    && !role.equals("9") && !role.equals("10")) {
+                throw new RuntimeException("用户角色值无效（1=买方 2=卖方 3=管理员 4=超级管理员 5=拍卖师 6=客服 7=财务 8=运营 9=风控 10=审计）");
             }
         }
         
-        // 权限检查：管理员只能创建普通用户及运营岗位角色，超级管理员可以创建所有角色（含管理员）
+        // 权限检查：
+        // - 管理员：不能创建管理员/超级管理员
+        // - 超级管理员：仅额外允许创建管理员，不允许创建超级管理员
         if (!isSuperAdmin) {
             for (String role : roles) {
                 role = role.trim();
                 if (role.equals("3") || role.equals("4")) {
                     throw new RuntimeException("管理员无法创建管理员或超级管理员账号");
+                }
+            }
+        } else {
+            for (String role : roles) {
+                role = role.trim();
+                if (role.equals("4")) {
+                    throw new RuntimeException("超级管理员不能创建超级管理员账号");
                 }
             }
         }
@@ -270,17 +281,27 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
             for (String role : roles) {
                 role = role.trim();
                 if (!role.equals("1") && !role.equals("2") && !role.equals("3") && !role.equals("4")
-                        && !role.equals("5") && !role.equals("6") && !role.equals("7") && !role.equals("8") && !role.equals("9")) {
-                    throw new RuntimeException("用户角色值无效（1=买方 2=卖方 3=管理员 4=超级管理员 5=拍卖师 6=客服 7=财务 8=运营 9=风控）");
+                        && !role.equals("5") && !role.equals("6") && !role.equals("7") && !role.equals("8")
+                        && !role.equals("9") && !role.equals("10")) {
+                    throw new RuntimeException("用户角色值无效（1=买方 2=卖方 3=管理员 4=超级管理员 5=拍卖师 6=客服 7=财务 8=运营 9=风控 10=审计）");
                 }
             }
             
-            // 权限检查：管理员只能设置买方、卖方及运营岗位角色，超级管理员可以设置所有角色
+            // 权限检查：
+            // - 管理员：不能设置管理员/超级管理员
+            // - 超级管理员：仅额外允许设置管理员，不允许设置超级管理员
             if (!isSuperAdmin) {
                 for (String role : roles) {
                     role = role.trim();
                     if (role.equals("3") || role.equals("4")) {
                         throw new RuntimeException("管理员无法设置管理员或超级管理员角色");
+                    }
+                }
+            } else {
+                for (String role : roles) {
+                    role = role.trim();
+                    if (role.equals("4")) {
+                        throw new RuntimeException("超级管理员不能设置超级管理员角色");
                     }
                 }
             }

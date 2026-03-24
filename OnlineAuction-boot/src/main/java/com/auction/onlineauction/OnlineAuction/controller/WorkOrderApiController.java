@@ -112,7 +112,7 @@ public class WorkOrderApiController {
         try {
             HttpSession session = request.getSession(false);
             if (session == null) return Result.error("请先登录");
-            if (!RoleCheckHelper.hasAnyRole(session, 3)) return Result.error("仅管理员可复核");
+            if (!RoleCheckHelper.hasAnyRole(session, 3, 4)) return Result.error("仅管理员可复核");
             return Result.success("查询成功", workOrderService.getAdminReviewWorkOrders(current, size, workStatus, workType));
         } catch (Exception e) {
             return Result.error(e.getMessage());
@@ -124,7 +124,7 @@ public class WorkOrderApiController {
         try {
             HttpSession session = request.getSession(false);
             if (session == null) return Result.error("请先登录");
-            if (!RoleCheckHelper.hasAnyRole(session, 3)) return Result.error("仅管理员可复核");
+            if (!RoleCheckHelper.hasAnyRole(session, 3, 4)) return Result.error("仅管理员可复核");
             Long adminId = (Long) session.getAttribute("userId");
             if (adminId == null) return Result.error("请先登录");
             Boolean approve = body.get("approve") == null ? null : Boolean.valueOf(body.get("approve").toString());

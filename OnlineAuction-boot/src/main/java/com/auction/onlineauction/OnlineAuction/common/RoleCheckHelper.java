@@ -3,7 +3,7 @@ package com.auction.onlineauction.OnlineAuction.common;
 import javax.servlet.http.HttpSession;
 /**
  * 角色校验工具
- * 角色：1=买方 2=卖方 3=管理员 4=超级管理员 5=拍卖师 6=客服 7=财务 8=运营 9=风控
+ * 角色：1=买方 2=卖方 3=管理员 4=超级管理员 5=拍卖师 6=客服 7=财务 8=运营 9=风控 10=审计
  */
 public final class RoleCheckHelper {
 
@@ -72,17 +72,16 @@ public final class RoleCheckHelper {
         return hasAnyRole(session, 3, 4, 8);
     }
 
-    /** 后台管理员/运营/拍卖师/客服/财务 可访问后台数据 */
+    /** 后台管理员/运营/拍卖师/客服/财务/审计 可访问后台数据 */
     public static boolean canAccessAdmin(HttpSession session) {
-        return hasAnyRole(session, 3, 4, 5, 6, 7, 8);
+        return hasAnyRole(session, 3, 4, 5, 6, 7, 8, 10);
     }
 
     /**
-     * 可查看前台竞拍公告（买方、卖方、超级管理员）
-     * 拍卖师、客服、财务无 notice:view 权限，不能查看
+     * 可查看前台竞拍公告（买方、卖方）
      */
     public static boolean canViewPublicNotice(HttpSession session) {
-        return hasAnyRole(session, 1, 2, 4);
+        return hasAnyRole(session, 1, 2);
     }
 
     /**
@@ -129,10 +128,10 @@ public final class RoleCheckHelper {
     }
 
     /**
-     * 可查看/管理后台保证金（仅财务、超级管理员，管理员无此权限）
+     * 可查看/管理后台保证金（仅财务）
      */
     public static boolean canManageDepositAdmin(HttpSession session) {
-        return hasAnyRole(session, 4, 7);
+        return hasAnyRole(session, 7);
     }
 
     /**
@@ -253,9 +252,9 @@ public final class RoleCheckHelper {
         return hasAnyRole(session, 3, 4);
     }
 
-    /** 消息中心：超级管理员可查看所有（监管） */
+    /** 消息中心：当前不启用“全量会话监管”特权 */
     public static boolean canViewAllMessageCenter(HttpSession session) {
-        return hasAnyRole(session, 4);
+        return false;
     }
 
     /** 是否为客服角色（用于分配会话） */
@@ -274,9 +273,16 @@ public final class RoleCheckHelper {
     }
 
     /**
-     * 风控角色：异常出价监控/用户风险标记/冻结解封申请/日志审计
+     * 风控角色：异常出价监控/用户风险标记/冻结解封申请
      */
     public static boolean isRiskControl(HttpSession session) {
         return hasAnyRole(session, 9);
+    }
+
+    /**
+     * 审计角色（只读日志审计）
+     */
+    public static boolean canViewAuditLogs(HttpSession session) {
+        return hasAnyRole(session, 10);
     }
 }

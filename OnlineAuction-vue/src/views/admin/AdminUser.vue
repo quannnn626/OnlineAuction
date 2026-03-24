@@ -44,6 +44,7 @@
             <el-option label="财务" :value="7"></el-option>
             <el-option label="运营" :value="8"></el-option>
             <el-option label="风控" :value="9"></el-option>
+            <el-option label="审计" :value="10"></el-option>
           </el-select>
         </el-col>
         <el-col :span="4">
@@ -229,15 +230,11 @@
             <el-option label="买方用户" :value="1"></el-option>
             <el-option label="卖方用户" :value="2"></el-option>
             <el-option label="风控" :value="9"></el-option>
+            <el-option label="审计" :value="10"></el-option>
             <el-option
               v-if="isSuperAdmin"
               label="管理员"
               :value="3"
-            ></el-option>
-            <el-option
-              v-if="isSuperAdmin"
-              label="超级管理员"
-              :value="4"
             ></el-option>
             <el-option label="拍卖师" :value="5"></el-option>
             <el-option label="客服" :value="6"></el-option>
@@ -250,7 +247,7 @@
           >
             提示：管理员只能{{
               isEdit ? "修改为" : "创建"
-            }}买方、卖方及运营岗位（拍卖师/客服/财务/运营/风控）账号
+            }}买方、卖方及运营岗位（拍卖师/客服/财务/运营/风控/审计）账号
           </div>
         </el-form-item>
         <el-form-item label="真实姓名" prop="realName">
@@ -733,6 +730,7 @@ export default {
         7: "财务",
         8: "运营",
         9: "风控",
+        10: "审计",
       };
       if (roles.length === 0) return "未知";
       if (roles.length === 1) {
@@ -753,6 +751,7 @@ export default {
       if (roles.includes("6")) return "info"; // 客服
       if (roles.includes("5")) return "info"; // 拍卖师
       if (roles.includes("9")) return "info"; // 风控
+      if (roles.includes("10")) return "info"; // 审计
       return "info";
     },
     // 获取卖方审核状态文本

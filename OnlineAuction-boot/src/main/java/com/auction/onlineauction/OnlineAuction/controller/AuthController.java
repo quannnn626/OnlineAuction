@@ -64,19 +64,7 @@ public class AuthController {
             session.setAttribute("isBuyer", loginDTO.getIsBuyer());
             session.setAttribute("isSeller", loginDTO.getIsSeller());
 
-            // 写入登录审计日志（用于风控日志审计：登录/IP/关键操作）
-            try {
-                AuctionOperLog log = new AuctionOperLog();
-                log.setOperUserId(loginDTO.getId());
-                log.setOperModule("auth");
-                log.setOperType("login");
-                log.setOperContent("用户登录：" + (loginDTO.getUserName() != null ? loginDTO.getUserName() : userName));
-                log.setOperIp(loginIp);
-                log.setCreateTime(LocalDateTime.now());
-                operLogService.save(log);
-            } catch (Exception ignored) {
-                // 日志写入失败不影响登录
-            }
+            insertAuthLog(loginDTO.getId(), "login", "登录成功：" + (loginDTO.getUserName() != null ? loginDTO.getUserName() : userName), loginIp);
             
             // 构建返回数据
             Map<String, Object> result = new HashMap<>();
@@ -84,6 +72,9 @@ public class AuthController {
             
             return Result.success("登录成功", result);
         } catch (Exception e) {
+            String loginIp = getClientIp(request);
+            String userName = loginRequest != null ? loginRequest.get("userName") : null;
+            insertAuthLog(null, "login_fail", "登录失败：" + (userName != null ? userName : "-") + "，原因=" + e.getMessage(), loginIp);
             return Result.error("登录失败：" + e.getMessage());
         }
     }
@@ -205,5 +196,20 @@ public class AuthController {
             ip = ip.split(",")[0].trim();
         }
         return ip != null ? ip : "unknown";
+    }
+
+    private void insertAuthLog(Long operUserId, String operType, String content, String ip) {
+        try {
+            AuctionOperLog log = new AuctionOperLog();
+            log.setOperUserId(operUserId);
+            log.setOperModule("auth");
+            log.setOperType(operType);
+            log.setOperContent(content);
+            log.setOperIp(ip);
+            log.setCreateTime(LocalDateTime.now());
+            operLogService.save(log);
+        } catch (Exception ignored) {
+            // 日志写入失败不影响主流程
+        }
     }
 }
