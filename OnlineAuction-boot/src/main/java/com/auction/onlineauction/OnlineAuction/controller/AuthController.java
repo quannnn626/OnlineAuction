@@ -39,44 +39,86 @@ public class AuthController {
     private IAuctionOperLogService operLogService;
 
     /**
-     * 用户登录
+     * 前台用户登录（仅买方/卖方账号）
      */
     @PostMapping("/login")
     public Result<Map<String, Object>> login(@RequestBody Map<String, String> loginRequest, HttpServletRequest request) {
         try {
             String userName = loginRequest.get("userName");
             String password = loginRequest.get("password");
-            
-            // 获取客户端IP
             String loginIp = getClientIp(request);
-            
-            // 调用Service进行登录
-            LoginDTO loginDTO = userService.login(userName, password, loginIp);
-            
-            // 将用户信息存入Session
-            HttpSession session = request.getSession();
-            session.setAttribute("userId", loginDTO.getId());
-            session.setAttribute("userName", loginDTO.getUserName());
-            session.setAttribute("userRole", loginDTO.getUserRole());
-            session.setAttribute("roles", loginDTO.getRoles());
-            session.setAttribute("isAdmin", loginDTO.getIsAdmin());
-            session.setAttribute("isSuperAdmin", loginDTO.getIsSuperAdmin());
-            session.setAttribute("isBuyer", loginDTO.getIsBuyer());
-            session.setAttribute("isSeller", loginDTO.getIsSeller());
 
-            insertAuthLog(loginDTO.getId(), "login", "登录成功：" + (loginDTO.getUserName() != null ? loginDTO.getUserName() : userName), loginIp);
-            
-            // 构建返回数据
+            LoginDTO loginDTO = userService.loginForPublicPortal(userName, password, loginIp);
+            bindUserSession(request, loginDTO);
+
+            insertAuthLog(loginDTO.getId(), "login", "前台登录成功：" + (loginDTO.getUserName() != null ? loginDTO.getUserName() : userName), loginIp);
+
             Map<String, Object> result = new HashMap<>();
             result.put("user", loginDTO);
-            
             return Result.success("登录成功", result);
         } catch (Exception e) {
             String loginIp = getClientIp(request);
             String userName = loginRequest != null ? loginRequest.get("userName") : null;
-            insertAuthLog(null, "login_fail", "登录失败：" + (userName != null ? userName : "-") + "，原因=" + e.getMessage(), loginIp);
+            insertAuthLog(null, "login_fail", "前台登录失败：" + (userName != null ? userName : "-") + "，原因=" + e.getMessage(), loginIp);
             return Result.error("登录失败：" + e.getMessage());
         }
+    }
+
+    /**
+     * 后台管理用户登录（须具备岗位角色 3～10）
+     */
+    @PostMapping("/admin/login")
+    public Result<Map<String, Object>> adminLogin(@RequestBody Map<String, String> loginRequest, HttpServletRequest request) {
+        try {
+            String userName = loginRequest.get("userName");
+            String password = loginRequest.get("password");
+            String loginIp = getClientIp(request);
+
+            LoginDTO loginDTO = userService.loginForAdminPortal(userName, password, loginIp);
+            bindUserSession(request, loginDTO);
+
+            insertAuthLog(loginDTO.getId(), "login", "后台登录成功：" + (loginDTO.getUserName() != null ? loginDTO.getUserName() : userName), loginIp);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("user", loginDTO);
+            return Result.success("登录成功", result);
+        } catch (Exception e) {
+            String loginIp = getClientIp(request);
+            String userName = loginRequest != null ? loginRequest.get("userName") : null;
+            insertAuthLog(null, "login_fail", "后台登录失败：" + (userName != null ? userName : "-") + "，原因=" + e.getMessage(), loginIp);
+            return Result.error("登录失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 公开注册（仅创建买方账号）
+     */
+    @PostMapping("/register")
+    public Result<Void> register(@RequestBody Map<String, String> body, HttpServletRequest request) {
+        try {
+            String userName = body != null ? body.get("userName") : null;
+            String password = body != null ? body.get("password") : null;
+            String phone = body != null ? body.get("phone") : null;
+            String nickName = body != null ? body.get("nickName") : null;
+            userService.registerPublicUser(userName, password, phone, nickName);
+            String ip = getClientIp(request);
+            insertAuthLog(null, "register", "用户注册：" + userName, ip);
+            return Result.success("注册成功，请登录", null);
+        } catch (Exception e) {
+            return Result.error("注册失败：" + e.getMessage());
+        }
+    }
+
+    private void bindUserSession(HttpServletRequest request, LoginDTO loginDTO) {
+        HttpSession session = request.getSession();
+        session.setAttribute("userId", loginDTO.getId());
+        session.setAttribute("userName", loginDTO.getUserName());
+        session.setAttribute("userRole", loginDTO.getUserRole());
+        session.setAttribute("roles", loginDTO.getRoles());
+        session.setAttribute("isAdmin", loginDTO.getIsAdmin());
+        session.setAttribute("isSuperAdmin", loginDTO.getIsSuperAdmin());
+        session.setAttribute("isBuyer", loginDTO.getIsBuyer());
+        session.setAttribute("isSeller", loginDTO.getIsSeller());
     }
 
     /**

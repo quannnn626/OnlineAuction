@@ -85,6 +85,21 @@ public interface IAuctionUserService extends IService<AuctionUser> {
     LoginDTO login(String userName, String password, String loginIp);
 
     /**
+     * 前台门户登录：仅允许买方/卖方（角色 1、2），不含后台岗位角色
+     */
+    LoginDTO loginForPublicPortal(String userName, String password, String loginIp);
+
+    /**
+     * 后台门户登录：须具备后台岗位角色（3～10）
+     */
+    LoginDTO loginForAdminPortal(String userName, String password, String loginIp);
+
+    /**
+     * 公开注册：仅创建买方账号（角色固定为 1）
+     */
+    void registerPublicUser(String userName, String password, String phone, String nickName);
+
+    /**
      * 更新个人资料（用户自己更新）
      * @param userId 当前登录用户ID
      * @param user 更新的用户信息（只更新允许的字段：nickName, realName, phone, email, sex）

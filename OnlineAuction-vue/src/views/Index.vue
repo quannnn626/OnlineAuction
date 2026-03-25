@@ -78,6 +78,7 @@
 <script>
 import { getMenuTree } from "@/api/menu";
 import { logout, getCurrentUser } from "@/api/auth";
+import { loginPathByUserRole } from "@/utils/loginPath";
 
 export default {
   name: "Index",
@@ -471,9 +472,15 @@ export default {
         type: "warning",
       })
         .then(() => {
+          let loginPath = "/login";
+          try {
+            const u = JSON.parse(localStorage.getItem("userInfo") || "{}");
+            loginPath = loginPathByUserRole(u.userRole);
+          } catch (e) {
+            loginPath = "/login";
+          }
           logout()
             .then(() => {
-              // 清除本地存储
               localStorage.removeItem("userInfo");
               localStorage.removeItem("userId");
               localStorage.removeItem("userName");
@@ -484,12 +491,11 @@ export default {
               localStorage.removeItem("isSeller");
 
               this.$message.success("退出登录成功");
-              // 跳转到登录页
-              this.$router.push("/login");
+              this.$router.push(loginPath);
             })
             .catch(() => {
               localStorage.clear();
-              this.$router.push("/login");
+              this.$router.push(loginPath);
             });
         })
         .catch(() => {

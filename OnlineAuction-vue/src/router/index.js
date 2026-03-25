@@ -1,15 +1,41 @@
 import Vue from "vue";
 import VueRouter from "vue-router";
+import { loginPathByUserRole } from "@/utils/loginPath";
 /**
  * 路由守卫
  */
 Vue.use(VueRouter);
+
+function routeNeedsStaffLogin(path) {
+  if (path === "/admin/login") return false;
+  if (path.startsWith("/admin")) return true;
+  if (
+    path === "/risk-dashboard" ||
+    path === "/audit-dashboard" ||
+    path === "/work-order" ||
+    path === "/message/service-orders" ||
+    path.startsWith("/message/service-orders/")
+  ) {
+    return true;
+  }
+  return false;
+}
 
 const routes = [
   {
     path: "/login",
     name: "Login",
     component: () => import("@/views/Login.vue"),
+  },
+  {
+    path: "/admin/login",
+    name: "AdminLogin",
+    component: () => import("@/views/admin/AdminLogin.vue"),
+  },
+  {
+    path: "/register",
+    name: "Register",
+    component: () => import("@/views/Register.vue"),
   },
   {
     path: "/",
@@ -244,7 +270,7 @@ router.beforeEach((to, from, next) => {
   const userInfo = localStorage.getItem("userInfo");
   const isLogin = !!userInfo;
 
-  // 如果访问登录页，已登录则跳转到首页
+  // 前台登录页：已登录则按角色跳转
   if (to.path === "/login") {
     if (isLogin) {
       const user = JSON.parse(userInfo);
@@ -267,9 +293,48 @@ router.beforeEach((to, from, next) => {
     return;
   }
 
-  // 如果未登录，跳转到登录页
+  // 后台登录页
+  if (to.path === "/admin/login") {
+    if (isLogin) {
+      const user = JSON.parse(userInfo);
+      const path = loginPathByUserRole(user.userRole);
+      if (path === "/admin/login") {
+        next("/admin/profile");
+      } else {
+        next("/home");
+      }
+    } else {
+      next();
+    }
+    return;
+  }
+
+  // 注册页：已登录则离开
+  if (to.path === "/register") {
+    if (isLogin) {
+      const user = JSON.parse(userInfo);
+      const roles = user.userRole
+        ? String(user.userRole)
+            .split(",")
+            .map((r) => r.trim())
+        : [];
+      const isBuyerOrSeller = roles.includes("1") || roles.includes("2");
+      if (!isBuyerOrSeller) {
+        next("/admin/profile");
+      } else if (roles.includes("2")) {
+        next("/my-goods");
+      } else {
+        next("/home");
+      }
+    } else {
+      next();
+    }
+    return;
+  }
+
+  // 未登录：后台相关路由去 /admin/login，其余去 /login
   if (!isLogin) {
-    next("/login");
+    next(routeNeedsStaffLogin(to.path) ? "/admin/login" : "/login");
     return;
   }
 

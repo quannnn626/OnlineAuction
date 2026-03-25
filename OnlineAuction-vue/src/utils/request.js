@@ -1,6 +1,7 @@
 import axios from "axios";
 import { Message } from "element-ui";
 import router from "@/router";
+import { loginPathByUserRole } from "@/utils/loginPath";
 
 // 创建 axios 实例
 const service = axios.create({
@@ -38,8 +39,17 @@ function isSessionExpired(msg, response) {
   return false;
 }
 
-// 清除登录信息并跳转登录页
+// 清除登录信息并跳转对应登录页（前台 / 后台）
 function clearAndRedirectToLogin() {
+  let target = "/login";
+  const raw = localStorage.getItem("userInfo");
+  if (raw) {
+    try {
+      target = loginPathByUserRole(JSON.parse(raw).userRole);
+    } catch (e) {
+      target = "/login";
+    }
+  }
   localStorage.removeItem("userInfo");
   localStorage.removeItem("userId");
   localStorage.removeItem("userName");
@@ -49,9 +59,9 @@ function clearAndRedirectToLogin() {
   localStorage.removeItem("isBuyer");
   localStorage.removeItem("isSeller");
   Message.warning("登录已过期，请重新登录");
-  if (router.currentRoute.path !== "/login") {
-    // catch 导航失败（如重复导航、被取消），避免 Uncaught "Navigation cancelled" 报错
-    router.replace("/login").catch(() => {});
+  const cur = router.currentRoute.path;
+  if (cur !== "/login" && cur !== "/admin/login" && cur !== "/register") {
+    router.replace(target).catch(() => {});
   }
 }
 

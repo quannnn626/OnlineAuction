@@ -1,9 +1,9 @@
 <template>
-  <div class="login-container">
+  <div class="login-container admin-login">
     <div class="login-box">
       <div class="login-header">
         <h2>在线拍卖系统</h2>
-        <p>欢迎登录</p>
+        <p>后台管理登录</p>
       </div>
       <el-form
         ref="loginForm"
@@ -14,7 +14,7 @@
         <el-form-item prop="userName">
           <el-input
             v-model="loginForm.userName"
-            placeholder="请输入用户名"
+            placeholder="请输入管理账号"
             prefix-icon="el-icon-user"
             @keyup.enter.native="handleLogin"
           ></el-input>
@@ -41,10 +41,8 @@
         </el-form-item>
       </el-form>
       <div class="login-footer">
-        <p>还没有账号？<router-link to="/register">立即注册</router-link></p>
-        <p class="admin-hint">
-          后台管理人员请使用
-          <router-link to="/admin/login">后台登录</router-link>
+        <p>
+          <router-link to="/login">前台用户登录</router-link>
         </p>
       </div>
     </div>
@@ -52,10 +50,10 @@
 </template>
 
 <script>
-import { login } from "@/api/auth";
+import { adminLogin } from "@/api/auth";
 
 export default {
-  name: "Login",
+  name: "AdminLogin",
   data() {
     return {
       loginForm: {
@@ -79,10 +77,9 @@ export default {
       this.$refs.loginForm.validate((valid) => {
         if (valid) {
           this.loading = true;
-          login(this.loginForm.userName, this.loginForm.password)
+          adminLogin(this.loginForm.userName, this.loginForm.password)
             .then((response) => {
               this.loading = false;
-              // 保存用户信息到localStorage
               if (response && response.user) {
                 localStorage.setItem("userInfo", JSON.stringify(response.user));
                 localStorage.setItem("userId", response.user.id);
@@ -92,38 +89,31 @@ export default {
                 localStorage.setItem("isSuperAdmin", response.user.isSuperAdmin);
                 localStorage.setItem("isBuyer", response.user.isBuyer);
                 localStorage.setItem("isSeller", response.user.isSeller);
-                
+
                 this.$message.success("登录成功");
-                
-                // 根据角色跳转
-                this.redirectByRole(response.user);
+                this.$router.push("/admin/profile");
               }
             })
-            .catch((error) => {
+            .catch(() => {
               this.loading = false;
             });
         }
       });
-    },
-    redirectByRole(user) {
-      const roles = user && user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
-      if (roles.includes("2")) {
-        this.$router.push("/my-goods");
-      } else {
-        this.$router.push("/home");
-      }
     },
   },
 };
 </script>
 
 <style scoped>
+.admin-login.login-container {
+  background: linear-gradient(135deg, #1e3a5f 0%, #0f172a 100%);
+}
+
 .login-container {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
 .login-box {
@@ -168,17 +158,11 @@ export default {
 }
 
 .login-footer a {
-  color: #667eea;
+  color: #1e3a5f;
   text-decoration: none;
-  cursor: pointer;
 }
 
 .login-footer a:hover {
   text-decoration: underline;
-}
-
-.admin-hint {
-  margin-top: 12px;
-  font-size: 13px;
 }
 </style>

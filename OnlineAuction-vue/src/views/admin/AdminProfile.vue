@@ -689,12 +689,11 @@ export default {
               localStorage.removeItem("isSeller");
 
               this.$message.success("退出登录成功");
-              // 跳转到登录页
-              this.$router.push("/login");
+              this.$router.push("/admin/login");
             })
             .catch(() => {
               localStorage.clear();
-              this.$router.push("/login");
+              this.$router.push("/admin/login");
             });
         })
         .catch(() => {

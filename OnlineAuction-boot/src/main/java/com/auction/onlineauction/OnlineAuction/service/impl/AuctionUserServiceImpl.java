@@ -20,6 +20,9 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * <p>
@@ -31,6 +34,26 @@ import java.util.stream.Collectors;
  */
 @Service
 public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, AuctionUser> implements IAuctionUserService {
+
+    /** 后台岗位角色：与前台路由、权限判断保持一致 */
+    private static final Set<String> STAFF_ROLE_IDS;
+    static {
+        Set<String> s = new HashSet<>();
+        Collections.addAll(s, "3", "4", "5", "6", "7", "8", "9", "10");
+        STAFF_ROLE_IDS = Collections.unmodifiableSet(s);
+    }
+
+    private static boolean hasStaffRole(List<String> roles) {
+        if (roles == null) {
+            return false;
+        }
+        for (String r : roles) {
+            if (r != null && STAFF_ROLE_IDS.contains(r.trim())) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     @Override
     public PageInfo<AuctionUser> getUserPage(Integer current, Integer size, String userName, Integer userRole, Integer userStatus, Long currentUserId) {
@@ -525,11 +548,9 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
                     .collect(Collectors.toList());
             loginDTO.setRoles(roles);
             
-            // 判断角色类型（3=管理员 4=超级管理员 5=拍卖师 6=客服 7=财务 8=运营 均可访问后台）
+            // 判断角色类型（3～10 为后台岗位，可访问管理端）
             boolean isSuperAdmin = roles.contains("4");
-            boolean canAccessAdmin = roles.contains("3") || roles.contains("4")
-                    || roles.contains("5") || roles.contains("6") || roles.contains("7") || roles.contains("8");
-            boolean isNormalUser = roles.contains("1");
+            boolean canAccessAdmin = hasStaffRole(roles);
 
             loginDTO.setIsAdmin(canAccessAdmin);
             loginDTO.setIsSuperAdmin(isSuperAdmin);
@@ -544,6 +565,87 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
         }
         
         return loginDTO;
+    }
+
+    @Override
+    public LoginDTO loginForPublicPortal(String userName, String password, String loginIp) {
+        LoginDTO dto = login(userName, password, loginIp);
+        if (hasStaffRole(dto.getRoles())) {
+            throw new RuntimeException("该账号为后台管理账号，请使用后台登录入口（/admin/login）");
+        }
+        return dto;
+    }
+
+    @Override
+    public LoginDTO loginForAdminPortal(String userName, String password, String loginIp) {
+        LoginDTO dto = login(userName, password, loginIp);
+        if (!hasStaffRole(dto.getRoles())) {
+            throw new RuntimeException("请使用前台用户登录入口（/login）");
+        }
+        return dto;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void registerPublicUser(String userName, String password, String phone, String nickName) {
+        if (userName == null || userName.trim().isEmpty()) {
+            throw new RuntimeException("用户名不能为空");
+        }
+        userName = userName.trim();
+        if (userName.length() < 3 || userName.length() > 32) {
+            throw new RuntimeException("用户名长度应为 3～32 个字符");
+        }
+        if (!userName.matches("^[a-zA-Z0-9_]+$")) {
+            throw new RuntimeException("用户名仅允许字母、数字、下划线");
+        }
+        if (password == null || password.trim().isEmpty()) {
+            throw new RuntimeException("密码不能为空");
+        }
+        if (password.length() < 6) {
+            throw new RuntimeException("密码长度不能少于6位");
+        }
+        if (phone == null || phone.trim().isEmpty()) {
+            throw new RuntimeException("手机号不能为空");
+        }
+        phone = phone.trim();
+        if (!phone.matches("^1\\d{10}$")) {
+            throw new RuntimeException("请输入正确的11位手机号");
+        }
+
+        QueryWrapper<AuctionUser> userNameWrapper = new QueryWrapper<>();
+        userNameWrapper.eq("user_name", userName);
+        userNameWrapper.eq("del_flag", 0);
+        if (count(userNameWrapper) > 0) {
+            throw new RuntimeException("用户名已存在");
+        }
+
+        QueryWrapper<AuctionUser> phoneWrapper = new QueryWrapper<>();
+        phoneWrapper.eq("phone", phone);
+        phoneWrapper.eq("del_flag", 0);
+        if (count(phoneWrapper) > 0) {
+            throw new RuntimeException("手机号已被注册");
+        }
+
+        AuctionUser u = new AuctionUser();
+        u.setUserName(userName);
+        u.setPassword(DigestUtils.md5DigestAsHex(password.getBytes()));
+        u.setPhone(phone);
+        String nn = (nickName != null && !nickName.trim().isEmpty()) ? nickName.trim() : userName;
+        if (nn.length() > 50) {
+            throw new RuntimeException("昵称过长");
+        }
+        u.setNickName(nn);
+        u.setUserRole("1");
+        u.setUserStatus(0);
+        u.setSellerAuditStatus(0);
+        u.setSex("2");
+        u.setDelFlag(0);
+        u.setRiskLevel(0);
+        u.setCreateTime(LocalDateTime.now());
+        u.setUpdateTime(LocalDateTime.now());
+        if (!save(u)) {
+            throw new RuntimeException("注册失败，请稍后重试");
+        }
     }
 
     @Override
