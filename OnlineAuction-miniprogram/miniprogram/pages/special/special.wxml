@@ -1,0 +1,13 @@
+<view class="page">
+  <view class="card">
+    <view class="title">拍卖专场</view>
+  </view>
+
+  <view class="card" wx:for="{{list}}" wx:key="id" data-id="{{item.id}}" data-name="{{item.specialName}}" bindtap="toSpecialGoods">
+    <view class="sp-name">{{item.specialName}}</view>
+    <view class="sp-desc">{{item.specialDesc || '暂无说明'}}</view>
+    <view class="link">点击查看专场商品 ></view>
+  </view>
+
+  <view wx:if="{{list.length === 0}}" class="empty">暂无专场</view>
+</view>

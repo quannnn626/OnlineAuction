@@ -1,0 +1,7 @@
+.row {
+  margin-bottom: 14rpx;
+}
+
+.label {
+  color: #666;
+}

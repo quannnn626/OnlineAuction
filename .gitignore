@@ -32,3 +32,4 @@ build/
 ### VS Code ###
 .vscode/
 /upload/
+/OnlineAuction-miniprogram/node_modules/

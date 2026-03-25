@@ -63,6 +63,18 @@ public class AuctionUser implements Serializable {
     private String phone;
 
     /**
+     * 微信唯一标识（openid）
+     */
+    @TableField("wx_openid")
+    private String wxOpenid;
+
+    /**
+     * 微信开放平台标识（可选）
+     */
+    @TableField("wx_unionid")
+    private String wxUnionid;
+
+    /**
      * 用户邮箱
      */
     @TableField("email")

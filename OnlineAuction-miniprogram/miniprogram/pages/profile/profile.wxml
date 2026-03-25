@@ -1,0 +1,11 @@
+<view class="page">
+  <view class="card">
+    <view class="title">个人中心</view>
+    <view class="row"><text class="label">账号：</text>{{profile.userName || '-'}}</view>
+    <view class="row"><text class="label">昵称：</text>{{profile.nickName || '-'}}</view>
+    <view class="row"><text class="label">手机号：</text>{{profile.phone || '-'}}</view>
+    <view class="row"><text class="label">角色：</text>{{profile.userRole || '-'}}</view>
+  </view>
+
+  <button class="btn-primary" bindtap="logout">退出登录</button>
+</view>

@@ -451,7 +451,11 @@ router.beforeEach((to, from, next) => {
 
   // 工单处理/复核：客服(6)与管理员(3)可访问
   if (to.path === "/work-order" && to.meta?.workOrder) {
-    const roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
+    const roles = user.userRole
+      ? String(user.userRole)
+          .split(",")
+          .map((r) => r.trim())
+      : [];
     if (!roles.includes("6") && !roles.includes("3")) {
       next("/home");
       return;
@@ -460,7 +464,11 @@ router.beforeEach((to, from, next) => {
 
   // 风控中心：仅风控角色(9)可访问
   if (to.path === "/risk-dashboard" && to.meta?.risk) {
-    const roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
+    const roles = user.userRole
+      ? String(user.userRole)
+          .split(",")
+          .map((r) => r.trim())
+      : [];
     if (!roles.includes("9")) {
       next("/home");
       return;
@@ -469,7 +477,11 @@ router.beforeEach((to, from, next) => {
 
   // 审计中心：仅审计角色(10)可访问
   if (to.path === "/audit-dashboard" && to.meta?.audit) {
-    const roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
+    const roles = user.userRole
+      ? String(user.userRole)
+          .split(",")
+          .map((r) => r.trim())
+      : [];
     if (!roles.includes("10")) {
       next("/home");
       return;

@@ -1,0 +1,33 @@
+.search-row {
+  display: flex;
+  gap: 12rpx;
+  align-items: center;
+}
+
+.input {
+  flex: 1;
+  border: 1rpx solid #ddd;
+  border-radius: 10rpx;
+  padding: 14rpx;
+}
+
+.goods-name {
+  font-size: 30rpx;
+  font-weight: 600;
+  margin-bottom: 8rpx;
+}
+
+.goods-desc {
+  color: #666;
+  margin-bottom: 8rpx;
+}
+
+.goods-price {
+  color: #e67e22;
+}
+
+.empty {
+  text-align: center;
+  color: #999;
+  margin-top: 50rpx;
+}

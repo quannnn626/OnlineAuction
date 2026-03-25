@@ -1,0 +1,9 @@
+<view class="page login-page">
+  <view class="card">
+    <view class="title">微信登录（自动注册角色1）</view>
+    <input class="input" placeholder="手机号（11位）" type="number" maxlength="11" bindinput="onInputPhone" />
+    <input class="input" placeholder="昵称（可选）" bindinput="onInputNickName" />
+    <input class="input" placeholder="头像URL（可选）" bindinput="onInputAvatar" />
+    <button class="btn-primary submit" loading="{{loading}}" bindtap="onSubmit">微信登录并自动注册</button>
+  </view>
+</view>

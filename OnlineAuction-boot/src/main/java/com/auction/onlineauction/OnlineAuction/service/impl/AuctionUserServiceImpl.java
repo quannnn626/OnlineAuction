@@ -649,6 +649,119 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public LoginDTO loginOrRegisterByWechat(String wxOpenid, String phone, String nickName, String avatar, String loginIp) {
+        if (wxOpenid == null || wxOpenid.trim().isEmpty()) {
+            throw new RuntimeException("微信标识不能为空");
+        }
+        if (phone == null || phone.trim().isEmpty()) {
+            throw new RuntimeException("手机号不能为空");
+        }
+        wxOpenid = wxOpenid.trim();
+        phone = phone.trim();
+        if (!phone.matches("^1\\d{10}$")) {
+            throw new RuntimeException("请输入正确的11位手机号");
+        }
+
+        QueryWrapper<AuctionUser> wxWrapper = new QueryWrapper<>();
+        wxWrapper.eq("wx_openid", wxOpenid);
+        wxWrapper.eq("del_flag", 0);
+        AuctionUser user = getOne(wxWrapper);
+
+        if (user == null) {
+            QueryWrapper<AuctionUser> phoneWrapper = new QueryWrapper<>();
+            phoneWrapper.eq("phone", phone);
+            phoneWrapper.eq("del_flag", 0);
+            AuctionUser phoneUser = getOne(phoneWrapper);
+
+            if (phoneUser != null) {
+                if (phoneUser.getWxOpenid() != null && !phoneUser.getWxOpenid().trim().isEmpty()
+                        && !wxOpenid.equals(phoneUser.getWxOpenid())) {
+                    throw new RuntimeException("手机号已绑定其他微信账号");
+                }
+                phoneUser.setWxOpenid(wxOpenid);
+                if (nickName != null && !nickName.trim().isEmpty()) {
+                    phoneUser.setNickName(nickName.trim());
+                }
+                if (avatar != null && !avatar.trim().isEmpty()) {
+                    phoneUser.setAvatar(avatar.trim());
+                }
+                phoneUser.setUserRole("1");
+                phoneUser.setUpdateTime(LocalDateTime.now());
+                updateById(phoneUser);
+                user = phoneUser;
+            } else {
+                AuctionUser u = new AuctionUser();
+                String baseUserName = "wx_" + wxOpenid.replaceAll("[^a-zA-Z0-9_]", "") + "_" + phone;
+                if (baseUserName.length() > 50) {
+                    baseUserName = baseUserName.substring(0, 50);
+                }
+                String finalUserName = baseUserName;
+                int suffix = 1;
+                while (true) {
+                    QueryWrapper<AuctionUser> userNameWrapper = new QueryWrapper<>();
+                    userNameWrapper.eq("user_name", finalUserName);
+                    userNameWrapper.eq("del_flag", 0);
+                    if (count(userNameWrapper) == 0) {
+                        break;
+                    }
+                    String suffixStr = "_" + suffix++;
+                    int keepLen = Math.max(1, 50 - suffixStr.length());
+                    finalUserName = baseUserName.substring(0, Math.min(baseUserName.length(), keepLen)) + suffixStr;
+                }
+
+                u.setUserName(finalUserName);
+                // 小程序微信登录账号不可密码登录，写入随机不可逆密码占位
+                u.setPassword(DigestUtils.md5DigestAsHex((wxOpenid + "_" + System.nanoTime()).getBytes()));
+                u.setPhone(phone);
+                u.setWxOpenid(wxOpenid);
+                String nn = (nickName != null && !nickName.trim().isEmpty()) ? nickName.trim() : "微信用户";
+                if (nn.length() > 50) {
+                    nn = nn.substring(0, 50);
+                }
+                u.setNickName(nn);
+                if (avatar != null && !avatar.trim().isEmpty()) {
+                    u.setAvatar(avatar.trim());
+                }
+                u.setUserRole("1");
+                u.setUserStatus(0);
+                u.setSellerAuditStatus(0);
+                u.setSex("2");
+                u.setDelFlag(0);
+                u.setRiskLevel(0);
+                u.setCreateTime(LocalDateTime.now());
+                u.setUpdateTime(LocalDateTime.now());
+                if (!save(u)) {
+                    throw new RuntimeException("微信登录注册失败，请稍后重试");
+                }
+                user = u;
+            }
+        }
+
+        if (user.getUserStatus() != null && user.getUserStatus() == 1) {
+            throw new RuntimeException("账号已被禁用，请联系管理员");
+        }
+        user.setLoginIp(loginIp);
+        user.setLoginDate(LocalDateTime.now());
+        user.setUpdateTime(LocalDateTime.now());
+        updateById(user);
+
+        LoginDTO loginDTO = new LoginDTO();
+        loginDTO.setId(user.getId());
+        loginDTO.setUserName(user.getUserName());
+        loginDTO.setNickName(user.getNickName());
+        loginDTO.setAvatar(user.getAvatar());
+        loginDTO.setUserRole("1");
+        loginDTO.setUserStatus(user.getUserStatus());
+        loginDTO.setRoles(Arrays.asList("1"));
+        loginDTO.setIsAdmin(false);
+        loginDTO.setIsSuperAdmin(false);
+        loginDTO.setIsBuyer(true);
+        loginDTO.setIsSeller(false);
+        return loginDTO;
+    }
+
+    @Override
     public AuctionUser updateProfile(Long userId, AuctionUser user) {
         AuctionUser existingUser = getById(userId);
         if (existingUser == null || existingUser.getDelFlag() == 1) {

@@ -1,0 +1,13 @@
+<view class="page">
+  <view class="card">
+    <view class="title">{{specialName || '专场商品'}}</view>
+  </view>
+
+  <view class="card" wx:for="{{list}}" wx:key="goodsId">
+    <view class="goods-name">{{item.goodsName || item.name || '未命名商品'}}</view>
+    <view class="goods-desc">{{item.goodsDesc || item.description || '暂无描述'}}</view>
+    <view class="goods-price">当前价：{{item.currentHighestPrice || item.basePrice || 0}}</view>
+  </view>
+
+  <view wx:if="{{list.length === 0}}" class="empty">该专场暂无商品</view>
+</view>

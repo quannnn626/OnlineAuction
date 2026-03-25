@@ -100,6 +100,11 @@ public interface IAuctionUserService extends IService<AuctionUser> {
     void registerPublicUser(String userName, String password, String phone, String nickName);
 
     /**
+     * 小程序微信登录：按微信唯一标识自动登录；首次登录自动注册为普通用户（角色1）
+     */
+    LoginDTO loginOrRegisterByWechat(String wxOpenid, String phone, String nickName, String avatar, String loginIp);
+
+    /**
      * 更新个人资料（用户自己更新）
      * @param userId 当前登录用户ID
      * @param user 更新的用户信息（只更新允许的字段：nickName, realName, phone, email, sex）

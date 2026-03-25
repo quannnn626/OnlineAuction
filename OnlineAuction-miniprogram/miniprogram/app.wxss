@@ -1,0 +1,30 @@
+page {
+  background: #f5f7fa;
+  color: #222;
+  font-size: 28rpx;
+}
+
+.page {
+  min-height: 100vh;
+  padding: 24rpx;
+  box-sizing: border-box;
+}
+
+.card {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 20rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 8rpx 20rpx rgba(0, 0, 0, 0.04);
+}
+
+.title {
+  font-size: 32rpx;
+  font-weight: 600;
+  margin-bottom: 20rpx;
+}
+
+.btn-primary {
+  background: #1677ff;
+  color: #fff;
+}

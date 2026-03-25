@@ -1,0 +1,41 @@
+{
+  "pages": [
+    "pages/login/login",
+    "pages/home/home",
+    "pages/special/special",
+    "pages/my-goods/my-goods",
+    "pages/profile/profile",
+    "pages/special-goods/special-goods"
+  ],
+  "window": {
+    "navigationBarTextStyle": "black",
+    "navigationBarBackgroundColor": "#ffffff",
+    "navigationBarTitleText": "在线拍卖"
+  },
+  "tabBar": {
+    "color": "#666666",
+    "selectedColor": "#1677ff",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/home/home",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/special/special",
+        "text": "专场"
+      },
+      {
+        "pagePath": "pages/my-goods/my-goods",
+        "text": "我的商品"
+      },
+      {
+        "pagePath": "pages/profile/profile",
+        "text": "个人中心"
+      }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}
