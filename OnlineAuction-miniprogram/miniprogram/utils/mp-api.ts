@@ -6,6 +6,7 @@ export interface LoginUser {
   nickName: string;
   avatar?: string;
   userRole: string;
+  needSetPassword?: boolean;
 }
 
 export interface GoodsItem {
@@ -69,5 +70,13 @@ export function getMyGoods(current = 1, size = 10) {
 export function getMyProfile() {
   return request<LoginUser & Record<string, unknown>>({
     url: "/mp/user/profile",
+  });
+}
+
+export function setPassword(newPassword: string) {
+  return request<{ needSetPassword: boolean }>({
+    url: "/mp/user/set-password",
+    method: "POST",
+    data: { password: newPassword },
   });
 }

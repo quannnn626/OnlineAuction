@@ -121,6 +121,13 @@ public interface IAuctionUserService extends IService<AuctionUser> {
     void changePassword(Long userId, String oldPassword, String newPassword);
 
     /**
+     * 小程序首次登录后设置密码（不要求旧密码）
+     * @param userId 当前登录用户ID
+     * @param newPassword 新密码（明文）
+     */
+    void setPassword(Long userId, String newPassword);
+
+    /**
      * 上传并更新头像
      * @param userId 当前登录用户ID
      * @param avatarFileId 头像文件ID（关联auction_file.id）

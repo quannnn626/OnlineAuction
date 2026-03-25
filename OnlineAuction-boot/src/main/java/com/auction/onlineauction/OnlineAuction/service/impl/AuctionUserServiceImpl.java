@@ -668,6 +668,12 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
         wxWrapper.eq("del_flag", 0);
         AuctionUser user = getOne(wxWrapper);
 
+        // username 规则：wx_openid + 手机号（用于区分不同微信账号）
+        String baseUserName = "wx_" + wxOpenid.replaceAll("[^a-zA-Z0-9_]", "") + "_" + phone;
+        if (baseUserName.length() > 50) {
+            baseUserName = baseUserName.substring(0, 50);
+        }
+
         if (user == null) {
             QueryWrapper<AuctionUser> phoneWrapper = new QueryWrapper<>();
             phoneWrapper.eq("phone", phone);
@@ -687,15 +693,29 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
                     phoneUser.setAvatar(avatar.trim());
                 }
                 phoneUser.setUserRole("1");
+
+                // 绑定成功后，更新 username 规则（wx_openid + phone）
+                String finalUserName = baseUserName;
+                int suffix = 1;
+                while (true) {
+                    QueryWrapper<AuctionUser> userNameWrapper = new QueryWrapper<>();
+                    userNameWrapper.eq("user_name", finalUserName);
+                    userNameWrapper.eq("del_flag", 0);
+                    AuctionUser existed = getOne(userNameWrapper);
+                    if (existed == null || (existed.getId() != null && existed.getId().equals(phoneUser.getId()))) {
+                        break;
+                    }
+                    String suffixStr = "_" + suffix++;
+                    int keepLen = Math.max(1, 50 - suffixStr.length());
+                    finalUserName = baseUserName.substring(0, Math.min(baseUserName.length(), keepLen)) + suffixStr;
+                }
+                phoneUser.setUserName(finalUserName);
+
                 phoneUser.setUpdateTime(LocalDateTime.now());
                 updateById(phoneUser);
                 user = phoneUser;
             } else {
                 AuctionUser u = new AuctionUser();
-                String baseUserName = "wx_" + wxOpenid.replaceAll("[^a-zA-Z0-9_]", "") + "_" + phone;
-                if (baseUserName.length() > 50) {
-                    baseUserName = baseUserName.substring(0, 50);
-                }
                 String finalUserName = baseUserName;
                 int suffix = 1;
                 while (true) {
@@ -711,8 +731,8 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
                 }
 
                 u.setUserName(finalUserName);
-                // 小程序微信登录账号不可密码登录，写入随机不可逆密码占位
-                u.setPassword(DigestUtils.md5DigestAsHex((wxOpenid + "_" + System.nanoTime()).getBytes()));
+                // 小程序首次自动注册：先不设置密码（password 为空；前端引导设置）
+                u.setPassword("");
                 u.setPhone(phone);
                 u.setWxOpenid(wxOpenid);
                 String nn = (nickName != null && !nickName.trim().isEmpty()) ? nickName.trim() : "微信用户";
@@ -736,6 +756,37 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
                 }
                 user = u;
             }
+        } else {
+            // wx_openid 存在：确保手机号一致（否则拒绝，避免一个手机号被绑定多个微信）
+            if (phone != null && !phone.trim().isEmpty()) {
+                String existedPhone = user.getPhone();
+                if (existedPhone != null && !existedPhone.trim().isEmpty() && !phone.equals(existedPhone.trim())) {
+                    throw new RuntimeException("该手机号已绑定其他微信账号");
+                }
+                if (existedPhone == null || existedPhone.trim().isEmpty()) {
+                    user.setPhone(phone);
+                }
+            }
+
+            // 更新昵称/头像（可选）
+            if (nickName != null && !nickName.trim().isEmpty()) {
+                user.setNickName(nickName.trim());
+            }
+            if (avatar != null && !avatar.trim().isEmpty()) {
+                user.setAvatar(avatar.trim());
+            }
+
+            // 更新 username 规则：wx_openid + phone
+            if (user.getPhone() != null && !user.getPhone().trim().isEmpty()) {
+                String desired = "wx_" + wxOpenid.replaceAll("[^a-zA-Z0-9_]", "") + "_" + user.getPhone().trim();
+                if (desired.length() > 50) desired = desired.substring(0, 50);
+                if (!desired.equals(user.getUserName())) {
+                    user.setUserName(desired);
+                }
+            }
+
+            user.setUpdateTime(LocalDateTime.now());
+            updateById(user);
         }
 
         if (user.getUserStatus() != null && user.getUserStatus() == 1) {
@@ -758,6 +809,9 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
         loginDTO.setIsSuperAdmin(false);
         loginDTO.setIsBuyer(true);
         loginDTO.setIsSeller(false);
+
+        boolean needSetPassword = user.getPassword() == null || user.getPassword().trim().isEmpty();
+        loginDTO.setNeedSetPassword(needSetPassword);
         return loginDTO;
     }
 
@@ -833,6 +887,33 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
         boolean success = updateById(user);
         if (!success) {
             throw new RuntimeException("修改密码失败");
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void setPassword(Long userId, String newPassword) {
+        if (userId == null) {
+            throw new RuntimeException("用户不存在");
+        }
+        if (newPassword == null || newPassword.trim().isEmpty()) {
+            throw new RuntimeException("新密码不能为空");
+        }
+        if (newPassword.length() < 6) {
+            throw new RuntimeException("新密码长度不能少于6位");
+        }
+
+        AuctionUser user = getById(userId);
+        if (user == null || user.getDelFlag() == 1) {
+            throw new RuntimeException("用户不存在");
+        }
+
+        String md5NewPassword = DigestUtils.md5DigestAsHex(newPassword.getBytes());
+        user.setPassword(md5NewPassword);
+        user.setUpdateTime(LocalDateTime.now());
+        boolean success = updateById(user);
+        if (!success) {
+            throw new RuntimeException("设置密码失败");
         }
     }
 

@@ -5,7 +5,8 @@
     "pages/special/special",
     "pages/my-goods/my-goods",
     "pages/profile/profile",
-    "pages/special-goods/special-goods"
+    "pages/special-goods/special-goods",
+    "pages/set-password/set-password"
   ],
   "window": {
     "navigationBarTextStyle": "black",

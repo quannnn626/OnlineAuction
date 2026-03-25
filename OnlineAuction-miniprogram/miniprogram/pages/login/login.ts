@@ -4,7 +4,6 @@ Page({
   data: {
     phone: "",
     nickName: "",
-    avatar: "",
     code: "",
     loading: false,
   },
@@ -22,10 +21,6 @@ Page({
 
   onInputNickName(e: WechatMiniprogram.Input) {
     this.setData({ nickName: e.detail.value.trim() });
-  },
-
-  onInputAvatar(e: WechatMiniprogram.Input) {
-    this.setData({ avatar: e.detail.value.trim() });
   },
 
   fetchLoginCode(): Promise<string> {
@@ -53,13 +48,28 @@ Page({
         code,
         phone: this.data.phone,
         nickName: this.data.nickName,
-        avatar: this.data.avatar,
       });
       const app = getApp<IAppOption>();
       app.globalData.user = resp.user;
       wx.setStorageSync("user", resp.user);
-      wx.showToast({ title: "登录成功", icon: "success" });
-      wx.switchTab({ url: "/pages/home/home" });
+      if (resp.user.needSetPassword) {
+        wx.showModal({
+          title: "设置密码",
+          content: "检测到你尚未设置密码，为保障账号安全，是否现在去设置？",
+          confirmText: "去设置",
+          cancelText: "先不设置",
+          success: (r) => {
+            if (r.confirm) {
+              wx.navigateTo({ url: "/pages/set-password/set-password" });
+            } else {
+              wx.switchTab({ url: "/pages/home/home" });
+            }
+          },
+        });
+      } else {
+        wx.showToast({ title: "登录成功", icon: "success" });
+        wx.switchTab({ url: "/pages/home/home" });
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "登录失败";
       wx.showToast({ title: msg, icon: "none" });

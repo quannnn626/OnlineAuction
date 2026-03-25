@@ -151,6 +151,24 @@ public class MpApiController {
         }
     }
 
+    @PostMapping("/user/set-password")
+    public Result<Map<String, Object>> setPassword(@RequestBody Map<String, String> body, HttpServletRequest request) {
+        try {
+            Long userId = getCurrentUserId(request);
+            if (userId == null) {
+                return Result.error("未登录");
+            }
+            String password = body != null ? body.get("password") : null;
+            userService.setPassword(userId, password);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("needSetPassword", false);
+            return Result.success("设置成功", result);
+        } catch (Exception e) {
+            return Result.error("设置失败：" + e.getMessage());
+        }
+    }
+
     private Long getCurrentUserId(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
         if (session == null) return null;

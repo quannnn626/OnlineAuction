@@ -66,4 +66,9 @@ public class LoginDTO implements Serializable {
      * 账号状态：0=正常 1=禁用
      */
     private Integer userStatus;
+
+    /**
+     * 是否需要设置密码（小程序首次自动注册时，password 为空）
+     */
+    private Boolean needSetPassword;
 }
