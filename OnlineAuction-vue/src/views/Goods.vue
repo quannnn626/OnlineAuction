@@ -73,8 +73,8 @@
         <el-table-column label="商品图片" width="120">
           <template slot-scope="scope">
             <el-image
-              :src="getGoodsImage(scope.row.goodsImg)"
-              :preview-src-list="[getGoodsImage(scope.row.goodsImg)]"
+              :src="getGoodsImage(scope.row)"
+              :preview-src-list="[getGoodsImage(scope.row)]"
               style="width: 80px; height: 80px; object-fit: cover"
               fit="cover"
             >
@@ -272,12 +272,25 @@ export default {
       this.pagination.current = current;
       this.loadData();
     },
-    getGoodsImage(goodsImg) {
-      if (!goodsImg) {
-        return "/images/no-image.svg";
+    getGoodsImage(goods) {
+      // 优先使用后端返回的 files[].filePath
+      const files = goods && goods.files ? goods.files : [];
+      if (Array.isArray(files) && files.length > 0) {
+        const f = files.find((x) => x && x.filePath && /\.(jpg|jpeg|png|gif|webp|bmp|svg)/i.test(x.filePath));
+        if (f && f.filePath) {
+          const p = f.filePath;
+          return /^https?:\/\//i.test(p) ? p : p.startsWith("/") ? p : "/" + p;
+        }
       }
-      const images = goodsImg.split(",");
-      return images[0].trim();
+
+      // 兼容旧字段 goodsImg（逗号分隔）
+      const goodsImg = goods && goods.goodsImg;
+      if (goodsImg) {
+        const images = String(goodsImg).split(",");
+        const url = images[0] && images[0].trim();
+        if (url) return url.startsWith("/") ? url : "/" + url;
+      }
+      return "/images/no-image.svg";
     },
     getStatusType(status) {
       const typeMap = {

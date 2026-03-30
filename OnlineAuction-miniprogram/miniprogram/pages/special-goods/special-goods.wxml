@@ -3,10 +3,17 @@
     <view class="title">{{specialName || '专场商品'}}</view>
   </view>
 
-  <view class="card" wx:for="{{list}}" wx:key="goodsId">
-    <view class="goods-name">{{item.goodsName || item.name || '未命名商品'}}</view>
-    <view class="goods-desc">{{item.goodsDesc || item.description || '暂无描述'}}</view>
+  <view class="card" wx:for="{{list}}" wx:key="goodsId" data-id="{{item.goodsId}}" bindtap="toGoodsDetail">
+    <image
+      class="goods-image"
+      wx:if="{{item.files && item.files.length > 0 && item.files[0].filePath}}"
+      src="{{uploadBase}}{{item.files[0].filePath}}"
+      mode="aspectFill"
+    ></image>
+    <view class="goods-name">{{item.goodsName || '未命名商品'}}</view>
+    <view class="goods-desc">{{item.goodsDesc || '暂无描述'}}</view>
     <view class="goods-price">当前价：{{item.currentHighestPrice || item.basePrice || 0}}</view>
+    <view class="detail-link">查看详情 ></view>
   </view>
 
   <view wx:if="{{list.length === 0}}" class="empty">该专场暂无商品</view>

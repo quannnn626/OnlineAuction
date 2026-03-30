@@ -17,6 +17,7 @@ export interface GoodsItem {
   basePrice?: number;
   shelfStatus?: number;
   fileIds?: string;
+  files?: Array<{ filePath: string; fileType?: string }>;
 }
 
 export interface SpecialItem {
@@ -58,6 +59,12 @@ export function getSpecialList() {
 export function getSpecialGoods(specialId: number) {
   return request<Array<Record<string, unknown>>>({
     url: `/mp/special/${specialId}/goods`,
+  });
+}
+
+export function getGoodsDetail(goodsId: number) {
+  return request<GoodsItem & Record<string, unknown>>({
+    url: `/mp/goods/${goodsId}`,
   });
 }
 

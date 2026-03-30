@@ -2,6 +2,7 @@ import { getMyGoods, GoodsItem } from "../../utils/mp-api";
 
 Page({
   data: {
+    uploadBase: "",
     list: [] as GoodsItem[],
   },
 
@@ -17,6 +18,7 @@ Page({
       return;
     }
     app.globalData.user = user;
+    this.setData({ uploadBase: app.globalData.uploadBase });
     await this.loadList();
   },
 
@@ -28,5 +30,11 @@ Page({
       const msg = err instanceof Error ? err.message : "加载失败";
       wx.showToast({ title: msg, icon: "none" });
     }
+  },
+
+  toGoodsDetail(e: WechatMiniprogram.BaseEvent) {
+    const id = Number(e.currentTarget.dataset.id || 0);
+    if (!id) return;
+    wx.navigateTo({ url: `/pages/goods-detail/goods-detail?id=${id}` });
   },
 });

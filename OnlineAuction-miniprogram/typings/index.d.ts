@@ -4,6 +4,7 @@ interface IAppOption {
   globalData: {
     userInfo?: WechatMiniprogram.UserInfo,
     baseUrl: string,
+    uploadBase: string,
     sessionId: string,
     user?: {
       id: number,

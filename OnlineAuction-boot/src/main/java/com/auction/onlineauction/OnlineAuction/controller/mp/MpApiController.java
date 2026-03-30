@@ -151,6 +151,20 @@ public class MpApiController {
         }
     }
 
+    @GetMapping("/goods/{id}")
+    public Result<AuctionGoods> getGoodsDetail(@PathVariable Long id, HttpServletRequest request) {
+        if (getCurrentUserId(request) == null) {
+            return Result.error("未登录");
+        }
+        try {
+            goodsService.incrementViewCount(id);
+            AuctionGoods goods = goodsService.getGoodsByIdForPublic(id);
+            return Result.success("查询成功", goods);
+        } catch (Exception e) {
+            return Result.error("查询失败：" + e.getMessage());
+        }
+    }
+
     @PostMapping("/user/set-password")
     public Result<Map<String, Object>> setPassword(@RequestBody Map<String, String> body, HttpServletRequest request) {
         try {

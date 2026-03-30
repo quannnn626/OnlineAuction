@@ -3,10 +3,17 @@
     <view class="title">我的商品</view>
   </view>
 
-  <view class="card" wx:for="{{list}}" wx:key="id">
+  <view class="card" wx:for="{{list}}" wx:key="id" data-id="{{item.id}}" bindtap="toGoodsDetail">
+    <image
+      class="goods-image"
+      wx:if="{{item.files && item.files.length > 0 && item.files[0].filePath}}"
+      src="{{uploadBase}}{{item.files[0].filePath}}"
+      mode="aspectFill"
+    ></image>
     <view class="goods-name">{{item.goodsName}}</view>
     <view class="goods-desc">{{item.goodsDesc || '暂无描述'}}</view>
     <view class="goods-price">当前价：{{item.currentHighestPrice || item.basePrice || 0}}</view>
+    <view class="detail-link">查看详情 ></view>
   </view>
 
   <view wx:if="{{list.length === 0}}" class="empty">暂无我的商品</view>

@@ -3,6 +3,7 @@ import { getHomeGoods, GoodsItem } from "../../utils/mp-api";
 Page({
   data: {
     keyword: "",
+    uploadBase: "",
     list: [] as GoodsItem[],
     loading: false,
   },
@@ -27,6 +28,7 @@ Page({
       return;
     }
     app.globalData.user = user;
+    this.setData({ uploadBase: app.globalData.uploadBase });
     await this.loadList();
   },
 
@@ -41,5 +43,11 @@ Page({
     } finally {
       this.setData({ loading: false });
     }
+  },
+
+  toGoodsDetail(e: WechatMiniprogram.BaseEvent) {
+    const id = Number(e.currentTarget.dataset.id || 0);
+    if (!id) return;
+    wx.navigateTo({ url: `/pages/goods-detail/goods-detail?id=${id}` });
   },
 });

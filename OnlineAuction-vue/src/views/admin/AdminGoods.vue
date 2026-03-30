@@ -75,8 +75,8 @@
         <el-table-column label="商品图片" width="120">
           <template slot-scope="scope">
             <el-image
-              :src="getGoodsImage(scope.row.goodsImg)"
-              :preview-src-list="getGoodsImages(scope.row.goodsImg)"
+              :src="getGoodsImage(scope.row)"
+              :preview-src-list="getGoodsImages(scope.row)"
               style="width: 80px; height: 80px; object-fit: cover"
               fit="cover"
             >
@@ -1188,14 +1188,33 @@ export default {
       }));
     },
     // 获取商品图片
-    getGoodsImage(goodsImg) {
-      if (!goodsImg) return "/images/no-image.svg";
-      return goodsImg.split(",")[0];
+    getGoodsImage(goods) {
+      const imgs = this.getGoodsImages(goods);
+      return imgs && imgs.length > 0 ? imgs[0] : "/images/no-image.svg";
     },
     // 获取商品图片列表
-    getGoodsImages(goodsImg) {
+    getGoodsImages(goods) {
+      const files = goods && Array.isArray(goods.files) ? goods.files : [];
+      const fromFiles = files
+        .map((f) => f && f.filePath ? this.normalizeFileUrl(f.filePath) : "")
+        .filter((p) => p && /\.(jpg|jpeg|png|gif|webp|bmp|svg)/i.test(p));
+
+      if (fromFiles.length > 0) return fromFiles;
+
+      // 兼容旧字段 goodsImg（逗号分隔）
+      const goodsImg = goods && goods.goodsImg ? goods.goodsImg : null;
       if (!goodsImg) return [];
-      return goodsImg.split(",");
+      return String(goodsImg)
+        .split(",")
+        .map((v) => v.trim())
+        .filter(Boolean)
+        .map((p) => this.normalizeFileUrl(p));
+    },
+    normalizeFileUrl(path) {
+      if (!path) return "";
+      if (/^https?:\/\//i.test(path)) return path;
+      if (path.startsWith("/")) return path;
+      return "/" + path;
     },
     // 获取审核状态类型
     getAuditStatusType(status) {

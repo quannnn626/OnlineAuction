@@ -1,0 +1,20 @@
+<view class="page">
+  <view class="card">
+    <view class="title">{{detail.goodsName || '商品详情'}}</view>
+    <image
+      class="goods-image"
+      wx:if="{{detail.files && detail.files.length > 0 && detail.files[0].filePath}}"
+      src="{{uploadBase}}{{detail.files[0].filePath}}"
+      mode="aspectFill"
+    ></image>
+    <view class="row"><text class="label">当前价：</text>{{detail.currentHighestPrice || detail.basePrice || 0}}</view>
+    <view class="row"><text class="label">起拍价：</text>{{detail.basePrice || 0}}</view>
+    <view class="row"><text class="label">状态：</text>{{detail.goodsStatus}}</view>
+  </view>
+
+  <view class="card">
+    <view class="sub-title">商品描述</view>
+    <view class="desc">{{detail.goodsDesc || '暂无描述'}}</view>
+  </view>
+</view>
+
