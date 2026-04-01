@@ -34,6 +34,13 @@ public interface IAuctionUserService extends IService<AuctionUser> {
     List<Map<String, Object>> searchUsersForSelection(String keyword, int limit);
 
     /**
+     * 后台“管理沟通通知”选择器用：
+     * 仅返回内部岗位接收人（role 5～10），并暂时排除卖家（role=2）
+     * 返回字段：userId、userName、nickName、userRole
+     */
+    List<Map<String, Object>> searchStaffUsersForNotification(String keyword, int limit);
+
+    /**
      * 根据ID查询用户详情（不返回密码）
      */
     AuctionUser getUserByIdWithoutPassword(Long id);

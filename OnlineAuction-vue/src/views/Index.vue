@@ -137,6 +137,15 @@ export default {
               });
             }
 
+            // 管理员管理沟通已迁移：非买方/卖方/客服隐藏旧“消息中心”入口
+            const canUseMessageCenter = roles.includes("1") || roles.includes("2") || roles.includes("6");
+            if (!canUseMessageCenter) {
+              menuTree = this.filterMenu(menuTree, (menu) => {
+                const p = (menu.menuPath || "").trim();
+                return p !== "/message" && p !== "message";
+              });
+            }
+
             // 买方/卖方端兜底菜单：补充“拍卖专场”入口（避免后端菜单未配置导致看不到）
             if (isEndUser && !this.menuExists(menuTree, "/special")) {
               menuTree.push({
@@ -238,6 +247,30 @@ export default {
               menuName: "个人信息",
               menuPath: "/admin/profile",
               menuIcon: "el-icon-user",
+              children: [],
+            });
+          }
+
+          // 管理沟通通知模块（B）：兜底左侧菜单入口
+          const canSend = ["3", "4"].some((r) => roles.includes(r));
+          const canInbox = ["5", "6", "7", "8", "9", "10"].some((r) =>
+            roles.includes(r),
+          );
+          if (canSend && !this.menuExists(menuTree, "/admin/notifications/send")) {
+            menuTree.push({
+              id: 99998,
+              menuName: "管理沟通通知",
+              menuPath: "/admin/notifications/send",
+              menuIcon: "el-icon-message",
+              children: [],
+            });
+          }
+          if (canInbox && !this.menuExists(menuTree, "/admin/notifications/inbox")) {
+            menuTree.push({
+              id: 99999,
+              menuName: "管理沟通通知",
+              menuPath: "/admin/notifications/inbox",
+              menuIcon: "el-icon-message",
               children: [],
             });
           }

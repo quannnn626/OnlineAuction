@@ -126,6 +126,40 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
     }
 
     @Override
+    public List<Map<String, Object>> searchStaffUsersForNotification(String keyword, int limit) {
+        QueryWrapper<AuctionUser> wrapper = new QueryWrapper<>();
+        wrapper.eq("del_flag", 0)
+                .select("id", "user_name", "nick_name", "user_role")
+                // 暂时先不加卖家：排除 role=2
+                .and(w -> w.notLike("user_role", "2")
+                        // 仅允许内部岗位接收人：role 5～10
+                        .and(w2 -> w2.like("user_role", "5")
+                                .or().like("user_role", "6")
+                                .or().like("user_role", "7")
+                                .or().like("user_role", "8")
+                                .or().like("user_role", "9")
+                                .or().like("user_role", "10")
+                        )
+                );
+
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            String kw = keyword.trim();
+            wrapper.and(w -> w.like("user_name", kw).or().like("nick_name", kw));
+        }
+
+        wrapper.orderByDesc("id").last("LIMIT " + Math.min(Math.max(limit, 1), 50));
+        List<AuctionUser> list = list(wrapper);
+        return list.stream().map(u -> {
+            Map<String, Object> m = new HashMap<>();
+            m.put("userId", u.getId());
+            m.put("userName", u.getUserName() != null ? u.getUserName() : "");
+            m.put("nickName", u.getNickName() != null ? u.getNickName() : "");
+            m.put("userRole", u.getUserRole() != null ? u.getUserRole() : "");
+            return m;
+        }).collect(Collectors.toList());
+    }
+
+    @Override
     public PageInfo<AuctionUser> getSellerAuditPage(Integer current, Integer size, String userName, Integer sellerAuditStatus) {
         PageHelper.startPage(current, size);
         QueryWrapper<AuctionUser> wrapper = new QueryWrapper<>();

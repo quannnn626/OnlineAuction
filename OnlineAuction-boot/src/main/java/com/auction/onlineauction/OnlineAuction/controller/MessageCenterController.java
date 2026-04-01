@@ -53,17 +53,7 @@ public class MessageCenterController {
     @PostMapping("/admin-session")
     public Result<AuctionMessageSession> getOrCreateAdminSession(@RequestBody Map<String, Object> body, HttpServletRequest request) {
         try {
-            HttpSession session = request.getSession(false);
-            if (session == null) return Result.error("请先登录");
-            if (!RoleCheckHelper.canCreateAdminSession(session)) {
-                return Result.error("仅管理员/超级管理员可与后台用户发起管理沟通");
-            }
-            Long adminId = (Long) session.getAttribute("userId");
-            if (adminId == null) return Result.error("请先登录");
-            Long targetId = body.get("targetUserId") != null ? Long.valueOf(body.get("targetUserId").toString()) : null;
-            if (targetId == null) return Result.error("目标用户ID不能为空");
-            AuctionMessageSession s = messageCenterService.getOrCreateAdminSession(adminId, targetId);
-            return Result.success("成功", s);
+            return Result.error("管理员管理沟通已迁移至「管理沟通通知」模块");
         } catch (Exception e) {
             return Result.error(e.getMessage());
         }

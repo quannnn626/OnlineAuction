@@ -221,6 +221,18 @@ const routes = [
         component: () => import("@/views/admin/AdminMessage.vue"),
       },
       {
+        path: "admin/notifications/send",
+        name: "AdminNotificationsSend",
+        component: () =>
+          import("@/views/admin/AdminNotificationsSend.vue"),
+      },
+      {
+        path: "admin/notifications/inbox",
+        name: "AdminNotificationsInbox",
+        component: () =>
+          import("@/views/admin/AdminNotificationsInbox.vue"),
+      },
+      {
         path: "admin/settings",
         name: "AdminSettings",
         component: () => import("@/views/admin/AdminSettings.vue"),
@@ -416,7 +428,7 @@ router.beforeEach((to, from, next) => {
     }
   }
 
-  // 消息中心：买方、卖方、管理员、超管、客服、拍卖师、财务、运营均可访问（会话可见性由后端控制）
+  // 消息中心：仅买方、卖方、客服可访问
   if (to.path === "/message" && to.meta?.messageCenter) {
     const roles = user.userRole
       ? String(user.userRole)
@@ -424,7 +436,7 @@ router.beforeEach((to, from, next) => {
           .map((r) => r.trim())
       : [];
     const canAccess = roles.some((r) =>
-      ["1", "2", "3", "4", "5", "6", "7", "8"].includes(r),
+      ["1", "2", "6"].includes(r),
     );
     if (!canAccess) {
       next("/home");

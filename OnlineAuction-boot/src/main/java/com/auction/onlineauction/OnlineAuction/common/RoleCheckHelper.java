@@ -237,9 +237,9 @@ public final class RoleCheckHelper {
         return hasAnyRole(session, 3, 4, 5, 7, 9);
     }
 
-    /** 消息中心：买方、卖方、管理员、超级管理员、客服、拍卖师、财务、运营可查看（权限细分在会话类型） */
+    /** 消息中心：仅买方、卖方、客服可使用 */
     public static boolean canUseMessageCenter(HttpSession session) {
-        return hasAnyRole(session, 1, 2, 3, 4, 5, 6, 7, 8);
+        return hasAnyRole(session, 1, 2, 6);
     }
 
     /** 普通用户(买方、卖方)可发起客服咨询，与客服对话；卖方除可上架商品外与买方无异 */
@@ -247,9 +247,9 @@ public final class RoleCheckHelper {
         return hasAnyRole(session, 1, 2);
     }
 
-    /** 仅管理员/超级管理员可与后台用户发起管理沟通 */
+    /** 管理员发起管理沟通已迁移到独立通知模块，这里关闭旧入口 */
     public static boolean canCreateAdminSession(HttpSession session) {
-        return hasAnyRole(session, 3, 4);
+        return false;
     }
 
     /** 消息中心：当前不启用“全量会话监管”特权 */
