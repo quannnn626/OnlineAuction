@@ -233,6 +233,35 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
     }
 
     @Override
+    public void hardDeleteGoods(Long id) {
+        if (id == null) {
+            throw new RuntimeException("商品ID不能为空");
+        }
+        AuctionGoods goods = getById(id);
+        if (goods == null) {
+            throw new RuntimeException("商品不存在");
+        }
+        boolean success = removeById(id);
+        if (!success) {
+            throw new RuntimeException("彻底删除失败");
+        }
+    }
+
+    @Override
+    public void batchHardDeleteGoods(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            throw new RuntimeException("请选择要删除的商品");
+        }
+        for (Long id : ids) {
+            if (id == null) continue;
+            AuctionGoods goods = getById(id);
+            if (goods != null) {
+                removeById(id);
+            }
+        }
+    }
+
+    @Override
     public void updateShelfStatus(Long id, Integer shelfStatus) {
         if (shelfStatus == null || (shelfStatus != 0 && shelfStatus != 1)) {
             throw new RuntimeException("上架状态值无效（0=下架，1=上架）");

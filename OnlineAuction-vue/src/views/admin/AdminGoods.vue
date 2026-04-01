@@ -209,12 +209,13 @@
               下架
             </el-button>
             <el-button
+              v-if="canDeleteGoods"
               size="mini"
               type="danger"
               icon="el-icon-delete"
               @click="handleDelete(scope.row)"
             >
-              删除
+              {{ isSuperAdmin ? "彻底删除" : "删除" }}
             </el-button>
           </template>
         </el-table-column>
@@ -349,7 +350,11 @@
             </div>
           </el-upload>
           <div v-if="fileList && fileList.length" class="upload-status-list">
-            <div v-for="f in fileList" :key="f.uid || f.id || f.name" class="upload-status-item">
+            <div
+              v-for="f in fileList"
+              :key="f.uid || f.id || f.name"
+              class="upload-status-item"
+            >
               <span class="upload-file-name">{{ f.name }}</span>
               <el-tag size="mini" :type="getUploadStatusType(f.status)">
                 {{ getUploadStatusText(f.status) }}
@@ -461,19 +466,36 @@
       :visible.sync="recordsDialogVisible"
       width="700px"
     >
-      <p v-if="recordsGoodsName" class="records-goods-name">{{ recordsGoodsName }}</p>
-      <el-table v-loading="recordsLoading" :data="recordsList" stripe size="small">
+      <p v-if="recordsGoodsName" class="records-goods-name">
+        {{ recordsGoodsName }}
+      </p>
+      <el-table
+        v-loading="recordsLoading"
+        :data="recordsList"
+        stripe
+        size="small"
+      >
         <el-table-column prop="bidPrice" label="出价" width="100">
           <template slot-scope="scope">¥{{ scope.row.bidPrice }}</template>
         </el-table-column>
-        <el-table-column prop="buyerName" label="买家" width="100"></el-table-column>
+        <el-table-column
+          prop="buyerName"
+          label="买家"
+          width="100"
+        ></el-table-column>
         <el-table-column prop="bidTime" label="出价时间" width="160">
-          <template slot-scope="scope">{{ scope.row.bidTime ? new Date(scope.row.bidTime).toLocaleString() : "-" }}</template>
+          <template slot-scope="scope">{{
+            scope.row.bidTime
+              ? new Date(scope.row.bidTime).toLocaleString()
+              : "-"
+          }}</template>
         </el-table-column>
         <el-table-column label="异常标记" width="180">
           <template slot-scope="scope">
             <el-select
-              :value="scope.row.abnormalType != null ? scope.row.abnormalType : 0"
+              :value="
+                scope.row.abnormalType != null ? scope.row.abnormalType : 0
+              "
               size="mini"
               @change="(v) => changeRecordAbnormal(scope.row, v)"
               style="width: 120px"
@@ -492,7 +514,12 @@
           :page-size="recordsPagination.size"
           :total="recordsPagination.total"
           layout="total, prev, pager, next"
-          @current-change="(p) => { recordsPagination.current = p; loadRecords(); }"
+          @current-change="
+            (p) => {
+              recordsPagination.current = p;
+              loadRecords();
+            }
+          "
         />
       </div>
     </el-dialog>
@@ -601,7 +628,12 @@ export default {
           },
         ],
         depositRequired: [
-          { type: "number", min: 0, message: "保证金不能为负", trigger: "blur" },
+          {
+            type: "number",
+            min: 0,
+            message: "保证金不能为负",
+            trigger: "blur",
+          },
         ],
         reservePrice: [
           {
@@ -636,8 +668,38 @@ export default {
     canAuctioneerManage() {
       try {
         const user = JSON.parse(localStorage.getItem("userInfo") || "{}");
-        const roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
+        const roles = user.userRole
+          ? String(user.userRole)
+              .split(",")
+              .map((r) => r.trim())
+          : [];
         return roles.some((r) => ["3", "4", "5"].includes(r));
+      } catch (e) {
+        return false;
+      }
+    },
+    canDeleteGoods() {
+      try {
+        const user = JSON.parse(localStorage.getItem("userInfo") || "{}");
+        const roles = user.userRole
+          ? String(user.userRole)
+              .split(",")
+              .map((r) => r.trim())
+          : [];
+        return roles.some((r) => ["3", "4", "5", "8"].includes(r));
+      } catch (e) {
+        return false;
+      }
+    },
+    isSuperAdmin() {
+      try {
+        const user = JSON.parse(localStorage.getItem("userInfo") || "{}");
+        const roles = user.userRole
+          ? String(user.userRole)
+              .split(",")
+              .map((r) => r.trim())
+          : [];
+        return roles.includes("4");
       } catch (e) {
         return false;
       }
@@ -705,7 +767,10 @@ export default {
     },
     // 更新已选择的分类名称显示
     updateSelectedCategoryNames() {
-      if (!this.formData.categoryIds || this.formData.categoryIds.length === 0) {
+      if (
+        !this.formData.categoryIds ||
+        this.formData.categoryIds.length === 0
+      ) {
         this.selectedCategoryNames = "";
         return;
       }
@@ -803,7 +868,8 @@ export default {
         ...goods,
         categoryIds: categoryIds,
         fileIds: goods.files ? goods.files.map((f) => f.id) : [],
-        depositRequired: goods.depositRequired != null ? Number(goods.depositRequired) : 0,
+        depositRequired:
+          goods.depositRequired != null ? Number(goods.depositRequired) : 0,
       };
       this.fileList = this.getFileListFromImages(goods.files);
       // 更新选中分类名称显示
@@ -819,9 +885,9 @@ export default {
     // 查看
     handleView(goods) {
       // 跳转到商品详情页面
-      this.$router.push({ 
-        path: "/goods-detail", 
-        query: { id: goods.id } 
+      this.$router.push({
+        path: "/goods-detail",
+        query: { id: goods.id },
       });
     },
     // 审核通过
@@ -854,7 +920,7 @@ export default {
         await this.performAudit(
           this.auditData.goodsId,
           this.auditData.status,
-          this.auditData.remark
+          this.auditData.remark,
         );
         this.auditDialogVisible = false;
       } catch (error) {
@@ -873,7 +939,7 @@ export default {
             confirmButtonText: "确定",
             cancelButtonText: "取消",
             type: "warning",
-          }
+          },
         );
         await reapplyGoods(goods.id);
         this.$message.success("重新申请成功，等待审核");
@@ -896,7 +962,9 @@ export default {
             if (isNaN(n) || n < 1 || n > 1440) return "请输入 1~1440 的整数";
             return true;
           },
-        }).then(({ value }) => parseInt(value, 10)).catch(() => null);
+        })
+          .then(({ value }) => parseInt(value, 10))
+          .catch(() => null);
         if (minutes == null) return;
         await extendAuctionTime(goods.id, minutes);
         this.$message.success("已延长 " + minutes + " 分钟");
@@ -908,11 +976,15 @@ export default {
     // 拍卖师：流拍
     async handleMarkNoSale(goods) {
       try {
-        await this.$confirm(`确定将 "${goods.goodsName}" 标记为流拍吗？`, "流拍", {
-          confirmButtonText: "确定",
-          cancelButtonText: "取消",
-          type: "warning",
-        });
+        await this.$confirm(
+          `确定将 "${goods.goodsName}" 标记为流拍吗？`,
+          "流拍",
+          {
+            confirmButtonText: "确定",
+            cancelButtonText: "取消",
+            type: "warning",
+          },
+        );
         await markNoSale(goods.id);
         this.$message.success("已标记流拍");
         this.loadData();
@@ -977,7 +1049,10 @@ export default {
     // 删除
     async handleDelete(goods) {
       try {
-        await this.$confirm(`确定删除商品 "${goods.goodsName}" 吗？`, "提示", {
+        const confirmText = this.isSuperAdmin
+          ? `确定彻底删除商品 "${goods.goodsName}" 吗？删除后无法恢复。`
+          : `确定删除商品 "${goods.goodsName}" 吗？`;
+        await this.$confirm(confirmText, "提示", {
           confirmButtonText: "确定",
           cancelButtonText: "取消",
           type: "warning",
@@ -1006,7 +1081,9 @@ export default {
     async handleSubmit() {
       this.$refs.form.validate(async (valid) => {
         if (!valid) return;
-        const uploading = (this.fileList || []).some((f) => f.status === "uploading");
+        const uploading = (this.fileList || []).some(
+          (f) => f.status === "uploading",
+        );
         if (uploading) {
           this.$message.warning("文件还在上传中，请稍后再提交");
           return;
@@ -1043,10 +1120,13 @@ export default {
       const isImage = file.type && file.type.startsWith("image/");
       const isVideo = file.type && file.type.startsWith("video/");
       const fileName = (file.name || "").toLowerCase();
-      const ext = fileName.includes(".") ? fileName.substring(fileName.lastIndexOf(".") + 1) : "";
+      const ext = fileName.includes(".")
+        ? fileName.substring(fileName.lastIndexOf(".") + 1)
+        : "";
       const imageExt = ["jpg", "jpeg", "png", "gif", "webp", "bmp"];
       const videoExt = ["mp4", "webm", "ogg", "mov", "m4v", "avi"];
-      const typeOk = isImage || isVideo || imageExt.includes(ext) || videoExt.includes(ext);
+      const typeOk =
+        isImage || isVideo || imageExt.includes(ext) || videoExt.includes(ext);
       if (!typeOk) {
         this.$message.error(`不支持的文件类型：${file.name}`);
         return false;
@@ -1069,7 +1149,7 @@ export default {
         // 提取文件路径和文件ID
         const filePaths = [];
         const fileIds = [];
-        
+
         // response.data 是文件数组（后端返回的是 List<AuctionFile>）
         if (Array.isArray(response.data)) {
           response.data.forEach((fileData) => {
@@ -1089,14 +1169,17 @@ export default {
             fileIds.push(response.data.id);
           }
         }
-        
+
         // 更新所有文件的路径和ID（合并所有已上传的文件和已有文件）
         fileList.forEach((f) => {
           // 处理新上传的文件（有response字段）
           if (f.response && f.response.data) {
             if (Array.isArray(f.response.data)) {
               f.response.data.forEach((fileData) => {
-                if (fileData.filePath && !filePaths.includes(fileData.filePath)) {
+                if (
+                  fileData.filePath &&
+                  !filePaths.includes(fileData.filePath)
+                ) {
                   filePaths.push(fileData.filePath);
                 }
                 if (fileData.id && !fileIds.includes(fileData.id)) {
@@ -1104,7 +1187,10 @@ export default {
                 }
               });
             } else {
-              if (f.response.data.filePath && !filePaths.includes(f.response.data.filePath)) {
+              if (
+                f.response.data.filePath &&
+                !filePaths.includes(f.response.data.filePath)
+              ) {
                 filePaths.push(f.response.data.filePath);
               }
               if (f.response.data.id && !fileIds.includes(f.response.data.id)) {
@@ -1126,7 +1212,7 @@ export default {
             }
           }
         });
-        
+
         this.formData.goodsImg = filePaths.join(",");
         this.formData.fileIds = fileIds;
       } else {
@@ -1139,7 +1225,7 @@ export default {
       // 更新文件路径和文件ID
       const filePaths = [];
       const fileIds = [];
-      
+
       fileList.forEach((f) => {
         // 处理新上传的文件（有response字段）
         if (f.response && f.response.data) {
@@ -1173,7 +1259,7 @@ export default {
           filePaths.push(f.url);
         }
       });
-      
+
       this.formData.goodsImg = filePaths.join(",");
       this.formData.fileIds = fileIds;
     },
@@ -1196,7 +1282,7 @@ export default {
     getGoodsImages(goods) {
       const files = goods && Array.isArray(goods.files) ? goods.files : [];
       const fromFiles = files
-        .map((f) => f && f.filePath ? this.normalizeFileUrl(f.filePath) : "")
+        .map((f) => (f && f.filePath ? this.normalizeFileUrl(f.filePath) : ""))
         .filter((p) => p && /\.(jpg|jpeg|png|gif|webp|bmp|svg)/i.test(p));
 
       if (fromFiles.length > 0) return fromFiles;
@@ -1276,7 +1362,9 @@ export default {
     },
     canReapply(row) {
       if (!row) return false;
-      return row.auditStatus === 2 || row.auditStatus === 3 || row.goodsStatus === 3;
+      return (
+        row.auditStatus === 2 || row.auditStatus === 3 || row.goodsStatus === 3
+      );
     },
     canOffline(row) {
       if (!row) return false;

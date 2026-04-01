@@ -56,7 +56,9 @@
                   <i class="el-icon-arrow-down"></i>
                 </span>
                 <el-dropdown-menu slot="dropdown">
-                  <el-dropdown-item command="profile">个人信息</el-dropdown-item>
+                  <el-dropdown-item command="profile"
+                    >个人信息</el-dropdown-item
+                  >
                   <el-dropdown-item divided command="logout"
                     >退出登录</el-dropdown-item
                   >
@@ -138,7 +140,8 @@ export default {
             }
 
             // 管理员管理沟通已迁移：非买方/卖方/客服隐藏旧“消息中心”入口
-            const canUseMessageCenter = roles.includes("1") || roles.includes("2") || roles.includes("6");
+            const canUseMessageCenter =
+              roles.includes("1") || roles.includes("2") || roles.includes("6");
             if (!canUseMessageCenter) {
               menuTree = this.filterMenu(menuTree, (menu) => {
                 const p = (menu.menuPath || "").trim();
@@ -188,7 +191,11 @@ export default {
         }
         // 客服/管理员兜底菜单：工单入口
         if (user) {
-          const roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
+          const roles = user.userRole
+            ? String(user.userRole)
+                .split(",")
+                .map((r) => r.trim())
+            : [];
           const canWorkOrder = roles.includes("6") || roles.includes("3");
           if (canWorkOrder && !this.menuExists(menuTree, "/work-order")) {
             menuTree.push({
@@ -202,7 +209,11 @@ export default {
         }
         // 风控兜底菜单：风控中心入口
         if (user) {
-          const roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
+          const roles = user.userRole
+            ? String(user.userRole)
+                .split(",")
+                .map((r) => r.trim())
+            : [];
           const canRisk = roles.includes("9");
           if (canRisk && !this.menuExists(menuTree, "/risk-dashboard")) {
             menuTree.push({
@@ -216,7 +227,11 @@ export default {
         }
         // 审计兜底菜单：审计中心入口（仅审计角色）
         if (user) {
-          const roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
+          const roles = user.userRole
+            ? String(user.userRole)
+                .split(",")
+                .map((r) => r.trim())
+            : [];
           const canAudit = roles.includes("10");
           if (canAudit && !this.menuExists(menuTree, "/audit-dashboard")) {
             menuTree.push({
@@ -256,7 +271,10 @@ export default {
           const canInbox = ["5", "6", "7", "8", "9", "10"].some((r) =>
             roles.includes(r),
           );
-          if (canSend && !this.menuExists(menuTree, "/admin/notifications/send")) {
+          if (
+            canSend &&
+            !this.menuExists(menuTree, "/admin/notifications/send")
+          ) {
             menuTree.push({
               id: 99998,
               menuName: "管理沟通通知",
@@ -265,7 +283,10 @@ export default {
               children: [],
             });
           }
-          if (canInbox && !this.menuExists(menuTree, "/admin/notifications/inbox")) {
+          if (
+            canInbox &&
+            !this.menuExists(menuTree, "/admin/notifications/inbox")
+          ) {
             menuTree.push({
               id: 99999,
               menuName: "管理沟通通知",
@@ -325,7 +346,11 @@ export default {
         if (userInfo) {
           try {
             const user = JSON.parse(userInfo);
-            const roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
+            const roles = user.userRole
+              ? String(user.userRole)
+                  .split(",")
+                  .map((r) => r.trim())
+              : [];
             if (roles.includes("10") || roles.includes("4")) {
               fallbackMenus.push({
                 id: 99997,
@@ -487,7 +512,11 @@ export default {
         if (userInfo) {
           try {
             const user = JSON.parse(userInfo);
-            roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
+            roles = user.userRole
+              ? String(user.userRole)
+                  .split(",")
+                  .map((r) => r.trim())
+              : [];
           } catch (e) {
             // ignore
           }

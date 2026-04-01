@@ -251,32 +251,44 @@ public class AuctionGoodsController {
     }
 
     /**
-     * 删除商品（逻辑删除，仅管理员、超级管理员可操作）
+     * 删除商品：超级管理员真删除，其余有权限角色逻辑删除
      */
     @DeleteMapping("/{id}")
     public Result<Void> deleteGoods(@PathVariable Long id, HttpServletRequest request) {
         try {
-            if (!RoleCheckHelper.canDelete(request.getSession(false))) {
+            HttpSession session = request.getSession(false);
+            if (!RoleCheckHelper.canDeleteGoods(session)) {
                 return Result.error("无权限删除商品");
             }
-            goodsService.deleteGoods(id);
-            return Result.success("删除成功", null);
+            if (RoleCheckHelper.hasAnyRole(session, 4)) {
+                goodsService.hardDeleteGoods(id);
+                return Result.success("删除成功", null);
+            } else {
+                goodsService.deleteGoods(id);
+                return Result.success("删除成功", null);
+            }
         } catch (Exception e) {
             return Result.error("删除失败：" + e.getMessage());
         }
     }
 
     /**
-     * 批量删除商品（仅管理员、超级管理员可操作）
+     * 批量删除商品：超级管理员真删除，其余有权限角色逻辑删除
      */
     @DeleteMapping("/batch")
     public Result<Void> batchDeleteGoods(@RequestBody List<Long> ids, HttpServletRequest request) {
         try {
-            if (!RoleCheckHelper.canDelete(request.getSession(false))) {
+            HttpSession session = request.getSession(false);
+            if (!RoleCheckHelper.canDeleteGoods(session)) {
                 return Result.error("无权限批量删除商品");
             }
-            goodsService.batchDeleteGoods(ids);
-            return Result.success("批量删除成功", null);
+            if (RoleCheckHelper.hasAnyRole(session, 4)) {
+                goodsService.batchHardDeleteGoods(ids);
+                return Result.success("批量删除成功", null);
+            } else {
+                goodsService.batchDeleteGoods(ids);
+                return Result.success("批量删除成功", null);
+            }
         } catch (Exception e) {
             return Result.error("批量删除失败：" + e.getMessage());
         }

@@ -33,6 +33,11 @@ public final class RoleCheckHelper {
         return hasAnyRole(session, 3, 4);
     }
 
+    /** 商品删除：管理员、超级管理员、拍卖师、运营 */
+    public static boolean canDeleteGoods(HttpSession session) {
+        return hasAnyRole(session, 3, 4, 5, 8);
+    }
+
     /** 管理员/超级管理员/拍卖师/运营 可审核商品 */
     public static boolean canAuditGoods(HttpSession session) {
         return hasAnyRole(session, 3, 4, 5, 8);

@@ -58,6 +58,16 @@ public interface IAuctionGoodsService extends IService<AuctionGoods> {
     void batchDeleteGoods(List<Long> ids);
 
     /**
+     * 真删除商品（物理删除，仅超级管理员）
+     */
+    void hardDeleteGoods(Long id);
+
+    /**
+     * 批量真删除商品（物理删除，仅超级管理员）
+     */
+    void batchHardDeleteGoods(List<Long> ids);
+
+    /**
      * 审核商品
      */
     void auditGoods(Long id, Integer auditStatus, String auditRemark);
