@@ -3,6 +3,13 @@
   align-items: center;
 }
 
+.hint {
+  font-size: 24rpx;
+  color: #888;
+  margin-bottom: 16rpx;
+  line-height: 1.5;
+}
+
 .input {
   border: 1rpx solid #ddd;
   border-radius: 10rpx;

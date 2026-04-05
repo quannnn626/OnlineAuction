@@ -43,6 +43,9 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
         STAFF_ROLE_IDS = Collections.unmodifiableSet(s);
     }
 
+    /** 小程序自动注册默认昵称：未修改前不能使用网页端登录 */
+    private static final String MP_DEFAULT_NICK = "微信用户";
+
     private static boolean hasStaffRole(List<String> roles) {
         if (roles == null) {
             return false;
@@ -603,11 +606,35 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
 
     @Override
     public LoginDTO loginForPublicPortal(String userName, String password, String loginIp) {
+        if (userName != null && !userName.trim().isEmpty()) {
+            QueryWrapper<AuctionUser> w = new QueryWrapper<>();
+            w.eq("user_name", userName.trim());
+            w.eq("del_flag", 0);
+            AuctionUser u = getOne(w);
+            if (u != null && !isWebLoginAllowed(u)) {
+                throw new RuntimeException("该账号未在小程序完成昵称与密码设置，暂无法使用网页登录，请使用小程序登录。");
+            }
+        }
         LoginDTO dto = login(userName, password, loginIp);
         if (hasStaffRole(dto.getRoles())) {
             throw new RuntimeException("该账号为后台管理账号，请使用后台登录入口（/admin/login）");
         }
         return dto;
+    }
+
+    /** 网页端登录：需已设置密码且昵称非小程序默认占位 */
+    private boolean isWebLoginAllowed(AuctionUser user) {
+        if (user == null) {
+            return false;
+        }
+        if (user.getPassword() == null || user.getPassword().trim().isEmpty()) {
+            return false;
+        }
+        String n = user.getNickName();
+        if (n == null || n.trim().isEmpty()) {
+            return false;
+        }
+        return !MP_DEFAULT_NICK.equals(n.trim());
     }
 
     @Override
@@ -697,12 +724,14 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
             throw new RuntimeException("请输入正确的11位手机号");
         }
 
-        QueryWrapper<AuctionUser> wxWrapper = new QueryWrapper<>();
-        wxWrapper.eq("wx_openid", wxOpenid);
-        wxWrapper.eq("del_flag", 0);
-        AuctionUser user = getOne(wxWrapper);
+        // 小程序：账号以手机号区分；同一微信可对不同手机号各有一条用户记录（DB 需去掉 wx_openid 唯一索引，见 migration_20260403_mp_multi_account_per_wx.sql）
+        QueryWrapper<AuctionUser> wxPhoneWrapper = new QueryWrapper<>();
+        wxPhoneWrapper.eq("wx_openid", wxOpenid);
+        wxPhoneWrapper.eq("phone", phone);
+        wxPhoneWrapper.eq("del_flag", 0);
+        AuctionUser user = getOne(wxPhoneWrapper);
 
-        // username 规则：wx_openid + 手机号（用于区分不同微信账号）
+        // username 规则：wx_openid + 手机号（同一微信下按手机号区分账号）
         String baseUserName = "wx_" + wxOpenid.replaceAll("[^a-zA-Z0-9_]", "") + "_" + phone;
         if (baseUserName.length() > 50) {
             baseUserName = baseUserName.substring(0, 50);
@@ -728,7 +757,6 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
                 }
                 phoneUser.setUserRole("1");
 
-                // 绑定成功后，更新 username 规则（wx_openid + phone）
                 String finalUserName = baseUserName;
                 int suffix = 1;
                 while (true) {
@@ -769,7 +797,7 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
                 u.setPassword("");
                 u.setPhone(phone);
                 u.setWxOpenid(wxOpenid);
-                String nn = (nickName != null && !nickName.trim().isEmpty()) ? nickName.trim() : "微信用户";
+                String nn = (nickName != null && !nickName.trim().isEmpty()) ? nickName.trim() : MP_DEFAULT_NICK;
                 if (nn.length() > 50) {
                     nn = nn.substring(0, 50);
                 }
@@ -791,18 +819,7 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
                 user = u;
             }
         } else {
-            // wx_openid 存在：确保手机号一致（否则拒绝，避免一个手机号被绑定多个微信）
-            if (phone != null && !phone.trim().isEmpty()) {
-                String existedPhone = user.getPhone();
-                if (existedPhone != null && !existedPhone.trim().isEmpty() && !phone.equals(existedPhone.trim())) {
-                    throw new RuntimeException("该手机号已绑定其他微信账号");
-                }
-                if (existedPhone == null || existedPhone.trim().isEmpty()) {
-                    user.setPhone(phone);
-                }
-            }
-
-            // 更新昵称/头像（可选）
+            // 已存在同一微信 + 同一手机号：更新资料
             if (nickName != null && !nickName.trim().isEmpty()) {
                 user.setNickName(nickName.trim());
             }
@@ -810,10 +827,11 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
                 user.setAvatar(avatar.trim());
             }
 
-            // 更新 username 规则：wx_openid + phone
             if (user.getPhone() != null && !user.getPhone().trim().isEmpty()) {
                 String desired = "wx_" + wxOpenid.replaceAll("[^a-zA-Z0-9_]", "") + "_" + user.getPhone().trim();
-                if (desired.length() > 50) desired = desired.substring(0, 50);
+                if (desired.length() > 50) {
+                    desired = desired.substring(0, 50);
+                }
                 if (!desired.equals(user.getUserName())) {
                     user.setUserName(desired);
                 }
@@ -844,8 +862,10 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
         loginDTO.setIsBuyer(true);
         loginDTO.setIsSeller(false);
 
-        boolean needSetPassword = user.getPassword() == null || user.getPassword().trim().isEmpty();
-        loginDTO.setNeedSetPassword(needSetPassword);
+        boolean webOk = isWebLoginAllowed(user);
+        loginDTO.setWebLoginAllowed(webOk);
+        // 未完成「昵称+密码」前，引导在小程序内完善（跳过则仅能用小程序）
+        loginDTO.setNeedSetPassword(!webOk);
         return loginDTO;
     }
 
@@ -948,6 +968,42 @@ public class AuctionUserServiceImpl extends ServiceImpl<AuctionUserMapper, Aucti
         boolean success = updateById(user);
         if (!success) {
             throw new RuntimeException("设置密码失败");
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void completeMpProfile(Long userId, String nickName, String newPassword) {
+        if (userId == null) {
+            throw new RuntimeException("用户不存在");
+        }
+        if (nickName == null || nickName.trim().length() < 2) {
+            throw new RuntimeException("昵称至少2个字符");
+        }
+        nickName = nickName.trim();
+        if (nickName.length() > 50) {
+            throw new RuntimeException("昵称过长");
+        }
+        if (MP_DEFAULT_NICK.equals(nickName)) {
+            throw new RuntimeException("请使用其他昵称");
+        }
+        if (newPassword == null || newPassword.trim().isEmpty()) {
+            throw new RuntimeException("密码不能为空");
+        }
+        if (newPassword.length() < 6) {
+            throw new RuntimeException("密码长度不能少于6位");
+        }
+
+        AuctionUser user = getById(userId);
+        if (user == null || user.getDelFlag() == 1) {
+            throw new RuntimeException("用户不存在");
+        }
+
+        user.setNickName(nickName);
+        user.setPassword(DigestUtils.md5DigestAsHex(newPassword.getBytes()));
+        user.setUpdateTime(LocalDateTime.now());
+        if (!updateById(user)) {
+            throw new RuntimeException("保存失败");
         }
     }
 

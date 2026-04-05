@@ -7,6 +7,8 @@ export interface LoginUser {
   avatar?: string;
   userRole: string;
   needSetPassword?: boolean;
+  /** 是否可用网页端登录（已设密码且昵称非默认） */
+  webLoginAllowed?: boolean;
 }
 
 export interface GoodsItem {
@@ -85,5 +87,14 @@ export function setPassword(newPassword: string) {
     url: "/mp/user/set-password",
     method: "POST",
     data: { password: newPassword },
+  });
+}
+
+/** 同时设置昵称与密码（完成后可使用网页端登录） */
+export function completeMpProfile(nickName: string, password: string) {
+  return request<{ needSetPassword: boolean; webLoginAllowed: boolean }>({
+    url: "/mp/user/complete-profile",
+    method: "POST",
+    data: { nickName, password },
   });
 }

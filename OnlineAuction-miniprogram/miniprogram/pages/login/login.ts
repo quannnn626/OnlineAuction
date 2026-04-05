@@ -3,8 +3,6 @@ import { wechatLogin } from "../../utils/mp-api";
 Page({
   data: {
     phone: "",
-    nickName: "",
-    code: "",
     loading: false,
   },
 
@@ -17,10 +15,6 @@ Page({
 
   onInputPhone(e: WechatMiniprogram.Input) {
     this.setData({ phone: e.detail.value.trim() });
-  },
-
-  onInputNickName(e: WechatMiniprogram.Input) {
-    this.setData({ nickName: e.detail.value.trim() });
   },
 
   fetchLoginCode(): Promise<string> {
@@ -47,22 +41,30 @@ Page({
       const resp = await wechatLogin({
         code,
         phone: this.data.phone,
-        nickName: this.data.nickName,
       });
       const app = getApp<IAppOption>();
       app.globalData.user = resp.user;
       wx.setStorageSync("user", resp.user);
+
       if (resp.user.needSetPassword) {
         wx.showModal({
-          title: "设置密码",
-          content: "检测到你尚未设置密码，为保障账号安全，是否现在去设置？",
+          title: "完善账号信息",
+          content:
+            "是否现在设置昵称与登录密码？设置后可使用网页端登录。",
           confirmText: "去设置",
-          cancelText: "先不设置",
+          cancelText: "跳过",
           success: (r) => {
             if (r.confirm) {
               wx.navigateTo({ url: "/pages/set-password/set-password" });
             } else {
-              wx.switchTab({ url: "/pages/home/home" });
+              wx.showToast({
+                title: "已跳过，网页端将无法登录",
+                icon: "none",
+                duration: 2500,
+              });
+              setTimeout(() => {
+                wx.switchTab({ url: "/pages/home/home" });
+              }, 500);
             }
           },
         });

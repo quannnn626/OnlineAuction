@@ -183,6 +183,28 @@ public class MpApiController {
         }
     }
 
+    /**
+     * 小程序：同时设置昵称与密码（与仅设密码相比，完成后可使用网页端登录）
+     */
+    @PostMapping("/user/complete-profile")
+    public Result<Map<String, Object>> completeMpProfile(@RequestBody Map<String, String> body, HttpServletRequest request) {
+        try {
+            Long userId = getCurrentUserId(request);
+            if (userId == null) {
+                return Result.error("未登录");
+            }
+            String nickName = body != null ? body.get("nickName") : null;
+            String password = body != null ? body.get("password") : null;
+            userService.completeMpProfile(userId, nickName, password);
+            Map<String, Object> result = new HashMap<>();
+            result.put("needSetPassword", false);
+            result.put("webLoginAllowed", true);
+            return Result.success("设置成功", result);
+        } catch (Exception e) {
+            return Result.error("设置失败：" + e.getMessage());
+        }
+    }
+
     private Long getCurrentUserId(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
         if (session == null) return null;

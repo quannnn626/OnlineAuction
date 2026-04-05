@@ -135,6 +135,11 @@ public interface IAuctionUserService extends IService<AuctionUser> {
     void setPassword(Long userId, String newPassword);
 
     /**
+     * 小程序：同时设置昵称与登录密码（与仅设置密码二选一即可满足网页端登录条件）
+     */
+    void completeMpProfile(Long userId, String nickName, String newPassword);
+
+    /**
      * 上传并更新头像
      * @param userId 当前登录用户ID
      * @param avatarFileId 头像文件ID（关联auction_file.id）

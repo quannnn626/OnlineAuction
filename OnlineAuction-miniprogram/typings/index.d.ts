@@ -12,7 +12,8 @@ interface IAppOption {
       nickName: string,
       avatar?: string,
       userRole: string,
-      needSetPassword?: boolean
+      needSetPassword?: boolean,
+      webLoginAllowed?: boolean
     }
   }
   userInfoReadyCallback?: WechatMiniprogram.GetUserInfoSuccessCallback,

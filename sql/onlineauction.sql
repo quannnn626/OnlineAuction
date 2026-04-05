@@ -11,7 +11,7 @@
  Target Server Version : 80019
  File Encoding         : 65001
 
- Date: 01/04/2026 15:45:44
+ Date: 05/04/2026 08:28:49
 */
 
 SET NAMES utf8mb4;
@@ -862,7 +862,7 @@ CREATE TABLE `auction_notification`  (
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `idx_sender_id`(`sender_id` ASC) USING BTREE,
   INDEX `idx_create_time`(`create_time` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of auction_notification
@@ -886,7 +886,7 @@ CREATE TABLE `auction_notification_target`  (
   UNIQUE INDEX `uk_notification_receiver`(`notification_id` ASC, `receiver_id` ASC) USING BTREE,
   INDEX `idx_receiver_id`(`receiver_id` ASC) USING BTREE,
   INDEX `idx_notification_id`(`notification_id` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 3 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of auction_notification_target
@@ -908,7 +908,7 @@ CREATE TABLE `auction_oper_log`  (
   `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '操作时间',
   PRIMARY KEY (`id`) USING BTREE,
   INDEX `idx_oper_user_id`(`oper_user_id` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 95 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '系统操作日志表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 115 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '系统操作日志表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of auction_oper_log
@@ -1027,6 +1027,8 @@ INSERT INTO `auction_oper_log` VALUES (111, 6, 'auth', 'login', '后台登录成
 INSERT INTO `auction_oper_log` VALUES (112, 2, 'auth', 'login', '后台登录成功：admin', '127.0.0.1', '2026-04-01 15:41:36');
 INSERT INTO `auction_oper_log` VALUES (113, 1, 'auth', 'login', '后台登录成功：superadmin', '127.0.0.1', '2026-04-01 15:41:45');
 INSERT INTO `auction_oper_log` VALUES (114, 1, 'auth', 'login', '后台登录成功：superadmin', '127.0.0.1', '2026-04-01 15:44:04');
+INSERT INTO `auction_oper_log` VALUES (115, 2, 'auth', 'login', '后台登录成功：admin', '127.0.0.1', '2026-04-03 10:50:12');
+INSERT INTO `auction_oper_log` VALUES (116, 2, 'auth', 'login', '后台登录成功：admin', '127.0.0.1', '2026-04-05 08:23:48');
 
 -- ----------------------------
 -- Table structure for auction_order
@@ -1324,7 +1326,7 @@ CREATE TABLE `auction_role_permission`  (
   UNIQUE INDEX `idx_role_permission`(`role_type` ASC, `permission_id` ASC) USING BTREE,
   INDEX `idx_role_type`(`role_type` ASC) USING BTREE,
   INDEX `idx_permission_id`(`permission_id` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 278 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '角色权限关联表' ROW_FORMAT = DYNAMIC;
+) ENGINE = InnoDB AUTO_INCREMENT = 280 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '角色权限关联表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of auction_role_permission
@@ -1589,16 +1591,16 @@ CREATE TABLE `auction_user`  (
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `idx_phone`(`phone` ASC) USING BTREE,
   UNIQUE INDEX `idx_user_name`(`user_name` ASC) USING BTREE,
-  UNIQUE INDEX `uk_wx_openid`(`wx_openid` ASC) USING BTREE,
   INDEX `idx_user_role`(`user_role` ASC) USING BTREE,
-  INDEX `idx_user_status`(`user_status` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 16 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '系统用户表' ROW_FORMAT = DYNAMIC;
+  INDEX `idx_user_status`(`user_status` ASC) USING BTREE,
+  INDEX `idx_wx_openid`(`wx_openid` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 17 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '系统用户表' ROW_FORMAT = DYNAMIC;
 
 -- ----------------------------
 -- Records of auction_user
 -- ----------------------------
 INSERT INTO `auction_user` VALUES (1, 'superadmin', 'e10adc3949ba59abbe56e057f20f883e', 'superadmin', '超级管理员', '17713356500', NULL, NULL, '', '', 31, '2', '4', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-04-01 15:44:04', '2026-01-21 14:54:06', '2026-04-01 15:44:04', 0, 0);
-INSERT INTO `auction_user` VALUES (2, 'admin', 'e10adc3949ba59abbe56e057f20f883e', 'admin', '管理员', '17034570777', NULL, NULL, '1709348112@qq.com', '', NULL, '0', '3', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-04-01 15:41:36', '2026-01-21 15:50:21', '2026-04-01 15:41:36', 0, 0);
+INSERT INTO `auction_user` VALUES (2, 'admin', 'e10adc3949ba59abbe56e057f20f883e', 'admin', '管理员', '17034570777', NULL, NULL, '1709348112@qq.com', '', NULL, '0', '3', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-04-05 08:23:48', '2026-01-21 15:50:21', '2026-04-05 08:23:48', 0, 0);
 INSERT INTO `auction_user` VALUES (3, 'buyuser', 'e10adc3949ba59abbe56e057f20f883e', '买方用户', '买方用户', '19234532287', NULL, NULL, '1709348112@qq.com', '', 40, '0', '2', 2, NULL, '51,52', '2026-03-17 09:09:13', '2026-03-17 09:11:32', NULL, 0, '127.0.0.1', '2026-03-30 15:53:18', '2026-01-21 16:17:43', '2026-03-30 15:53:18', 0, 0);
 INSERT INTO `auction_user` VALUES (4, 'selluser', 'e10adc3949ba59abbe56e057f20f883e', '卖方用户', '卖方用户', '18766753345', NULL, NULL, '1709348112@qq.com', '', 32, '0', '2', 2, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-03-30 16:09:34', '2026-01-21 16:18:22', '2026-03-30 16:09:34', 0, 0);
 INSERT INTO `auction_user` VALUES (5, 'paimaishi', 'e10adc3949ba59abbe56e057f20f883e', '拍卖师', '拍卖师', '13848553521', NULL, NULL, '', '', NULL, '2', '5', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-04-01 15:22:36', '2026-02-25 12:26:19', '2026-04-01 15:22:36', 0, 0);
@@ -1610,8 +1612,9 @@ INSERT INTO `auction_user` VALUES (10, 'kefu2', 'e10adc3949ba59abbe56e057f20f883
 INSERT INTO `auction_user` VALUES (11, 'fengkong', 'e10adc3949ba59abbe56e057f20f883e', '风控', '风控', '13345678899', NULL, NULL, '', '', NULL, '2', '9', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-04-01 14:47:52', '2026-03-20 11:28:55', '2026-04-01 14:47:52', 0, 0);
 INSERT INTO `auction_user` VALUES (12, 'shenji', 'e10adc3949ba59abbe56e057f20f883e', '审计', '审计', '13378996783', NULL, NULL, '', '', NULL, '2', '10', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-03-24 16:38:31', '2026-03-24 16:14:26', '2026-03-24 16:38:31', 0, 0);
 INSERT INTO `auction_user` VALUES (13, 'buyuser3', 'e10adc3949ba59abbe56e057f20f883e', NULL, '买家3', '12245678871', NULL, NULL, '', '', NULL, '2', '1', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-03-25 10:38:33', '2026-03-25 10:38:28', '2026-03-25 10:38:33', 0, 0);
-INSERT INTO `auction_user` VALUES (15, 'wx_oZ8R21z0siH8k1akrH_2lwgHJUo0_17765001335', 'e10adc3949ba59abbe56e057f20f883e', NULL, '测试输入错误昵称', '17765001335', 'oZ8R21z0siH8k1akrH_2lwgHJUo0', NULL, '', '', NULL, '2', '2', 2, NULL, '63', '2026-03-26 10:07:15', '2026-03-26 10:07:48', NULL, 0, '127.0.0.1', '2026-04-01 14:59:22', '2026-03-25 15:27:25', '2026-04-01 14:59:22', 0, 0);
+INSERT INTO `auction_user` VALUES (15, 'wx_oZ8R21z0siH8k1akrH_2lwgHJUo0_17765001335', 'e10adc3949ba59abbe56e057f20f883e', NULL, '测试输入错误昵称', '17765001335', 'oZ8R21z0siH8k1akrH_2lwgHJUo0', NULL, '', '', NULL, '2', '2', 2, NULL, '63', '2026-03-26 10:07:15', '2026-03-26 10:07:48', NULL, 0, '127.0.0.1', '2026-04-03 13:54:31', '2026-03-25 15:27:25', '2026-04-03 13:54:31', 0, 0);
 INSERT INTO `auction_user` VALUES (16, 'yonghu5', 'e10adc3949ba59abbe56e057f20f883e', NULL, '测试注册普通用户', '15566784451', NULL, NULL, '', '', NULL, '2', '1', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-03-30 15:49:01', '2026-03-30 15:48:54', '2026-03-30 15:49:01', 0, 0);
+INSERT INTO `auction_user` VALUES (17, 'wx_oZ8R21z0siH8k1akrH_2lwgHJUo0_13164558897', 'e10adc3949ba59abbe56e057f20f883e', NULL, '测试小程序注册用户', '13164558897', 'oZ8R21z0siH8k1akrH_2lwgHJUo0', NULL, '', '', NULL, '2', '1', 0, NULL, NULL, NULL, NULL, NULL, 0, '127.0.0.1', '2026-04-03 11:59:26', '2026-04-03 11:59:26', '2026-04-03 11:59:51', 0, 0);
 
 -- ----------------------------
 -- Table structure for auction_work_order

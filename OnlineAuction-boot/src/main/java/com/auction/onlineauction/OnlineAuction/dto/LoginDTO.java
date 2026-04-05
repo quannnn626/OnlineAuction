@@ -71,4 +71,9 @@ public class LoginDTO implements Serializable {
      * 是否需要设置密码（小程序首次自动注册时，password 为空）
      */
     private Boolean needSetPassword;
+
+    /**
+     * 是否允许使用网页端登录（需已设置密码且昵称非小程序默认占位）
+     */
+    private Boolean webLoginAllowed;
 }
