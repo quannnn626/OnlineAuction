@@ -56,13 +56,19 @@ public interface IAuctionOrderService extends IService<AuctionOrder> {
     /** 买方支付尾款：待付款订单，用保证金抵扣尾款后订单变为待发货 */
     void payByBuyer(Long orderId, Long buyerId);
 
-    /** 指定商品是否已存在有效订单 */
+    /**
+     * 指定商品是否仍存在「有效成交链路」订单（待付款/待发货/待收货/已完成）。
+     * 不含悔拍(4)、已退款(5)，避免悔拍后商品被定时任务误判为已成交。
+     */
     boolean existsActiveOrderByGoodsId(Long goodsId);
+
+    /** 是否存在悔拍或已退款订单（与 existsActiveOrderByGoodsId 互补，用于流拍态稳定判断） */
+    boolean hasTerminalFailureOrderByGoodsId(Long goodsId);
 
     /** 根据中标记录创建订单（depositAmount 为商品设定的保证金，可为 0） */
     AuctionOrder createWinningOrder(Long goodsId, Long sellerId, AuctionRecord highestRecord, LocalDateTime payDeadline, BigDecimal depositAmount);
 
-    /** 悔拍：扣除买方保证金，订单置为已悔拍，商品恢复为上架状态供拍卖师再次上架 */
+    /** 悔拍：扣除买方保证金，订单置为已悔拍，商品置为流拍并下架，卖方可重新申请上架再次竞拍 */
     void markOrderAsDefaulted(Long orderId);
 
     /** 已完成且未做佣金结算的订单分页（带商品名、买卖方名，供财务结算） */

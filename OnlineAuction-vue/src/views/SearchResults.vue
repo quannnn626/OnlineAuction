@@ -35,7 +35,7 @@
             </div>
             <div class="goods-item-image">
               <img
-                :src="getGoodsImage(goods.goodsImg)"
+                :src="getGoodsImage(goods)"
                 :alt="goods.goodsName"
                 @error="handleImageError"
               />
@@ -90,7 +90,7 @@ export default {
           // 其他搜索参数
         };
         const result = await searchGoods(params);
-        this.goodsList = result.records || result || [];
+        this.goodsList = result.list || result.records || [];
       } catch (error) {
         this.$message.error("搜索失败，请重试");
       } finally {
@@ -103,12 +103,27 @@ export default {
     handleGoodsClick(goods) {
       this.$router.push({ path: "/goods-detail", query: { id: goods.id } });
     },
-    getGoodsImage(goodsImg) {
-      if (!goodsImg) {
-        return "/images/no-image.svg";
+    getGoodsImage(goods) {
+      const files = goods && goods.files ? goods.files : [];
+      if (Array.isArray(files) && files.length > 0) {
+        const f = files.find(
+          (x) =>
+            x &&
+            x.filePath &&
+            /\.(jpg|jpeg|png|gif|webp|bmp|svg)/i.test(x.filePath),
+        );
+        if (f && f.filePath) {
+          const p = f.filePath;
+          return /^https?:\/\//i.test(p) ? p : p.startsWith("/") ? p : "/" + p;
+        }
       }
-      const images = goodsImg.split(",");
-      return images[0].trim();
+      const goodsImg = goods && goods.goodsImg;
+      if (goodsImg) {
+        const images = String(goodsImg).split(",");
+        const url = images[0] && images[0].trim();
+        if (url) return url.startsWith("/") ? url : "/" + url;
+      }
+      return "/images/no-image.svg";
     },
     handleImageError(event) {
       event.target.src = "/images/no-image.svg";

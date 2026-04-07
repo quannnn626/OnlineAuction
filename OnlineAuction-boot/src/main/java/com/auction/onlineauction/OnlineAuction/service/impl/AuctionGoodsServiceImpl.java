@@ -17,7 +17,10 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -318,6 +321,11 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
         if (!success) {
             throw new RuntimeException("审核失败");
         }
+        // 审核通过后立即按开始/结束时间校正商品状态（未开始/竞拍中/已结束），避免列表刷新前误判
+        AuctionGoods refreshed = getById(id);
+        if (refreshed != null) {
+            updateGoodsStatusByTime(refreshed);
+        }
     }
 
     @Override
@@ -338,17 +346,45 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
         updateById(goods);
     }
 
-    private static LocalDateTime parseDateTime(Object v) {
-        if (v == null) return null;
-        String s = v.toString().trim();
-        if (s.isEmpty()) return null;
-        if (v instanceof java.time.LocalDateTime) return (java.time.LocalDateTime) v;
-        try {
-            if (s.length() > 19) s = s.substring(0, 19);
-            return LocalDateTime.parse(s.replace(" ", "T"), DateTimeFormatter.ISO_LOCAL_DATE_TIME);
-        } catch (Exception e) {
-            return LocalDateTime.parse(s, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+    /**
+     * 解析前端传入的拍卖时间：JSON 中 Date 常为 ISO-8601 带 Z（UTC），须转为 JVM 默认时区本地时间；
+     * 若去掉 Z 再按 LocalDateTime 解析，在东八区等会整体偏 8 小时，导致未到期却被判已结束→误显示流拍。
+     */
+    private static LocalDateTime parseDateTimeFlexible(String s) {
+        if (s == null || s.isEmpty()) {
+            return null;
         }
+        if (s.contains("T")) {
+            try {
+                return OffsetDateTime.parse(s).atZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime();
+            } catch (DateTimeParseException ignored) {
+                String cleaned = s;
+                int dot = cleaned.indexOf('.');
+                if (dot > 0) {
+                    cleaned = cleaned.substring(0, dot);
+                }
+                return LocalDateTime.parse(cleaned, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+            }
+        }
+        try {
+            return LocalDateTime.parse(s, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        } catch (DateTimeParseException e) {
+            throw new RuntimeException("日期时间格式错误: " + s, e);
+        }
+    }
+
+    private static LocalDateTime parseDateTime(Object v) {
+        if (v == null) {
+            return null;
+        }
+        if (v instanceof LocalDateTime) {
+            return (LocalDateTime) v;
+        }
+        String s = v.toString().trim();
+        if (s.isEmpty()) {
+            return null;
+        }
+        return parseDateTimeFlexible(s);
     }
 
     @Override
@@ -462,21 +498,7 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
         if (dateTimeStr == null || dateTimeStr.trim().isEmpty()) {
             return null;
         }
-        try {
-            // 处理ISO格式（包含T和Z）
-            if (dateTimeStr.contains("T")) {
-                String cleaned = dateTimeStr.replace("Z", "").replace("+00:00", "");
-                if (cleaned.contains(".")) {
-                    cleaned = cleaned.substring(0, cleaned.indexOf("."));
-                }
-                return LocalDateTime.parse(cleaned, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"));
-            } else {
-                // 处理标准格式
-                return LocalDateTime.parse(dateTimeStr, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("日期时间格式错误: " + dateTimeStr);
-        }
+        return parseDateTimeFlexible(dateTimeStr.trim());
     }
 
     /**
@@ -714,6 +736,11 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
         if (orderService.existsActiveOrderByGoodsId(goods.getId())) {
             return 2;
         }
+        // 存在悔拍/已退款订单且已无有效成交单：商品必须为流拍。
+        // 否则历史「已成交+悔拍」脏数据会在本方法里再次走生成订单分支或长期保持已成交，导致无法重新申请。
+        if (orderService.hasTerminalFailureOrderByGoodsId(goods.getId())) {
+            return 3;
+        }
 
         AuctionRecord highestRecord = recordMapper.selectHighestRecord(goods.getId());
         if (highestRecord == null) {
@@ -771,10 +798,16 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
         // 1) 审核驳回(auditStatus=2)
         // 2) 已下架(auditStatus=3)
         // 3) 已流拍(goodsStatus=3)
+        // 4) 手动下架（auditStatus=1 且 shelfStatus=0）
+        boolean manuallyOffShelf = goods.getAuditStatus() != null
+                && goods.getAuditStatus() == 1
+                && goods.getShelfStatus() != null
+                && goods.getShelfStatus() == 0;
         boolean canReapply = (goods.getAuditStatus() != null && (goods.getAuditStatus() == 2 || goods.getAuditStatus() == 3))
-                || (goods.getGoodsStatus() != null && goods.getGoodsStatus() == 3);
+                || (goods.getGoodsStatus() != null && goods.getGoodsStatus() == 3)
+                || manuallyOffShelf;
         if (!canReapply) {
-            throw new RuntimeException("仅审核驳回、已下架或已流拍商品可重新申请");
+            throw new RuntimeException("仅审核驳回、已下架、已流拍或手动下架商品可重新申请");
         }
         
         // 重新设置为待审核状态

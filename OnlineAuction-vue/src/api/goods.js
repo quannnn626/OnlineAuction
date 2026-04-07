@@ -10,7 +10,7 @@ export function getGoodsList(params) {
 
 export function searchGoods(params) {
   return request({
-    url: "/OnlineAuction/auctionGoods/search",
+    url: "/goods/search",
     method: "get",
     params,
   });
@@ -89,11 +89,21 @@ export function getGoodsBatch(ids = []) {
 }
 
 /**
- * 获取商品详情
+ * 获取商品详情（前台可见范围：已上架且审核通过）
  */
 export function getGoodsDetail(id) {
   return request({
     url: `/goods/${id}`,
+    method: "get",
+  });
+}
+
+/**
+ * 获取商品详情（后台可见范围：含已下架/未通过审核）
+ */
+export function getGoodsDetailAdmin(id) {
+  return request({
+    url: `/OnlineAuction/auctionGoods/${id}`,
     method: "get",
   });
 }

@@ -19,7 +19,11 @@ export function confirmReceipt(id) {
 }
 
 export function getAdminOrderPage(params) {
-  return request({ url: "/OnlineAuction/auctionOrder/page", method: "get", params });
+  return request({
+    url: "/OnlineAuction/auctionOrder/page",
+    method: "get",
+    params,
+  });
 }
 
 /** 客服查看某用户的订单（仅在与该用户有会话时可用） */
@@ -36,16 +40,27 @@ export function getAdminOrderById(id) {
 }
 
 export function updateOrderStatus(id, orderStatus) {
-  return request({ url: `/OnlineAuction/auctionOrder/${id}/status`, method: "put", data: { orderStatus } });
+  return request({
+    url: `/OnlineAuction/auctionOrder/${id}/status`,
+    method: "put",
+    data: { orderStatus },
+  });
 }
 
 export function processRefund(id, remark) {
-  return request({ url: `/OnlineAuction/auctionOrder/${id}/refund`, method: "post", data: { remark } });
+  return request({
+    url: `/OnlineAuction/auctionOrder/${id}/refund`,
+    method: "post",
+    data: { remark },
+  });
 }
 
 /** 落槌确认 */
 export function confirmDeal(id) {
-  return request({ url: `/OnlineAuction/auctionOrder/${id}/confirm-deal`, method: "post" });
+  return request({
+    url: `/OnlineAuction/auctionOrder/${id}/confirm-deal`,
+    method: "post",
+  });
 }
 
 /** 发货 */

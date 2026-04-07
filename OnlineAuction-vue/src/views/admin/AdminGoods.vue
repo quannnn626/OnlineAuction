@@ -4,7 +4,12 @@
     <div class="page-header">
       <h2>拍卖商品管理</h2>
       <div class="header-actions">
-        <el-button type="primary" icon="el-icon-plus" @click="handleAdd">
+        <el-button
+          v-if="canAddGoods"
+          type="primary"
+          icon="el-icon-plus"
+          @click="handleAdd"
+        >
           添加商品
         </el-button>
       </div>
@@ -665,6 +670,34 @@ export default {
     };
   },
   computed: {
+    /** 与后端 AuctionGoodsController.addGoods 一致：仅卖方(2)、管理员(3)、超管(4)、运营(8)可新增 */
+    canAddGoods() {
+      try {
+        const user = JSON.parse(localStorage.getItem("userInfo") || "{}");
+        const roles = user.userRole
+          ? String(user.userRole)
+              .split(",")
+              .map((r) => r.trim())
+          : [];
+        return roles.some((r) => ["2", "3", "4", "8"].includes(r));
+      } catch (e) {
+        return false;
+      }
+    },
+    /** 与后端 AuctionGoodsController.reapplyGoods 一致：卖方(2)、管理员(3)、超管(4)、运营(8) */
+    canUseReapply() {
+      try {
+        const user = JSON.parse(localStorage.getItem("userInfo") || "{}");
+        const roles = user.userRole
+          ? String(user.userRole)
+              .split(",")
+              .map((r) => r.trim())
+          : [];
+        return roles.some((r) => ["2", "3", "4", "8"].includes(r));
+      } catch (e) {
+        return false;
+      }
+    },
     canAuctioneerManage() {
       try {
         const user = JSON.parse(localStorage.getItem("userInfo") || "{}");
@@ -831,6 +864,10 @@ export default {
     },
     // 添加
     handleAdd() {
+      if (!this.canAddGoods) {
+        this.$message.warning("无权限新增商品，仅卖方或管理/运营可操作");
+        return;
+      }
       this.dialogTitle = "添加商品";
       this.formData = {
         id: null,
@@ -884,10 +921,10 @@ export default {
     },
     // 查看
     handleView(goods) {
-      // 跳转到商品详情页面
+      // 后台查看需走后台详情接口（可查看已下架/未通过审核商品）
       this.$router.push({
         path: "/goods-detail",
-        query: { id: goods.id },
+        query: { id: goods.id, from: "admin" },
       });
     },
     // 审核通过
@@ -929,8 +966,12 @@ export default {
         this.auditLoading = false;
       }
     },
-    // 重新申请（流拍/驳回/已下架）
+    // 重新申请（流拍/驳回/已下架；含手动下架 shelf=0）
     async handleReapply(goods) {
+      if (!this.canUseReapply) {
+        this.$message.warning("无权限重新申请，仅卖方或管理/运营可操作");
+        return;
+      }
       try {
         await this.$confirm(
           `确定将商品 "${goods.goodsName}" 重新申请上架吗？`,
@@ -1104,6 +1145,10 @@ export default {
             await updateGoods(data);
             this.$message.success("修改成功");
           } else {
+            if (!this.canAddGoods) {
+              this.$message.warning("无权限新增商品");
+              return;
+            }
             await addGoods(data);
             this.$message.success("添加成功");
           }
@@ -1361,9 +1406,12 @@ export default {
       return map[status] || "info";
     },
     canReapply(row) {
-      if (!row) return false;
+      if (!row || !this.canUseReapply) return false;
       return (
-        row.auditStatus === 2 || row.auditStatus === 3 || row.goodsStatus === 3
+        row.auditStatus === 2 ||
+        row.auditStatus === 3 ||
+        row.goodsStatus === 3 ||
+        (row.auditStatus === 1 && row.shelfStatus === 0)
       );
     },
     canOffline(row) {

@@ -223,14 +223,12 @@ const routes = [
       {
         path: "admin/notifications/send",
         name: "AdminNotificationsSend",
-        component: () =>
-          import("@/views/admin/AdminNotificationsSend.vue"),
+        component: () => import("@/views/admin/AdminNotificationsSend.vue"),
       },
       {
         path: "admin/notifications/inbox",
         name: "AdminNotificationsInbox",
-        component: () =>
-          import("@/views/admin/AdminNotificationsInbox.vue"),
+        component: () => import("@/views/admin/AdminNotificationsInbox.vue"),
       },
       {
         path: "admin/settings",
@@ -435,16 +433,14 @@ router.beforeEach((to, from, next) => {
           .split(",")
           .map((r) => r.trim())
       : [];
-    const canAccess = roles.some((r) =>
-      ["1", "2", "6"].includes(r),
-    );
+    const canAccess = roles.some((r) => ["1", "2", "6"].includes(r));
     if (!canAccess) {
       next("/home");
       return;
     }
   }
 
-  // 客服查看用户订单页：仅客服可访问，且必须带 userId 参数（从会话内跳转）
+  // 客服查看用户订单页：仅客服可访问，且必须带 userId 参数
   if (to.path === "/message/service-orders" && to.meta?.serviceOrders) {
     const roles = user.userRole
       ? String(user.userRole)

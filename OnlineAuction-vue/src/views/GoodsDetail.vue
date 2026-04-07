@@ -8,9 +8,16 @@
       </div>
 
       <!-- 商品图片展示区（无图片则不展示） -->
-      <div class="image-gallery" v-if="displayImageList.length > 0">
+      <div
+        class="image-gallery"
+        :class="{ 'is-off-shelf': isOffShelf }"
+        v-if="displayImageList.length > 0"
+      >
         <div class="main-image">
           <img :src="currentMainImage" alt="商品主图" class="main-img" />
+          <div v-if="isOffShelf" class="off-shelf-mask">
+            <span class="off-shelf-text">/ 已下架 /</span>
+          </div>
         </div>
         <div class="thumbnail-list">
           <img
@@ -216,7 +223,7 @@
 </template>
 
 <script>
-import { getGoodsDetail } from "@/api/goods";
+import { getGoodsDetail, getGoodsDetailAdmin } from "@/api/goods";
 import { getCategoryListForHome } from "@/api/category";
 import { submitBid, getRecordsByGoodsId } from "@/api/record";
 import { submitComplaint } from "@/api/complaint";
@@ -250,6 +257,10 @@ export default {
     };
   },
   computed: {
+    isOffShelf() {
+      // 下架优先按 shelfStatus 判定；兼容旧数据 auditStatus=3 视为下架态
+      return this.goodsInfo.shelfStatus === 0 || this.goodsInfo.auditStatus === 3;
+    },
     // 是否可以竞拍
     canBid() {
       if (!this.goodsInfo.id) return false;
@@ -359,7 +370,10 @@ export default {
       }
       this.loading = true;
       try {
-        const data = await getGoodsDetail(goodsId);
+        const isAdminView = this.$route.query.from === "admin";
+        const data = isAdminView
+          ? await getGoodsDetailAdmin(goodsId)
+          : await getGoodsDetail(goodsId);
         this.goodsInfo = data || {};
         this.selectedImageIndex = 0;
         // 加载分类名称
@@ -543,6 +557,9 @@ export default {
     "$route.query.id"() {
       this.loadGoodsDetail();
     },
+    "$route.query.from"() {
+      this.loadGoodsDetail();
+    },
   },
 };
 </script>
@@ -583,6 +600,7 @@ export default {
 
 .main-image {
   flex: 1;
+  position: relative;
 }
 
 .main-img {
@@ -590,6 +608,31 @@ export default {
   height: auto;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.image-gallery.is-off-shelf .main-img,
+.image-gallery.is-off-shelf .thumbnail {
+  filter: grayscale(100%);
+}
+
+.off-shelf-mask {
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.off-shelf-text {
+  color: #fff;
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  transform: rotate(-20deg);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
 }
 
 .thumbnail-list {

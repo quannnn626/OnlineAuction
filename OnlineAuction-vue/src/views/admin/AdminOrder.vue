@@ -6,10 +6,20 @@
     <div class="filter-section">
       <el-form :inline="true" :model="searchForm" class="search-form">
         <el-form-item label="订单号">
-          <el-input v-model="searchForm.orderNo" placeholder="订单编号" clearable style="width: 180px"></el-input>
+          <el-input
+            v-model="searchForm.orderNo"
+            placeholder="订单编号"
+            clearable
+            style="width: 180px"
+          ></el-input>
         </el-form-item>
         <el-form-item label="状态">
-          <el-select v-model="searchForm.orderStatus" placeholder="全部" clearable style="width: 120px">
+          <el-select
+            v-model="searchForm.orderStatus"
+            placeholder="全部"
+            clearable
+            style="width: 120px"
+          >
             <el-option label="待付款" :value="0"></el-option>
             <el-option label="待发货" :value="1"></el-option>
             <el-option label="待收货" :value="2"></el-option>
@@ -19,60 +29,151 @@
           </el-select>
         </el-form-item>
         <el-form-item v-if="canManageOrder" label="买方ID">
-          <el-input v-model="searchForm.buyerId" placeholder="买方用户ID（筛选）" clearable style="width: 130px"></el-input>
+          <el-input
+            v-model="searchForm.buyerId"
+            placeholder="买方用户ID（筛选）"
+            clearable
+            style="width: 130px"
+          ></el-input>
         </el-form-item>
         <el-form-item v-if="canManageOrder" label="卖方ID">
-          <el-input v-model="searchForm.sellerId" placeholder="卖方用户ID（筛选）" clearable style="width: 130px"></el-input>
+          <el-input
+            v-model="searchForm.sellerId"
+            placeholder="卖方用户ID（筛选）"
+            clearable
+            style="width: 130px"
+          ></el-input>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" icon="el-icon-search" @click="handleSearch">搜索</el-button>
-          <el-button icon="el-icon-refresh" @click="handleReset">重置</el-button>
+          <el-button type="primary" icon="el-icon-search" @click="handleSearch"
+            >搜索</el-button
+          >
+          <el-button icon="el-icon-refresh" @click="handleReset"
+            >重置</el-button
+          >
         </el-form-item>
       </el-form>
     </div>
     <div class="table-section">
       <el-table v-loading="loading" :data="tableData" stripe>
         <el-table-column prop="id" label="ID" width="70"></el-table-column>
-        <el-table-column prop="orderNo" label="订单号" width="160"></el-table-column>
-        <el-table-column prop="goodsName" label="商品名称" min-width="120"></el-table-column>
-        <el-table-column prop="buyerName" label="买方" width="100"></el-table-column>
-        <el-table-column prop="sellerName" label="卖方" width="100"></el-table-column>
-        <el-table-column prop="dealPrice" label="成交价" width="100"></el-table-column>
-        <el-table-column prop="depositAmount" label="保证金" width="90"></el-table-column>
-        <el-table-column prop="remainAmount" label="尾款" width="90"></el-table-column>
+        <el-table-column
+          prop="orderNo"
+          label="订单号"
+          width="160"
+        ></el-table-column>
+        <el-table-column
+          prop="goodsName"
+          label="商品名称"
+          min-width="120"
+        ></el-table-column>
+        <el-table-column
+          prop="buyerName"
+          label="买方"
+          width="100"
+        ></el-table-column>
+        <el-table-column
+          prop="sellerName"
+          label="卖方"
+          width="100"
+        ></el-table-column>
+        <el-table-column
+          prop="dealPrice"
+          label="成交价"
+          width="100"
+        ></el-table-column>
+        <el-table-column
+          prop="depositAmount"
+          label="保证金"
+          width="90"
+        ></el-table-column>
+        <el-table-column
+          prop="remainAmount"
+          label="尾款"
+          width="90"
+        ></el-table-column>
         <el-table-column prop="orderStatus" label="状态" width="90">
           <template slot-scope="scope">
-            <el-tag :type="getStatusTagType(scope.row.orderStatus)">{{ getStatusText(scope.row.orderStatus) }}</el-tag>
-            <span v-if="scope.row.confirmationNo" class="confirmation-no" title="成交确认书">📄{{ scope.row.confirmationNo }}</span>
+            <el-tag :type="getStatusTagType(scope.row.orderStatus)">{{
+              getStatusText(scope.row.orderStatus)
+            }}</el-tag>
+            <span
+              v-if="scope.row.confirmationNo"
+              class="confirmation-no"
+              title="成交确认书"
+              >📄{{ scope.row.confirmationNo }}</span
+            >
           </template>
         </el-table-column>
         <el-table-column prop="payDeadline" label="尾款截止" width="160">
-          <template slot-scope="scope">{{ formatDateTime(scope.row.payDeadline) }}</template>
+          <template slot-scope="scope">{{
+            formatDateTime(scope.row.payDeadline)
+          }}</template>
         </el-table-column>
         <el-table-column prop="createTime" label="创建时间" width="160">
-          <template slot-scope="scope">{{ formatDateTime(scope.row.createTime) }}</template>
+          <template slot-scope="scope">{{
+            formatDateTime(scope.row.createTime)
+          }}</template>
         </el-table-column>
         <el-table-column label="物流" width="140" align="center">
           <template slot-scope="scope">
-            <span v-if="scope.row.expressCompany">{{ scope.row.expressCompany }}<br>{{ scope.row.expressNo }}</span>
+            <span v-if="scope.row.expressCompany"
+              >{{ scope.row.expressCompany }}<br />{{
+                scope.row.expressNo
+              }}</span
+            >
             <span v-else class="text-muted">-</span>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="320" fixed="right">
           <template slot-scope="scope">
-            <el-button v-if="canConfirmDeal && !scope.row.confirmDealAt && (scope.row.orderStatus === 0 || scope.row.orderStatus === 1)" size="mini" type="info" icon="el-icon-bangzhu" @click="handleConfirmDeal(scope.row)">
+            <el-button
+              v-if="
+                canConfirmDeal &&
+                !scope.row.confirmDealAt &&
+                (scope.row.orderStatus === 0 || scope.row.orderStatus === 1)
+              "
+              size="mini"
+              type="info"
+              icon="el-icon-bangzhu"
+              @click="handleConfirmDeal(scope.row)"
+            >
               落槌确认
             </el-button>
-            <el-button v-if="canConfirmDeal && scope.row.orderStatus === 0" size="mini" type="warning" icon="el-icon-warning-outline" @click="handleMarkDefault(scope.row)">
+            <el-button
+              v-if="canConfirmDeal && scope.row.orderStatus === 0"
+              size="mini"
+              type="warning"
+              icon="el-icon-warning-outline"
+              @click="handleMarkDefault(scope.row)"
+            >
               标记悔拍
             </el-button>
-            <el-button v-if="canManageOrder && scope.row.orderStatus === 0" size="mini" type="success" icon="el-icon-check" @click="handleSettle(scope.row)">
+            <el-button
+              v-if="canManageOrder && scope.row.orderStatus === 0"
+              size="mini"
+              type="success"
+              icon="el-icon-check"
+              @click="handleSettle(scope.row)"
+            >
               确认结算
             </el-button>
-            <el-button v-if="canShip(scope.row)" size="mini" type="primary" icon="el-icon-truck" @click="handleShip(scope.row)">
+            <el-button
+              v-if="canShip(scope.row)"
+              size="mini"
+              type="primary"
+              icon="el-icon-truck"
+              @click="handleShip(scope.row)"
+            >
               发货
             </el-button>
-            <el-button v-if="canManageOrder && scope.row.orderStatus === 2" size="mini" type="success" icon="el-icon-check" @click="handleConfirmReceipt(scope.row)">
+            <el-button
+              v-if="canManageOrder && scope.row.orderStatus === 2"
+              size="mini"
+              type="success"
+              icon="el-icon-check"
+              @click="handleConfirmReceipt(scope.row)"
+            >
               确认收货
             </el-button>
             <el-button
@@ -84,7 +185,9 @@
             >
               退款
             </el-button>
-            <template v-if="!canManageOrder && !canConfirmDeal && !canShip(scope.row)">
+            <template
+              v-if="!canManageOrder && !canConfirmDeal && !canShip(scope.row)"
+            >
               <span class="text-muted">仅查看</span>
             </template>
           </template>
@@ -110,15 +213,25 @@
           <span>{{ shipForm.orderNo }}</span>
         </el-form-item>
         <el-form-item label="快递公司" prop="expressCompany" required>
-          <el-input v-model="shipForm.expressCompany" placeholder="如：顺丰速运、中通快递" clearable></el-input>
+          <el-input
+            v-model="shipForm.expressCompany"
+            placeholder="如：顺丰速运、中通快递"
+            clearable
+          ></el-input>
         </el-form-item>
         <el-form-item label="快递单号" prop="expressNo" required>
-          <el-input v-model="shipForm.expressNo" placeholder="请输入快递单号" clearable></el-input>
+          <el-input
+            v-model="shipForm.expressNo"
+            placeholder="请输入快递单号"
+            clearable
+          ></el-input>
         </el-form-item>
       </el-form>
       <div slot="footer">
         <el-button @click="shipVisible = false">取消</el-button>
-        <el-button type="primary" @click="submitShip" :loading="shipLoading">确认发货</el-button>
+        <el-button type="primary" @click="submitShip" :loading="shipLoading"
+          >确认发货</el-button
+        >
       </div>
     </el-dialog>
 
@@ -131,12 +244,19 @@
           <span>{{ refundForm.depositAmount }} 元（保证金）</span>
         </el-form-item>
         <el-form-item label="退款原因" prop="remark">
-          <el-input v-model="refundForm.remark" type="textarea" :rows="3" placeholder="可选"></el-input>
+          <el-input
+            v-model="refundForm.remark"
+            type="textarea"
+            :rows="3"
+            placeholder="可选"
+          ></el-input>
         </el-form-item>
       </el-form>
       <div slot="footer">
         <el-button @click="refundVisible = false">取消</el-button>
-        <el-button type="warning" @click="submitRefund" :loading="refundLoading">确认退款</el-button>
+        <el-button type="warning" @click="submitRefund" :loading="refundLoading"
+          >确认退款</el-button
+        >
       </div>
     </el-dialog>
   </div>
@@ -161,7 +281,11 @@ export default {
       if (!userInfo) return false;
       try {
         const user = JSON.parse(userInfo);
-        const roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
+        const roles = user.userRole
+          ? String(user.userRole)
+              .split(",")
+              .map((r) => r.trim())
+          : [];
         return roles.some((r) => ["3", "4", "7"].includes(r));
       } catch (e) {
         return false;
@@ -173,7 +297,11 @@ export default {
       if (!userInfo) return false;
       try {
         const user = JSON.parse(userInfo);
-        const roles = user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
+        const roles = user.userRole
+          ? String(user.userRole)
+              .split(",")
+              .map((r) => r.trim())
+          : [];
         return roles.some((r) => ["3", "4", "5"].includes(r));
       } catch (e) {
         return false;
@@ -193,14 +321,29 @@ export default {
     return {
       loading: false,
       tableData: [],
-      searchForm: { orderNo: "", orderStatus: undefined, buyerId: "", sellerId: "" },
+      searchForm: {
+        orderNo: "",
+        orderStatus: undefined,
+        buyerId: "",
+        sellerId: "",
+      },
       pagination: { current: 1, size: 10, total: 0 },
       refundVisible: false,
       refundLoading: false,
-      refundForm: { orderId: null, orderNo: "", depositAmount: null, remark: "" },
+      refundForm: {
+        orderId: null,
+        orderNo: "",
+        depositAmount: null,
+        remark: "",
+      },
       shipVisible: false,
       shipLoading: false,
-      shipForm: { orderId: null, orderNo: "", expressCompany: "", expressNo: "" },
+      shipForm: {
+        orderId: null,
+        orderNo: "",
+        expressCompany: "",
+        expressNo: "",
+      },
     };
   },
   mounted() {
@@ -215,7 +358,11 @@ export default {
       const roles = (() => {
         try {
           const user = JSON.parse(localStorage.getItem("userInfo") || "{}");
-          return user.userRole ? String(user.userRole).split(",").map((r) => r.trim()) : [];
+          return user.userRole
+            ? String(user.userRole)
+                .split(",")
+                .map((r) => r.trim())
+            : [];
         } catch (e) {
           return [];
         }
@@ -225,11 +372,15 @@ export default {
       return uid && row.sellerId && String(uid) === String(row.sellerId);
     },
     handleConfirmDeal(row) {
-      this.$confirm("确认对该订单执行落槌确认？将生成成交确认书编号并锁定买受人。", "落槌确认", {
-        confirmButtonText: "确定",
-        cancelButtonText: "取消",
-        type: "info",
-      })
+      this.$confirm(
+        "确认对该订单执行落槌确认？将生成成交确认书编号并锁定买受人。",
+        "落槌确认",
+        {
+          confirmButtonText: "确定",
+          cancelButtonText: "取消",
+          type: "info",
+        },
+      )
         .then(async () => {
           try {
             await confirmDeal(row.id);
@@ -242,7 +393,12 @@ export default {
         .catch(() => {});
     },
     handleShip(row) {
-      this.shipForm = { orderId: row.id, orderNo: row.orderNo, expressCompany: "", expressNo: "" };
+      this.shipForm = {
+        orderId: row.id,
+        orderNo: row.orderNo,
+        expressCompany: "",
+        expressNo: "",
+      };
       this.shipVisible = true;
     },
     async submitShip() {
@@ -252,7 +408,11 @@ export default {
       }
       this.shipLoading = true;
       try {
-        await shipOrder(this.shipForm.orderId, this.shipForm.expressCompany, this.shipForm.expressNo);
+        await shipOrder(
+          this.shipForm.orderId,
+          this.shipForm.expressCompany,
+          this.shipForm.expressNo,
+        );
         this.$message.success("发货成功");
         this.shipVisible = false;
         this.loadData();
@@ -271,11 +431,13 @@ export default {
           orderStatus: this.searchForm.orderStatus,
           orderNo: this.searchForm.orderNo || undefined,
         };
-        if (this.searchForm.buyerId) params.buyerId = parseInt(this.searchForm.buyerId);
-        if (this.searchForm.sellerId) params.sellerId = parseInt(this.searchForm.sellerId);
+        if (this.searchForm.buyerId)
+          params.buyerId = parseInt(this.searchForm.buyerId);
+        if (this.searchForm.sellerId)
+          params.sellerId = parseInt(this.searchForm.sellerId);
         const res = await getAdminOrderPage(params);
-        this.tableData = (res && res.list) ? res.list : [];
-        this.pagination.total = (res && res.total) ? res.total : 0;
+        this.tableData = res && res.list ? res.list : [];
+        this.pagination.total = res && res.total ? res.total : 0;
       } catch (e) {
         this.tableData = [];
       } finally {
@@ -287,7 +449,12 @@ export default {
       this.loadData();
     },
     handleReset() {
-      this.searchForm = { orderNo: "", orderStatus: undefined, buyerId: "", sellerId: "" };
+      this.searchForm = {
+        orderNo: "",
+        orderStatus: undefined,
+        buyerId: "",
+        sellerId: "",
+      };
       this.pagination.current = 1;
       this.loadData();
     },
@@ -319,9 +486,13 @@ export default {
     },
     handleMarkDefault(row) {
       this.$confirm(
-        "确认买方未付款/悔拍？将扣除保证金，订单标记为已悔拍，商品恢复上架供拍卖师再次上架。",
+        "确认买方未付款/悔拍？将扣除保证金，订单标记为已悔拍；商品将置为流拍并下架，卖方可重新申请上架后再次竞拍。",
         "标记悔拍",
-        { confirmButtonText: "确定", cancelButtonText: "取消", type: "warning" }
+        {
+          confirmButtonText: "确定",
+          cancelButtonText: "取消",
+          type: "warning",
+        },
       )
         .then(async () => {
           try {
@@ -374,29 +545,69 @@ export default {
       }
     },
     getStatusText(s) {
-      const map = { 0: "待付款", 1: "待发货", 2: "待收货", 3: "已完成", 4: "已悔拍", 5: "已退款" };
+      const map = {
+        0: "待付款",
+        1: "待发货",
+        2: "待收货",
+        3: "已完成",
+        4: "已悔拍",
+        5: "已退款",
+      };
       return map[s] || "-";
     },
     getStatusTagType(s) {
-      const map = { 0: "warning", 1: "primary", 2: "primary", 3: "success", 4: "info", 5: "info" };
+      const map = {
+        0: "warning",
+        1: "primary",
+        2: "primary",
+        3: "success",
+        4: "info",
+        5: "info",
+      };
       return map[s] || "info";
     },
     formatDateTime(val) {
       if (!val) return "-";
       const d = new Date(val);
-      return isNaN(d.getTime()) ? val : d.toLocaleString("zh-CN", { hour12: false });
+      return isNaN(d.getTime())
+        ? val
+        : d.toLocaleString("zh-CN", { hour12: false });
     },
   },
 };
 </script>
 
 <style scoped>
-.admin-order-page { padding: 20px; }
-.page-header { margin-bottom: 20px; }
-.page-header h2 { margin: 0; font-size: 20px; }
-.filter-section { margin-bottom: 20px; }
-.table-section { background: #fff; padding: 20px; border-radius: 4px; }
-.pagination-section { margin-top: 20px; text-align: right; }
-.text-muted { color: #909399; font-size: 12px; }
-.confirmation-no { display: block; font-size: 11px; color: #67c23a; margin-top: 2px; }
+.admin-order-page {
+  padding: 20px;
+}
+.page-header {
+  margin-bottom: 20px;
+}
+.page-header h2 {
+  margin: 0;
+  font-size: 20px;
+}
+.filter-section {
+  margin-bottom: 20px;
+}
+.table-section {
+  background: #fff;
+  padding: 20px;
+  border-radius: 4px;
+}
+.pagination-section {
+  margin-top: 20px;
+  text-align: right;
+}
+.text-muted {
+  color: #909399;
+  font-size: 12px;
+}
+.confirmation-no {
+  display: block;
+  font-size: 11px;
+  color: #67c23a;
+  margin-top: 2px;
+}
 </style>

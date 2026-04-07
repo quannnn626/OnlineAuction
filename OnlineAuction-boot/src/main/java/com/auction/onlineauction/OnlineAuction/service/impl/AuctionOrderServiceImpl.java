@@ -257,6 +257,18 @@ public class AuctionOrderServiceImpl extends ServiceImpl<AuctionOrderMapper, Auc
         }
         QueryWrapper<AuctionOrder> q = new QueryWrapper<>();
         q.eq("goods_id", goodsId).eq("del_flag", 0);
+        q.in("order_status", 0, 1, 2, 3);
+        return count(q) > 0;
+    }
+
+    @Override
+    public boolean hasTerminalFailureOrderByGoodsId(Long goodsId) {
+        if (goodsId == null) {
+            return false;
+        }
+        QueryWrapper<AuctionOrder> q = new QueryWrapper<>();
+        q.eq("goods_id", goodsId).eq("del_flag", 0);
+        q.in("order_status", 4, 5);
         return count(q) > 0;
     }
 
@@ -377,7 +389,7 @@ public class AuctionOrderServiceImpl extends ServiceImpl<AuctionOrderMapper, Auc
         AuctionGoods goods = goodsService.getById(order.getGoodsId());
         if (goods != null && goods.getDelFlag() == 0) {
             goods.setGoodsStatus(3);
-            goods.setShelfStatus(1);
+            goods.setShelfStatus(0);
             goods.setAuditStatus(1);
             goods.setCurrentHighestPrice(null);
             goods.setUpdateTime(LocalDateTime.now());
