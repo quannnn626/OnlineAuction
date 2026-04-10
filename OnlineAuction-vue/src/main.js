@@ -38,6 +38,7 @@ axios.interceptors.response.use(
 
 Vue.config.productionTip = false;
 
+//把 Element UI 注册成全局组件库
 Vue.use(ElementUI);
 
 // 将 axios 挂载到 Vue 原型上

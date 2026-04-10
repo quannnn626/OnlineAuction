@@ -1,15 +1,94 @@
 <view class="page">
   <view class="card">
     <view class="title">{{detail.goodsName || '商品详情'}}</view>
-    <image
-      class="goods-image"
-      wx:if="{{detail.files && detail.files.length > 0 && detail.files[0].filePath}}"
-      src="{{uploadBase}}{{detail.files[0].filePath}}"
-      mode="aspectFill"
-    ></image>
-    <view class="row"><text class="label">当前价：</text>{{detail.currentHighestPrice || detail.basePrice || 0}}</view>
+    <swiper
+      wx:if="{{imageUrls.length > 0}}"
+      class="goods-swiper"
+      indicator-dots
+      circular
+      autoplay="{{imageUrls.length > 1}}"
+      interval="4000"
+    >
+      <swiper-item wx:for="{{imageUrls}}" wx:key="*this">
+        <image class="goods-swiper-image" src="{{item}}" mode="aspectFill"></image>
+      </swiper-item>
+    </swiper>
+
+    <view wx:if="{{videoUrls.length > 0}}" class="video-block">
+      <view class="sub-title video-title">商品视频</view>
+      <video
+        wx:for="{{videoUrls}}"
+        wx:key="*this"
+        class="goods-video"
+        src="{{item}}"
+        controls
+        show-center-play-btn
+      ></video>
+    </view>
+    <view class="row">
+      <text class="label">当前价：</text>
+      <text class="price-strong">{{detail.currentHighestPrice || detail.basePrice || 0}}</text>
+      <text wx:if="{{detail.currentHighestPrice}}" class="price-hint">（含竞价）</text>
+    </view>
     <view class="row"><text class="label">起拍价：</text>{{detail.basePrice || 0}}</view>
-    <view class="row"><text class="label">状态：</text>{{detail.goodsStatus}}</view>
+    <view class="row"><text class="label">最小加价：</text>{{detail.addPrice || 0}}</view>
+    <view class="row"><text class="label">开始时间：</text>{{startTimeText}}</view>
+    <view class="row"><text class="label">结束时间：</text>{{endTimeText}}</view>
+    <view class="row"><text class="label">状态：</text>{{goodsStatusText}}</view>
+  </view>
+
+  <view class="card" wx:if="{{canBid}}">
+    <view class="sub-title">参与竞拍</view>
+    <view class="row bid-tip-row">
+      <text class="label">最低可出：</text>
+      <text class="price-strong">{{minBidPriceText}}</text>
+      <text class="unit">元</text>
+    </view>
+    <input
+      class="bid-input"
+      type="digit"
+      placeholder="输入出价金额"
+      value="{{bidInput}}"
+      bindinput="onBidInput"
+    />
+    <button
+      class="bid-btn primary"
+      loading="{{bidding}}"
+      disabled="{{bidding}}"
+      bindtap="submitBid"
+    >
+      立即出价
+    </button>
+    <button
+      class="bid-btn outline"
+      disabled="{{bidding}}"
+      bindtap="quickBid"
+    >
+      快速加价（+{{addPriceText}}）
+    </button>
+  </view>
+
+  <view class="card" wx:elif="{{bidDisabledReason}}">
+    <view class="sub-title">竞拍</view>
+    <view class="bid-muted">{{bidDisabledReason}}</view>
+  </view>
+
+  <view class="card">
+    <view class="sub-title">竞拍记录</view>
+    <view wx:if="{{recordsLoading}}" class="bid-muted">加载中…</view>
+    <view wx:elif="{{bidRecordsDisplay.length === 0}}" class="bid-muted">暂无出价记录</view>
+    <view wx:else class="record-list">
+      <view class="record-row" wx:for="{{bidRecordsDisplay}}" wx:key="id">
+        <view class="record-main">
+          <text class="record-name">{{item.buyerName}}</text>
+          <text class="record-price">¥{{item.bidPriceText}}</text>
+        </view>
+        <view class="record-meta">
+          <text>{{item.bidTimeText}}</text>
+          <text wx:if="{{item.isHighest}}" class="tag-highest">当前最高</text>
+        </view>
+      </view>
+    </view>
   </view>
 
   <view class="card">
@@ -17,4 +96,3 @@
     <view class="desc">{{detail.goodsDesc || '暂无描述'}}</view>
   </view>
 </view>
-

@@ -9,6 +9,20 @@ export interface LoginUser {
   needSetPassword?: boolean;
   /** 是否可用网页端登录（已设密码且昵称非默认） */
   webLoginAllowed?: boolean;
+  isBuyer?: boolean;
+  isSeller?: boolean;
+}
+
+export interface BidRecordRow {
+  id?: number;
+  buyerName?: string;
+  buyer_name?: string;
+  bidPrice?: number;
+  bid_price?: number;
+  bidTime?: string;
+  bid_time?: string;
+  isHighest?: number;
+  is_highest?: number;
 }
 
 export interface GoodsItem {
@@ -67,6 +81,22 @@ export function getSpecialGoods(specialId: number) {
 export function getGoodsDetail(goodsId: number) {
   return request<GoodsItem & Record<string, unknown>>({
     url: `/mp/goods/${goodsId}`,
+  });
+}
+
+/** 与网页端同一接口，依赖登录 Session（Cookie） */
+export function submitBid(goodsId: number, bidPrice: number) {
+  return request<unknown>({
+    url: "/OnlineAuction/auctionRecord/bid",
+    method: "POST",
+    data: { goodsId, bidPrice },
+  });
+}
+
+/** 商品竞拍记录（公开，无需登录；小程序仍带 Cookie 无妨） */
+export function getBidRecordsByGoodsId(goodsId: number, limit = 20) {
+  return request<BidRecordRow[]>({
+    url: `/OnlineAuction/auctionRecord/list?goodsId=${goodsId}&limit=${limit}`,
   });
 }
 
