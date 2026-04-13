@@ -1,10 +1,13 @@
 package com.auction.onlineauction.OnlineAuction.service.impl;
 
+import com.auction.onlineauction.OnlineAuction.entity.AuctionMessage;
 import com.auction.onlineauction.OnlineAuction.entity.AuctionUser;
 import com.auction.onlineauction.OnlineAuction.entity.AuctionMessageCenter;
 import com.auction.onlineauction.OnlineAuction.entity.AuctionMessageSession;
 import com.auction.onlineauction.OnlineAuction.entity.AuctionWorkOrder;
+import com.auction.onlineauction.OnlineAuction.mapper.AuctionMessageMapper;
 import com.auction.onlineauction.OnlineAuction.service.IAuctionDepositService;
+import com.auction.onlineauction.OnlineAuction.service.IAuctionMessageService;
 import com.auction.onlineauction.OnlineAuction.mapper.AuctionMessageCenterMapper;
 import com.auction.onlineauction.OnlineAuction.mapper.AuctionMessageSessionMapper;
 import com.auction.onlineauction.OnlineAuction.mapper.AuctionWorkOrderMapper;
@@ -34,11 +37,15 @@ public class AuctionWorkOrderServiceImpl extends ServiceImpl<AuctionWorkOrderMap
     @Autowired
     private IAuctionUserService userService;
     @Autowired
+    private AuctionMessageMapper auctionMessageMapper;
+    @Autowired
+    private IAuctionMessageService messageBoardService;
+    @Autowired
     private IAuctionDepositService depositService;
     @Autowired
     private AuctionMessageSessionMapper sessionMapper;
     @Autowired
-    private AuctionMessageCenterMapper messageMapper;
+    private AuctionMessageCenterMapper messageCenterMapper;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -70,8 +77,41 @@ public class AuctionWorkOrderServiceImpl extends ServiceImpl<AuctionWorkOrderMap
         w.setCreateTime(LocalDateTime.now());
         w.setUpdateTime(LocalDateTime.now());
         w.setDelFlag(0);
+        w.setPenaltyTargetUserId(resolveSuggestedPenaltyTargetUserId(w));
         save(w);
         return w;
+    }
+
+    /**
+     * 推断处罚对象用户ID（无需手工填）。
+     * 规则：留言类工单 → 处罚被投诉的留言发布者；其余投诉类（商品/订单/竞价/其他）→ 处罚发起工单的用户（投诉人）；
+     * 风控类 → 工单登记的处罚对象或 relatedId 目标用户。
+     */
+    private Long resolveSuggestedPenaltyTargetUserId(AuctionWorkOrder w) {
+        if (w == null) return null;
+        String type = w.getWorkType() == null ? "" : w.getWorkType().trim().toLowerCase();
+        if ("risk".equals(type)) {
+            if (w.getPenaltyTargetUserId() != null) return w.getPenaltyTargetUserId();
+            return w.getRelatedId();
+        }
+        if ("message".equals(type)) {
+            Long rid = w.getRelatedId();
+            if (rid == null) return null;
+            try {
+                AuctionMessage m = auctionMessageMapper.selectById(rid);
+                if (m == null || (m.getDelFlag() != null && m.getDelFlag() == 1)) return null;
+                return m.getUserId();
+            } catch (Exception ignored) {
+                return null;
+            }
+        }
+        return w.getUserId();
+    }
+
+    private static String displayUserName(AuctionUser u) {
+        if (u == null) return null;
+        if (u.getNickName() != null && !u.getNickName().trim().isEmpty()) return u.getNickName().trim();
+        return u.getUserName();
     }
 
     @Override
@@ -180,10 +220,11 @@ public class AuctionWorkOrderServiceImpl extends ServiceImpl<AuctionWorkOrderMap
         w.setWorkStatus(workStatus);
         w.setHandleResult(resultText);
         if (workStatus == 2) {
-            // 提交管理员复核：记录建议处罚
-            w.setPenaltyType(normalizePenaltyType(penaltyType));
-            w.setPenaltyTargetUserId(penaltyTargetUserId);
+            String pNorm = normalizePenaltyType(penaltyType);
+            w.setPenaltyType(pNorm);
+            w.setPenaltyTargetUserId(resolveSuggestedPenaltyTargetUserId(w));
             w.setPenaltyAmount(penaltyAmount);
+            assertPenaltyTypeAllowedForWorkOrder(w, pNorm);
         }
         if (workStatus == 3) {
             // 客服直接关闭
@@ -230,7 +271,8 @@ public class AuctionWorkOrderServiceImpl extends ServiceImpl<AuctionWorkOrderMap
 
         if (approve) {
             String pType = normalizePenaltyType(penaltyType != null ? penaltyType : w.getPenaltyType());
-            Long targetUserId = penaltyTargetUserId != null ? penaltyTargetUserId : w.getPenaltyTargetUserId();
+            assertPenaltyTypeAllowedForWorkOrder(w, pType);
+            Long targetUserId = resolveSuggestedPenaltyTargetUserId(w);
             BigDecimal amount = penaltyAmount != null ? penaltyAmount : w.getPenaltyAmount();
             executePenalty(pType, targetUserId, amount, w);
             w.setPenaltyType(pType);
@@ -295,7 +337,7 @@ public class AuctionWorkOrderServiceImpl extends ServiceImpl<AuctionWorkOrderMap
         msg.setIsRead(0);
         msg.setDelFlag(0);
         msg.setCreateTime(LocalDateTime.now());
-        messageMapper.insert(msg);
+        messageCenterMapper.insert(msg);
 
         session.setUpdateTime(LocalDateTime.now());
         sessionMapper.updateById(session);
@@ -303,14 +345,34 @@ public class AuctionWorkOrderServiceImpl extends ServiceImpl<AuctionWorkOrderMap
 
     private String normalizePenaltyType(String penaltyType) {
         String p = penaltyType == null ? "NONE" : penaltyType.trim().toUpperCase();
-        if (!Arrays.asList("NONE", "WARN", "DEDUCT_DEPOSIT", "BAN_USER", "UNBAN_USER").contains(p)) {
+        if (!Arrays.asList("NONE", "WARN", "DEDUCT_DEPOSIT", "BAN_USER", "UNBAN_USER", "DELETE_MESSAGE").contains(p)) {
             return "NONE";
         }
         return p;
     }
 
+    /** 订单投诉：仅允许无处罚/警告/封禁；不受理由管理员在复核中选「驳回」。 */
+    private void assertPenaltyTypeAllowedForWorkOrder(AuctionWorkOrder w, String pNorm) {
+        if (w == null || pNorm == null) return;
+        String t = w.getWorkType() == null ? "" : w.getWorkType().trim().toLowerCase();
+        if (!"order".equals(t)) return;
+        if ("DEDUCT_DEPOSIT".equals(pNorm) || "DELETE_MESSAGE".equals(pNorm) || "UNBAN_USER".equals(pNorm)) {
+            throw new RuntimeException("订单投诉只支持无处罚、警告或封禁账号；不受理请在复核中选择驳回");
+        }
+    }
+
     private void executePenalty(String penaltyType, Long targetUserId, BigDecimal penaltyAmount, AuctionWorkOrder w) {
         if ("NONE".equals(penaltyType) || "WARN".equals(penaltyType)) return;
+        if ("DELETE_MESSAGE".equals(penaltyType)) {
+            if (w == null || !"message".equalsIgnoreCase(w.getWorkType())) {
+                throw new RuntimeException("仅留言类工单可执行删除留言");
+            }
+            if (w.getRelatedId() == null) {
+                throw new RuntimeException("工单关联留言ID为空");
+            }
+            messageBoardService.deleteMessageAdmin(w.getRelatedId());
+            return;
+        }
         if (targetUserId == null) throw new RuntimeException("处罚目标用户不能为空");
         if ("DEDUCT_DEPOSIT".equals(penaltyType)) {
             if (penaltyAmount == null || penaltyAmount.compareTo(BigDecimal.ZERO) <= 0) {
@@ -394,6 +456,8 @@ public class AuctionWorkOrderServiceImpl extends ServiceImpl<AuctionWorkOrderMap
         list.forEach(w -> {
             userIds.add(w.getUserId());
             if (w.getServiceId() != null) userIds.add(w.getServiceId());
+            Long eff = resolveSuggestedPenaltyTargetUserId(w);
+            if (eff != null) userIds.add(eff);
         });
         Map<Long, AuctionUser> userMap = userService.listByIds(userIds).stream()
                 .filter(u -> u.getDelFlag() == 0)
@@ -413,6 +477,14 @@ public class AuctionWorkOrderServiceImpl extends ServiceImpl<AuctionWorkOrderMap
             row.put("updateTime", w.getUpdateTime());
             row.put("userId", w.getUserId());
             row.put("serviceId", w.getServiceId());
+            row.put("penaltyType", w.getPenaltyType());
+            row.put("penaltyAmount", w.getPenaltyAmount());
+            row.put("penaltyTargetUserId", w.getPenaltyTargetUserId());
+            Long effectivePenaltyTargetUserId = resolveSuggestedPenaltyTargetUserId(w);
+            row.put("effectivePenaltyTargetUserId", effectivePenaltyTargetUserId);
+            AuctionUser penalized = effectivePenaltyTargetUserId == null ? null : userMap.get(effectivePenaltyTargetUserId);
+            row.put("penaltyTargetDisplayName", penalized == null ? null : displayUserName(penalized));
+
             AuctionUser u = userMap.get(w.getUserId());
             AuctionUser s = userMap.get(w.getServiceId());
             row.put("userName", u == null ? "用户" : ((u.getNickName() != null && !u.getNickName().trim().isEmpty()) ? u.getNickName() : u.getUserName()));

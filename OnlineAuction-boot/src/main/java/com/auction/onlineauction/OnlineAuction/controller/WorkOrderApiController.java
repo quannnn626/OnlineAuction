@@ -140,6 +140,9 @@ public class WorkOrderApiController {
                     id, adminId, approve, reviewResult, penaltyType, penaltyTargetUserId, penaltyAmount
             );
 
+            AuctionWorkOrder after = workOrderService.getById(id);
+            Long resolvedTarget = after != null ? after.getPenaltyTargetUserId() : null;
+
             // 风控工单复核：写入操作审计
             if ("risk".equalsIgnoreCase(workType)) {
                 try {
@@ -147,7 +150,7 @@ public class WorkOrderApiController {
                     log.setOperUserId(adminId);
                     log.setOperModule("risk-work-order");
                     log.setOperType(approve != null && approve ? "approve" : "reject");
-                    log.setOperContent("workOrderId=" + id + ", penaltyType=" + penaltyType + ", targetUserId=" + penaltyTargetUserId);
+                    log.setOperContent("workOrderId=" + id + ", penaltyType=" + (after != null ? after.getPenaltyType() : penaltyType) + ", targetUserId=" + resolvedTarget);
                     log.setOperIp(getClientIp(request));
                     log.setCreateTime(LocalDateTime.now());
                     operLogService.save(log);

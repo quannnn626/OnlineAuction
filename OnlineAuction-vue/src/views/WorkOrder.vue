@@ -50,6 +50,14 @@
       <el-table-column prop="title" label="标题" min-width="180"></el-table-column>
       <el-table-column prop="content" label="内容" min-width="220" show-overflow-tooltip></el-table-column>
       <el-table-column prop="userName" label="提交人" width="120"></el-table-column>
+      <el-table-column label="处罚对象" min-width="160" show-overflow-tooltip>
+        <template slot-scope="scope">
+          <span v-if="scope.row.effectivePenaltyTargetUserId">
+            {{ scope.row.penaltyTargetDisplayName || "用户" }}（ID: {{ scope.row.effectivePenaltyTargetUserId }}）
+          </span>
+          <span v-else class="text-muted">—（无关联或无法解析）</span>
+        </template>
+      </el-table-column>
       <el-table-column prop="workStatus" label="状态" width="100">
         <template slot-scope="scope">
           <el-tag :type="getStatusType(scope.row.workStatus)" size="small">
@@ -83,8 +91,21 @@
       />
     </div>
 
-    <el-dialog title="客服处理工单" :visible.sync="processVisible" width="620px">
-      <el-form :model="processForm" label-width="100px">
+    <el-dialog title="客服处理工单" :visible.sync="processVisible" width="520px">
+      <div class="dialog-penalty-summary">
+        <div class="dpt-title">处罚对象</div>
+        <p v-if="dialogWorkType === 'message'" class="dpt-sub">留言投诉：处罚留言发布者</p>
+        <p v-else-if="dialogWorkType && dialogWorkType !== 'risk'" class="dpt-sub">其它投诉：处罚发起工单的用户（投诉人）</p>
+        <template v-if="dialogPenaltyUserId">
+          <div class="dpt-line"><span class="dpt-k">用户昵称</span>{{ dialogPenaltyDisplayName || "—" }}</div>
+          <div class="dpt-line"><span class="dpt-k">用户ID</span>{{ dialogPenaltyUserId }}</div>
+        </template>
+        <div v-else class="dpt-empty">暂无（无法从工单解析）</div>
+      </div>
+      <p v-if="dialogWorkType === 'order'" class="order-type-hint">
+        订单投诉：不受理由管理员在复核中选「驳回」；仅书面回复选「无处罚」并写清处理意见；需惩戒投诉人选「警告」或「封禁账号」。
+      </p>
+      <el-form :model="processForm" label-width="100px" class="dialog-form-below">
         <el-form-item label="工单状态">
           <el-select v-model="processForm.workStatus" style="width: 100%">
             <el-option label="处理中" :value="1"></el-option>
@@ -94,14 +115,8 @@
         </el-form-item>
         <el-form-item v-if="processForm.workStatus === 2" label="建议处罚">
           <el-select v-model="processForm.penaltyType" style="width: 100%">
-            <el-option label="无处罚" value="NONE"></el-option>
-            <el-option label="警告" value="WARN"></el-option>
-            <el-option label="扣保证金" value="DEDUCT_DEPOSIT"></el-option>
-            <el-option label="禁用账号" value="BAN_USER"></el-option>
+            <el-option v-for="o in processPenaltyOptions" :key="o.value" :label="o.label" :value="o.value" />
           </el-select>
-        </el-form-item>
-        <el-form-item v-if="processForm.workStatus === 2" label="处罚对象ID">
-          <el-input v-model.number="processForm.penaltyTargetUserId" placeholder="选填：建议处罚对象用户ID"></el-input>
         </el-form-item>
         <el-form-item v-if="processForm.workStatus === 2 && processForm.penaltyType === 'DEDUCT_DEPOSIT'" label="扣款金额">
           <el-input-number v-model="processForm.penaltyAmount" :min="0" :precision="2" style="width: 100%"></el-input-number>
@@ -116,8 +131,21 @@
       </span>
     </el-dialog>
 
-    <el-dialog title="管理员复核" :visible.sync="reviewVisible" width="620px">
-      <el-form :model="reviewForm" label-width="100px">
+    <el-dialog title="管理员复核" :visible.sync="reviewVisible" width="520px">
+      <div class="dialog-penalty-summary">
+        <div class="dpt-title">处罚对象</div>
+        <p v-if="dialogWorkType === 'message'" class="dpt-sub">留言投诉：处罚留言发布者</p>
+        <p v-else-if="dialogWorkType && dialogWorkType !== 'risk'" class="dpt-sub">其它投诉：处罚发起工单的用户（投诉人）</p>
+        <template v-if="dialogPenaltyUserId">
+          <div class="dpt-line"><span class="dpt-k">用户昵称</span>{{ dialogPenaltyDisplayName || "—" }}</div>
+          <div class="dpt-line"><span class="dpt-k">用户ID</span>{{ dialogPenaltyUserId }}</div>
+        </template>
+        <div v-else class="dpt-empty">暂无（无法从工单解析）</div>
+      </div>
+      <p v-if="dialogWorkType === 'order'" class="order-type-hint">
+        订单投诉：不受理请选「驳回」；仅书面回复选「无处罚」并写清复核意见；需惩戒投诉人选「警告」或「封禁账号」。
+      </p>
+      <el-form :model="reviewForm" label-width="100px" class="dialog-form-below">
         <el-form-item label="复核结果">
           <el-radio-group v-model="reviewForm.approve">
             <el-radio :label="true">通过（执行处罚）</el-radio>
@@ -126,15 +154,8 @@
         </el-form-item>
         <el-form-item v-if="reviewForm.approve" label="处罚类型">
           <el-select v-model="reviewForm.penaltyType" style="width: 100%">
-            <el-option label="无处罚" value="NONE"></el-option>
-            <el-option label="警告" value="WARN"></el-option>
-            <el-option label="扣保证金" value="DEDUCT_DEPOSIT"></el-option>
-            <el-option label="禁用账号" value="BAN_USER"></el-option>
-            <el-option label="解封账号" value="UNBAN_USER"></el-option>
+            <el-option v-for="o in reviewPenaltyOptions" :key="o.value" :label="o.label" :value="o.value" />
           </el-select>
-        </el-form-item>
-        <el-form-item v-if="reviewForm.approve" label="处罚对象ID">
-          <el-input v-model.number="reviewForm.penaltyTargetUserId" placeholder="处罚对象用户ID"></el-input>
         </el-form-item>
         <el-form-item v-if="reviewForm.approve && reviewForm.penaltyType === 'DEDUCT_DEPOSIT'" label="扣款金额">
           <el-input-number v-model="reviewForm.penaltyAmount" :min="0" :precision="2" style="width: 100%"></el-input-number>
@@ -168,11 +189,15 @@ export default {
       processVisible: false,
       processLoading: false,
       processRowId: null,
+      dialogWorkType: "",
+      processPenaltyOptions: [],
+      reviewPenaltyOptions: [],
+      dialogPenaltyDisplayName: "",
+      dialogPenaltyUserId: null,
       processForm: {
         workStatus: 1,
         handleResult: "",
         penaltyType: "NONE",
-        penaltyTargetUserId: null,
         penaltyAmount: 0,
       },
       reviewVisible: false,
@@ -182,7 +207,6 @@ export default {
         approve: true,
         reviewResult: "",
         penaltyType: "NONE",
-        penaltyTargetUserId: null,
         penaltyAmount: 0,
       },
     };
@@ -225,11 +249,14 @@ export default {
     },
     openProcessDialog(row) {
       this.processRowId = row.id;
+      this.dialogWorkType = (row.workType || "").toLowerCase();
+      this.processPenaltyOptions = this.buildPenaltyOptions(row.workType);
+      const pt = this.normalizePenaltyTypeForRow(row.penaltyType, this.processPenaltyOptions);
+      this.setDialogPenaltyFromRow(row);
       this.processForm = {
         workStatus: row.workStatus === 3 ? 3 : (row.workStatus === 2 ? 2 : 1),
         handleResult: row.handleResult || "",
-        penaltyType: row.penaltyType || "NONE",
-        penaltyTargetUserId: row.penaltyTargetUserId || null,
+        penaltyType: pt,
         penaltyAmount: row.penaltyAmount || 0,
       };
       this.processVisible = true;
@@ -252,14 +279,68 @@ export default {
     },
     openReviewDialog(row) {
       this.reviewRowId = row.id;
+      this.dialogWorkType = (row.workType || "").toLowerCase();
+      this.reviewPenaltyOptions = this.buildPenaltyOptions(row.workType);
+      const pt = this.normalizePenaltyTypeForRow(row.penaltyType, this.reviewPenaltyOptions);
+      this.setDialogPenaltyFromRow(row);
       this.reviewForm = {
         approve: true,
         reviewResult: "",
-        penaltyType: row.penaltyType || "NONE",
-        penaltyTargetUserId: row.penaltyTargetUserId || null,
+        penaltyType: pt,
         penaltyAmount: row.penaltyAmount || 0,
       };
       this.reviewVisible = true;
+    },
+    buildPenaltyOptions(workType) {
+      const wt = (workType || "").toLowerCase();
+      if (wt === "message") {
+        return [
+          { label: "无处罚", value: "NONE" },
+          { label: "警告", value: "WARN" },
+          { label: "封禁账号（留言发布者）", value: "BAN_USER" },
+          { label: "删除留言", value: "DELETE_MESSAGE" },
+        ];
+      }
+      if (wt === "bid") {
+        return [
+          { label: "无处罚", value: "NONE" },
+          { label: "警告", value: "WARN" },
+          { label: "封禁账号（发起投诉的用户）", value: "BAN_USER" },
+        ];
+      }
+      if (wt === "risk") {
+        return [
+          { label: "无处罚", value: "NONE" },
+          { label: "警告", value: "WARN" },
+          { label: "扣保证金", value: "DEDUCT_DEPOSIT" },
+          { label: "禁用账号", value: "BAN_USER" },
+          { label: "解封账号", value: "UNBAN_USER" },
+        ];
+      }
+      if (wt === "order") {
+        return [
+          { label: "无处罚（以意见回复投诉人）", value: "NONE" },
+          { label: "警告", value: "WARN" },
+          { label: "封禁账号（发起投诉的用户）", value: "BAN_USER" },
+        ];
+      }
+      return [
+        { label: "无处罚", value: "NONE" },
+        { label: "警告", value: "WARN" },
+        { label: "扣保证金", value: "DEDUCT_DEPOSIT" },
+        { label: "禁用账号（发起投诉的用户）", value: "BAN_USER" },
+      ];
+    },
+    normalizePenaltyTypeForRow(saved, options) {
+      const v = saved || "NONE";
+      const allowed = (options || []).map((o) => o.value);
+      return allowed.includes(v) ? v : "NONE";
+    },
+    setDialogPenaltyFromRow(row) {
+      const id = row && row.effectivePenaltyTargetUserId;
+      this.dialogPenaltyUserId = id != null && id !== "" ? id : null;
+      this.dialogPenaltyDisplayName =
+        row && row.penaltyTargetDisplayName ? String(row.penaltyTargetDisplayName) : "";
     },
     async submitReview() {
       if (!this.reviewForm.reviewResult || !this.reviewForm.reviewResult.trim()) {
@@ -304,4 +385,48 @@ export default {
 .page-header h2 { margin: 0; }
 .toolbar { margin-bottom: 12px; display: flex; gap: 10px; }
 .pagination-wrap { margin-top: 16px; text-align: right; }
+.text-muted { color: #909399; font-size: 12px; }
+.dialog-penalty-summary {
+  padding: 14px 16px;
+  margin: -8px 0 16px;
+  background: #f7f8fa;
+  border-radius: 8px;
+  border: 1px solid #ebeef5;
+}
+.dpt-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 6px;
+}
+.dpt-sub {
+  font-size: 12px;
+  color: #909399;
+  margin: 0 0 10px;
+  line-height: 1.4;
+}
+.dpt-line {
+  font-size: 14px;
+  color: #303133;
+  line-height: 1.8;
+}
+.dpt-k {
+  display: inline-block;
+  width: 72px;
+  color: #909399;
+  font-size: 13px;
+}
+.dpt-empty {
+  font-size: 13px;
+  color: #909399;
+}
+.dialog-form-below {
+  margin-top: 0;
+}
+.order-type-hint {
+  font-size: 12px;
+  color: #909399;
+  line-height: 1.5;
+  margin: 0 0 12px;
+}
 </style>

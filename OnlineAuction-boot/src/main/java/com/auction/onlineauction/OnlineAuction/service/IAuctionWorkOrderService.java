@@ -26,7 +26,10 @@ public interface IAuctionWorkOrderService extends IService<AuctionWorkOrder> {
 
     PageInfo<Map<String, Object>> getServiceWorkOrders(Long serviceId, Integer current, Integer size, Integer workStatus);
 
-    /** 客服处理：1=处理中 2=提交管理员复核 3=客服直接关闭 */
+    /**
+     * 客服处理：1=处理中 2=提交管理员复核 3=客服直接关闭。
+     * {@code penaltyTargetUserId} 已忽略，处罚对象由服务端按工单类型解析（留言类为留言发布者，其余为发起工单的投诉人）。
+     */
     void serviceProcessWorkOrder(Long workOrderId,
                                  Long serviceId,
                                  Integer workStatus,
@@ -37,7 +40,10 @@ public interface IAuctionWorkOrderService extends IService<AuctionWorkOrder> {
 
     PageInfo<Map<String, Object>> getAdminReviewWorkOrders(Integer current, Integer size, Integer workStatus, String workType);
 
-    /** 管理员复核：通过/驳回（仅 role=3） */
+    /**
+     * 管理员复核：通过/驳回（仅 role=3）。
+     * {@code penaltyTargetUserId} 已忽略，处罚对象由服务端按工单类型解析（留言类为留言发布者，其余为发起工单的投诉人）。
+     */
     void adminReviewWorkOrder(Long workOrderId,
                               Long adminId,
                               Boolean approve,
