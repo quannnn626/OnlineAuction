@@ -73,4 +73,7 @@ public interface IAuctionOrderService extends IService<AuctionOrder> {
 
     /** 已完成且未做佣金结算的订单分页（带商品名、买卖方名，供财务结算） */
     PageInfo<Map<String, Object>> getOrdersPendingCommissionSettlement(Integer current, Integer size);
+
+    /** 为订单设置收货地址（仅买方本人，待付款状态） */
+    void updateOrderAddress(Long orderId, Long buyerId, Long addressId);
 }

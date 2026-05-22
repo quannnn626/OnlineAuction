@@ -33,6 +33,14 @@
       <el-table-column prop="createTime" label="创建时间" width="160">
         <template slot-scope="scope">{{ formatDateTime(scope.row.createTime) }}</template>
       </el-table-column>
+      <el-table-column label="收货地址" min-width="150">
+        <template slot-scope="scope">
+          <template v-if="scope.row.addressId">
+            <span>{{ getAddressSummary(scope.row.addressId) }}</span>
+          </template>
+          <span v-else class="text-muted">未选择</span>
+        </template>
+      </el-table-column>
       <el-table-column label="物流" width="160">
         <template slot-scope="scope">
           <span v-if="scope.row.expressCompany">{{ scope.row.expressCompany }} {{ scope.row.expressNo }}</span>
@@ -42,9 +50,19 @@
       <el-table-column label="操作" width="260">
         <template slot-scope="scope">
           <template v-if="roleType === 'buyer'">
-            <el-button v-if="scope.row.orderStatus === 0" size="mini" type="primary" @click="handlePay(scope.row)">
-              去付款
-            </el-button>
+            <template v-if="scope.row.orderStatus === 0">
+              <el-button size="mini" @click="openAddressDialog(scope.row)">
+                {{ scope.row.addressId ? '更换地址' : '选择地址' }}
+              </el-button>
+              <el-button
+                v-if="scope.row.addressId"
+                size="mini"
+                type="primary"
+                @click="handlePay(scope.row)"
+              >
+                去付款
+              </el-button>
+            </template>
             <el-button v-if="scope.row.orderStatus === 2" size="mini" type="success" @click="handleConfirmReceipt(scope.row)">
               确认收货
             </el-button>
@@ -75,6 +93,44 @@
         <el-button type="primary" :loading="shipLoading" @click="submitShip">确认发货</el-button>
       </span>
     </el-dialog>
+    <el-dialog title="选择收货地址" :visible.sync="addressDialogVisible" width="520px">
+      <el-empty v-if="addressList.length === 0" description="暂无收货地址，请先在个人中心-地址管理中新增地址">
+        <el-button type="primary" @click="$router.push('/profile/address')">前往新增地址</el-button>
+      </el-empty>
+      <el-radio-group v-else v-model="addressSelectedId" style="display:block">
+        <div
+          v-for="addr in addressList"
+          :key="addr.id"
+          class="address-card"
+          :class="{ 'is-selected': addressSelectedId === addr.id }"
+          @click="addressSelectedId = addr.id"
+        >
+          <el-radio :label="addr.id" style="margin-right:10px"></el-radio>
+          <div class="address-info">
+            <div class="address-contact">
+              <strong>{{ addr.receiverName }}</strong>
+              <span style="margin-left:12px">{{ addr.receiverPhone }}</span>
+              <el-tag v-if="addr.isDefault === 1" size="mini" type="success" style="margin-left:8px">默认</el-tag>
+            </div>
+            <div class="address-detail">
+              {{ (addr.province || "") + (addr.city || "") + (addr.district || "") + (addr.detailAddress || "") }}
+            </div>
+          </div>
+        </div>
+      </el-radio-group>
+      <span slot="footer">
+        <el-button @click="addressDialogVisible = false">取消</el-button>
+        <el-button
+          v-if="addressList.length > 0"
+          type="primary"
+          :loading="addressLoading"
+          @click="confirmSelectAddress"
+        >
+          确认选择
+        </el-button>
+      </span>
+    </el-dialog>
+
     <el-dialog title="订单投诉" :visible.sync="complaintVisible" width="520px">
       <el-form :model="complaintForm" label-width="100px">
         <el-form-item label="订单号">
@@ -112,7 +168,8 @@
 </template>
 
 <script>
-import { getMyOrderPage, payOrder, confirmReceipt, shipOrder } from "@/api/order";
+import { getMyOrderPage, payOrder, confirmReceipt, shipOrder, updateOrderAddress } from "@/api/order";
+import { getAddressList } from "@/api/address";
 import { submitComplaint } from "@/api/complaint";
 
 export default {
@@ -127,6 +184,11 @@ export default {
       shipVisible: false,
       shipLoading: false,
       shipForm: { orderId: null, orderNo: "", expressCompany: "", expressNo: "" },
+      addressList: [],
+      addressDialogVisible: false,
+      addressCurrentOrderId: null,
+      addressSelectedId: null,
+      addressLoading: false,
       complaintVisible: false,
       complaintLoading: false,
       complaintForm: {
@@ -139,6 +201,7 @@ export default {
   },
   mounted() {
     this.loadData();
+    this.loadAddressList();
   },
   methods: {
     handleRoleChange() {
@@ -183,6 +246,46 @@ export default {
       if (!val) return "-";
       const d = new Date(val);
       return isNaN(d.getTime()) ? val : d.toLocaleString("zh-CN", { hour12: false });
+    },
+    getAddressSummary(addressId) {
+      const addr = this.addressList.find((a) => a.id === addressId);
+      if (!addr) return "-";
+      return `${addr.receiverName} ${addr.receiverPhone} ${(addr.province||"")+(addr.city||"")+(addr.district||"")+(addr.detailAddress||"")}`;
+    },
+    openAddressDialog(row) {
+      this.addressCurrentOrderId = row.id;
+      this.addressSelectedId = row.addressId || null;
+      // 默认选中的地址优先级：订单已有地址 > 默认地址 > 第一个地址
+      if (!this.addressSelectedId && this.addressList.length > 0) {
+        const def = this.addressList.find((a) => a.isDefault === 1);
+        this.addressSelectedId = def ? def.id : this.addressList[0].id;
+      }
+      this.addressDialogVisible = true;
+    },
+    async confirmSelectAddress() {
+      if (!this.addressSelectedId || !this.addressCurrentOrderId) {
+        this.$message.warning("请选择一个地址");
+        return;
+      }
+      this.addressLoading = true;
+      try {
+        await updateOrderAddress(this.addressCurrentOrderId, this.addressSelectedId);
+        this.$message.success("地址设置成功");
+        this.addressDialogVisible = false;
+        this.loadData();
+      } catch (e) {
+        this.$message.error(e.message || "地址设置失败");
+      } finally {
+        this.addressLoading = false;
+      }
+    },
+    async loadAddressList() {
+      try {
+        const data = await getAddressList();
+        this.addressList = data || [];
+      } catch (e) {
+        this.addressList = [];
+      }
     },
     handlePay(row) {
       this.$confirm("确认已完成付款？", "支付确认", {
@@ -293,4 +396,31 @@ export default {
 .filter-bar { margin-bottom: 20px; display: flex; align-items: center; }
 .pagination-wrap { margin-top: 20px; }
 .text-muted { color: #909399; font-size: 12px; }
+.address-card {
+  display: flex;
+  align-items: flex-start;
+  padding: 12px;
+  margin-bottom: 8px;
+  border: 1px solid #e8e8e8;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.address-card:hover {
+  border-color: #409eff;
+}
+.address-card.is-selected {
+  border-color: #409eff;
+  background: #ecf5ff;
+}
+.address-info {
+  flex: 1;
+}
+.address-contact {
+  margin-bottom: 4px;
+}
+.address-detail {
+  color: #666;
+  font-size: 13px;
+}
 </style>

@@ -147,7 +147,9 @@
       <el-tab-pane label="发票管理" name="invoice">
         <router-view />
       </el-tab-pane>
-      <el-tab-pane label="地址管理" name="address" />
+      <el-tab-pane label="地址管理" name="address">
+        <router-view />
+      </el-tab-pane>
 
     </el-tabs>
   </div>
@@ -252,6 +254,8 @@ export default {
         this.activeTab = "deposit";
       } else if (routeName === "ProfileInvoice") {
         this.activeTab = "invoice";
+      } else if (routeName === "ProfileAddress") {
+        this.activeTab = "address";
       } else {
         this.activeTab = "info";
       }
@@ -261,6 +265,7 @@ export default {
         order: "/profile/order",
         deposit: "/profile/deposit",
         invoice: "/profile/invoice",
+        address: "/profile/address",
       };
       const targetPath = routeMap[tab.name];
       if (targetPath && this.$route.path !== targetPath) {

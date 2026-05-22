@@ -72,6 +72,21 @@ public class OrderApiController {
         }
     }
 
+    /** 为订单选择收货地址（仅买方本人，待付款状态） */
+    @PutMapping("/{id}/address")
+    public Result<Void> updateAddress(@PathVariable Long id, @RequestBody java.util.Map<String, Object> params, HttpServletRequest request) {
+        try {
+            if (request.getSession(false) == null) return Result.error("请先登录");
+            Long userId = (Long) request.getSession(false).getAttribute("userId");
+            if (userId == null) return Result.error("请先登录");
+            Long addressId = Long.valueOf(params.get("addressId").toString());
+            orderService.updateOrderAddress(id, userId, addressId);
+            return Result.success("地址设置成功", null);
+        } catch (Exception e) {
+            return Result.error(e.getMessage());
+        }
+    }
+
     /** 买方确认收货（仅买方本人，订单状态 待收货->已完成） */
     @PutMapping("/{id}/confirm-receipt")
     public Result<Void> confirmReceipt(@PathVariable Long id, HttpServletRequest request) {

@@ -1,5 +1,6 @@
 package com.auction.onlineauction.OnlineAuction.service.impl;
 
+import com.auction.onlineauction.OnlineAuction.entity.AuctionAddress;
 import com.auction.onlineauction.OnlineAuction.entity.AuctionDeposit;
 import com.auction.onlineauction.OnlineAuction.entity.AuctionGoods;
 import com.auction.onlineauction.OnlineAuction.entity.AuctionMessageSession;
@@ -8,6 +9,7 @@ import com.auction.onlineauction.OnlineAuction.entity.AuctionRecord;
 import com.auction.onlineauction.OnlineAuction.entity.AuctionUser;
 import com.auction.onlineauction.OnlineAuction.mapper.AuctionMessageSessionMapper;
 import com.auction.onlineauction.OnlineAuction.mapper.AuctionOrderMapper;
+import com.auction.onlineauction.OnlineAuction.service.IAuctionAddressService;
 import com.auction.onlineauction.OnlineAuction.service.IAuctionDepositService;
 import com.auction.onlineauction.OnlineAuction.service.IAuctionFeeRecordService;
 import com.auction.onlineauction.OnlineAuction.service.IAuctionGoodsService;
@@ -57,6 +59,9 @@ public class AuctionOrderServiceImpl extends ServiceImpl<AuctionOrderMapper, Auc
     private IAuctionGoodsService goodsService;
     @Autowired
     private IAuctionUserService userService;
+
+    @Autowired
+    private IAuctionAddressService addressService;
 
     @Override
     public PageInfo<AuctionOrder> getOrderPage(Integer current, Integer size, Integer orderStatus,
@@ -427,8 +432,32 @@ public class AuctionOrderServiceImpl extends ServiceImpl<AuctionOrderMapper, Auc
         if (order.getOrderStatus() != 0) {
             throw new RuntimeException("仅待付款订单可支付");
         }
+        if (order.getAddressId() == null) {
+            throw new RuntimeException("请先选择收货地址");
+        }
         // 假支付：仅将订单状态改为待发货，不扣保证金（保证金仅用于悔拍扣除）
         updateOrderStatus(orderId, 1);
+    }
+
+    @Override
+    public void updateOrderAddress(Long orderId, Long buyerId, Long addressId) {
+        AuctionOrder order = getById(orderId);
+        if (order == null || order.getDelFlag() == 1) {
+            throw new RuntimeException("订单不存在");
+        }
+        if (!order.getBuyerId().equals(buyerId)) {
+            throw new RuntimeException("仅买方本人可为订单选择地址");
+        }
+        if (order.getOrderStatus() != 0) {
+            throw new RuntimeException("仅待付款订单可选择地址");
+        }
+        AuctionAddress address = addressService.getById(addressId);
+        if (address == null || address.getDelFlag() == 1 || !address.getUserId().equals(buyerId)) {
+            throw new RuntimeException("地址不存在");
+        }
+        order.setAddressId(addressId);
+        order.setUpdateTime(java.time.LocalDateTime.now());
+        updateById(order);
     }
 
     @Override

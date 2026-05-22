@@ -124,6 +124,11 @@ const routes = [
             name: "ProfileInvoice",
             component: () => import("@/views/ProfileInvoice.vue"),
           },
+          {
+            path: "address",
+            name: "ProfileAddress",
+            component: () => import("@/views/ProfileAddress.vue"),
+          },
         ],
       },
       {

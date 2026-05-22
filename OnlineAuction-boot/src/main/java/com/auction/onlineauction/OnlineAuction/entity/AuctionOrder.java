@@ -129,6 +129,9 @@ public class AuctionOrder implements Serializable {
     @TableField("ship_time")
     private LocalDateTime shipTime;
 
+    @TableField("address_id")
+    private Long addressId;
+
     /**
      * 创建时间（竞拍成交后系统自动生成）
      */

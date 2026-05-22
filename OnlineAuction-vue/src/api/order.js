@@ -13,6 +13,15 @@ export function payOrder(id) {
   return request({ url: `/order/${id}/pay`, method: "put" });
 }
 
+/** 为订单设置收货地址（仅买方本人，待付款状态） */
+export function updateOrderAddress(id, addressId) {
+  return request({
+    url: `/order/${id}/address`,
+    method: "put",
+    data: { addressId },
+  });
+}
+
 /** 买方确认收货 */
 export function confirmReceipt(id) {
   return request({ url: `/order/${id}/confirm-receipt`, method: "put" });
