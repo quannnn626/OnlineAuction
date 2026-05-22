@@ -115,7 +115,7 @@
             <el-form-item label="出价金额" prop="bidPrice">
               <el-input-number
                 v-model="bidForm.bidPrice"
-                :min="minBidPrice"
+                :min="0"
                 :precision="2"
                 :step="goodsInfo.addPrice || 1"
                 :controls="true"
@@ -135,6 +135,13 @@
               </el-button>
               <el-button @click="handleQuickBid" :disabled="bidding">
                 快速加价（+{{ goodsInfo.addPrice || 0 }}）
+              </el-button>
+              <el-button
+                type="warning"
+                @click="showProxyDialog"
+                :disabled="bidding"
+              >
+                代理出价
               </el-button>
             </el-form-item>
           </el-form>
@@ -193,6 +200,57 @@
         </video>
       </div>
 
+      <!-- 代理出价弹窗 -->
+      <el-dialog
+        title="代理出价"
+        :visible.sync="proxyDialogVisible"
+        width="480px"
+        :close-on-click-modal="false"
+      >
+        <el-form
+          :model="proxyForm"
+          :rules="proxyRules"
+          ref="proxyForm"
+          label-width="120px"
+        >
+          <el-form-item label="当前最高出价">
+            <span class="proxy-info-text"
+              >¥ {{ (goodsInfo.currentHighestPrice || goodsInfo.basePrice || 0).toFixed(2) }}</span
+            >
+          </el-form-item>
+          <el-form-item label="最低出价">
+            <span class="proxy-info-text">¥ {{ minBidPrice.toFixed(2) }}</span>
+          </el-form-item>
+          <el-form-item label="最小加价幅度">
+            <span class="proxy-info-text">¥ {{ (goodsInfo.addPrice || 0).toFixed(2) }}</span>
+          </el-form-item>
+          <el-form-item label="代理最高价" prop="agentMaxPrice">
+            <el-input-number
+              v-model="proxyForm.agentMaxPrice"
+              :min="minBidPrice"
+              :precision="2"
+              :step="goodsInfo.addPrice || 1"
+              :controls="true"
+              style="width: 220px"
+            ></el-input-number>
+          </el-form-item>
+        </el-form>
+        <div class="proxy-tip">
+          <i class="el-icon-info"></i>
+          设置代理出价后，系统将自动以最小加价幅度为您出价，直至达到您设置的最高价。当有他人出价超过您的代理最高价时，代理出价失效。
+        </div>
+        <span slot="footer">
+          <el-button @click="proxyDialogVisible = false">取消</el-button>
+          <el-button
+            type="primary"
+            :loading="proxyLoading"
+            @click="handleProxyBid"
+          >
+            确认设置
+          </el-button>
+        </span>
+      </el-dialog>
+
       <el-dialog title="提交投诉" :visible.sync="complaintVisible" width="520px">
         <el-form :model="complaintForm" label-width="100px">
           <el-form-item label="投诉类型">
@@ -225,7 +283,7 @@
 <script>
 import { getGoodsDetail, getGoodsDetailAdmin } from "@/api/goods";
 import { getCategoryListForHome } from "@/api/category";
-import { submitBid, getRecordsByGoodsId } from "@/api/record";
+import { submitBid, submitProxyBid, getRecordsByGoodsId } from "@/api/record";
 import { submitComplaint } from "@/api/complaint";
 
 export default {
@@ -246,6 +304,16 @@ export default {
       bidRules: {
         bidPrice: [
           { required: true, message: "请输入出价金额", trigger: "blur" },
+        ],
+      },
+      proxyDialogVisible: false,
+      proxyLoading: false,
+      proxyForm: {
+        agentMaxPrice: 0,
+      },
+      proxyRules: {
+        agentMaxPrice: [
+          { required: true, message: "请输入代理最高价", trigger: "blur" },
         ],
       },
       complaintVisible: false,
@@ -431,6 +499,35 @@ export default {
     handleQuickBid() {
       this.bidForm.bidPrice = this.minBidPrice;
       this.handleSubmitBid();
+    },
+    // 显示代理出价弹窗
+    showProxyDialog() {
+      this.proxyForm.agentMaxPrice = this.minBidPrice;
+      this.proxyDialogVisible = true;
+      this.$nextTick(() => {
+        if (this.$refs.proxyForm) {
+          this.$refs.proxyForm.clearValidate();
+        }
+      });
+    },
+    // 提交代理出价
+    handleProxyBid() {
+      this.$refs.proxyForm.validate(async (valid) => {
+        if (!valid) return;
+        const goodsId = this.$route.query.id;
+        this.proxyLoading = true;
+        try {
+          await submitProxyBid(goodsId, this.proxyForm.agentMaxPrice);
+          this.$message.success("代理出价设置成功！系统将自动为您出价");
+          this.proxyDialogVisible = false;
+          await this.loadGoodsDetail();
+          this.bidForm.bidPrice = this.minBidPrice;
+        } catch (error) {
+          this.$message.error(error.message || "代理出价设置失败");
+        } finally {
+          this.proxyLoading = false;
+        }
+      });
     },
     // 跳转咨询客服
     goToConsult() {
@@ -808,5 +905,26 @@ export default {
 .bid-price {
   color: #e74c3c;
   font-weight: bold;
+}
+
+.proxy-info-text {
+  font-size: 16px;
+  color: #e74c3c;
+  font-weight: bold;
+}
+
+.proxy-tip {
+  padding: 12px;
+  background: #fdf6ec;
+  border: 1px solid #faecd8;
+  border-radius: 4px;
+  color: #e6a23c;
+  font-size: 13px;
+  line-height: 1.6;
+  margin-top: 10px;
+}
+
+.proxy-tip i {
+  margin-right: 4px;
 }
 </style>

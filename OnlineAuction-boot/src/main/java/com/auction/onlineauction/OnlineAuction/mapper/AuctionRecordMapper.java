@@ -144,4 +144,18 @@ public interface AuctionRecordMapper extends BaseMapper<AuctionRecord> {
     Long countByGoodsIdBuyerIdAndBidIp(@Param("goodsId") Long goodsId,
                                          @Param("buyerId") Long buyerId,
                                          @Param("bidIp") String bidIp);
+
+    /** 查询可触发的代理出价（排除指定买家，agentMaxPrice > 当前最高价，取最高者） */
+    AuctionRecord selectHighestProxyBidExcludeBuyer(@Param("goodsId") Long goodsId,
+                                                     @Param("excludeBuyerId") Long excludeBuyerId,
+                                                     @Param("currentHighestPrice") BigDecimal currentHighestPrice);
+
+    /** 查询商品上所有未耗尽的代理出价，按最高价降序，取前N个 */
+    List<AuctionRecord> selectTopProxyBids(@Param("goodsId") Long goodsId,
+                                           @Param("currentHighestPrice") BigDecimal currentHighestPrice,
+                                           @Param("limit") int limit);
+
+    /** 查询买家在商品下是否有未耗尽的有效代理出价 */
+    @Select("SELECT COUNT(1) FROM auction_record WHERE goods_id = #{goodsId} AND buyer_id = #{buyerId} AND is_agent = 1 AND del_flag = 0 AND bid_status = 1 AND agent_max_price > (SELECT current_highest_price FROM auction_goods WHERE id = #{goodsId})")
+    int countActiveProxyByGoodsAndBuyer(@Param("goodsId") Long goodsId, @Param("buyerId") Long buyerId);
 }

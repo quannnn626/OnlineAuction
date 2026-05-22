@@ -208,6 +208,30 @@ public class AuctionRecordController {
     }
 
     /**
+     * 提交代理出价
+     */
+    @PostMapping("/proxy-bid")
+    public Result<AuctionRecord> submitProxyBid(@RequestBody Map<String, Object> params, HttpServletRequest request) {
+        try {
+            HttpSession session = request.getSession(false);
+            if (session == null) {
+                return Result.error("未登录");
+            }
+            Long buyerId = (Long) session.getAttribute("userId");
+            if (buyerId == null) {
+                return Result.error("未登录");
+            }
+            Long goodsId = Long.valueOf(params.get("goodsId").toString());
+            BigDecimal agentMaxPrice = new BigDecimal(params.get("agentMaxPrice").toString());
+            String bidIp = getClientIp(request);
+            AuctionRecord record = recordService.submitProxyBid(goodsId, buyerId, agentMaxPrice, bidIp);
+            return Result.success("代理出价设置成功", record);
+        } catch (Exception e) {
+            return Result.error("代理出价失败：" + e.getMessage());
+        }
+    }
+
+    /**
      * 拍卖师/管理员标记异常出价：0=正常 1=恶意出价 2=机器人
      */
     @PutMapping("/{id}/abnormal")

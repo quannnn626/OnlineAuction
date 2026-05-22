@@ -116,6 +116,36 @@
         ORDER BY bidCount DESC
     </select>
 
+    <!-- 查询可触发的代理出价（排除指定买家，agentMaxPrice > 当前最高价，取最高者） -->
+    <select id="selectHighestProxyBidExcludeBuyer" resultMap="BaseResultMap">
+        SELECT * FROM auction_record
+        WHERE goods_id = #{goodsId}
+          AND is_agent = 1
+          AND del_flag = 0
+          AND bid_status = 1
+          AND buyer_id != #{excludeBuyerId}
+          AND agent_max_price > #{currentHighestPrice}
+        ORDER BY agent_max_price DESC
+        LIMIT 1
+    </select>
+
+    <!-- 查询商品上所有未耗尽的代理出价，每个买家取最新一条，按agentMaxPrice降序 -->
+    <select id="selectTopProxyBids" resultMap="BaseResultMap">
+        SELECT ar.* FROM auction_record ar
+        INNER JOIN (
+            SELECT buyer_id, MAX(id) AS max_id
+            FROM auction_record
+            WHERE goods_id = #{goodsId}
+              AND is_agent = 1
+              AND del_flag = 0
+              AND bid_status = 1
+              AND agent_max_price > #{currentHighestPrice}
+            GROUP BY buyer_id
+        ) sub ON ar.id = sub.max_id
+        ORDER BY ar.agent_max_price DESC
+        LIMIT #{limit}
+    </select>
+
     <!-- 风控：疑似围标/刷价汇总（同一 IP 下 >=minBidCount 个不同账号竞拍同商品） -->
     <select id="selectSuspectedRingBiddersForRisk" resultType="java.util.Map">
         SELECT ar.buyer_id AS buyerId,

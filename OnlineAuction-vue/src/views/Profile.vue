@@ -147,6 +147,8 @@
       <el-tab-pane label="发票管理" name="invoice">
         <router-view />
       </el-tab-pane>
+      <el-tab-pane label="地址管理" name="address" />
+
     </el-tabs>
   </div>
 </template>

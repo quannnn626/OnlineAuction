@@ -65,4 +65,7 @@ public interface IAuctionRecordService extends IService<AuctionRecord> {
 
     /** 按买方分页查询竞拍记录（含商品名，用于保证金管理） */
     PageInfo<AuctionRecord> getRecordsByBuyerIdPage(Integer current, Integer size, Long buyerId);
+
+    /** 提交代理出价 */
+    AuctionRecord submitProxyBid(Long goodsId, Long buyerId, BigDecimal agentMaxPrice, String bidIp);
 }

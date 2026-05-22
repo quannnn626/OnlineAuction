@@ -44,6 +44,7 @@ public final class RoleCheckHelper {
     }
 
     /** 管理员/超级管理员/运营 可修改商品上架状态 */
+    //TODO 需要修改对拍卖师隐藏上架状态按钮
     public static boolean canUpdateShelf(HttpSession session) {
         return hasAnyRole(session, 3, 4, 8);
     }

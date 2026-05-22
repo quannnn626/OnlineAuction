@@ -81,6 +81,20 @@ export function getAdminRecordsByBuyerIdPage(buyerId, params) {
   });
 }
 
+/**
+ * 提交代理出价
+ */
+export function submitProxyBid(goodsId, agentMaxPrice) {
+  return request({
+    url: "/OnlineAuction/auctionRecord/proxy-bid",
+    method: "post",
+    data: {
+      goodsId,
+      agentMaxPrice,
+    },
+  });
+}
+
 /** 拍卖师/管理员：标记异常出价（0=正常 1=恶意出价 2=机器人） */
 export function markRecordAbnormal(recordId, type) {
   return request({

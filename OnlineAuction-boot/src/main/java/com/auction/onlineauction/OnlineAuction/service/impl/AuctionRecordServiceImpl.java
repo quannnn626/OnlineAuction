@@ -235,9 +235,181 @@ public class AuctionRecordServiceImpl extends ServiceImpl<AuctionRecordMapper, A
             throw new RuntimeException("更新商品最高出价失败");
         }
 
-        // 11. 返回竞拍记录
-        // 注意：整个方法在@Transactional和SELECT FOR UPDATE的保护下，
-        // 确保多个用户同时出价时不会出现价格混乱或数据不一致的问题
+        // 11. 代理出价自动跟价
+        processProxyAutoBidding(goodsId, buyerId, bidPrice, goods.getAddPrice(), bidIp);
+
+        // 12. 返回竞拍记录
+        return record;
+    }
+
+    /**
+     * 代理出价自动跟价——直接计算最终胜者，避免逐次加价的 ping-pong 问题。
+     *
+     * 算法：将所有有效最高价排序（手动出价 + 各代理出价），最高者胜出，
+     * 成交价 = min(胜者有效最高价, 第二名有效最高价 + 加价幅度)。
+     */
+    private void processProxyAutoBidding(Long goodsId, Long manualBuyerId, BigDecimal manualBidPrice,
+                                          BigDecimal addPrice, String triggerBidIp) {
+        AuctionGoods goods = recordMapper.selectGoodsForUpdate(goodsId);
+        if (goods == null || goods.getCurrentHighestPrice() == null) {
+            return;
+        }
+        BigDecimal currentHighest = goods.getCurrentHighestPrice();
+
+        List<AuctionRecord> proxyBids = recordMapper.selectTopProxyBids(goodsId, currentHighest, 20);
+        if (proxyBids.isEmpty()) {
+            return;
+        }
+
+        // 构建各买家 -> 有效最高价的映射，同时记录 IP
+        java.util.Map<Long, BigDecimal> effectiveMaxMap = new java.util.LinkedHashMap<>();
+        java.util.Map<Long, String> ipMap = new java.util.HashMap<>();
+        for (AuctionRecord proxy : proxyBids) {
+            effectiveMaxMap.put(proxy.getBuyerId(), proxy.getAgentMaxPrice());
+            ipMap.put(proxy.getBuyerId(), proxy.getBidIp() != null ? proxy.getBidIp() : triggerBidIp);
+        }
+
+        // 手动出价方的有效最高价 = max(手动出价金额, 其代理最高价)
+        BigDecimal manualEffective = manualBidPrice;
+        if (effectiveMaxMap.containsKey(manualBuyerId)) {
+            BigDecimal proxyMax = effectiveMaxMap.get(manualBuyerId);
+            if (proxyMax.compareTo(manualEffective) > 0) {
+                manualEffective = proxyMax;
+            }
+        }
+        effectiveMaxMap.put(manualBuyerId, manualEffective);
+        ipMap.putIfAbsent(manualBuyerId, triggerBidIp);
+
+        // 按有效最高价降序排列
+        java.util.List<java.util.Map.Entry<Long, BigDecimal>> sorted = new java.util.ArrayList<>(effectiveMaxMap.entrySet());
+        sorted.sort((a, b) -> b.getValue().compareTo(a.getValue()));
+
+        if (sorted.size() < 2) {
+            return;
+        }
+
+        long winnerId = sorted.get(0).getKey();
+        BigDecimal winnerMax = sorted.get(0).getValue();
+        BigDecimal secondMax = sorted.get(1).getValue();
+
+        // 成交价 = min(胜者最高价, 第二名最高价 + 加价幅度)
+        BigDecimal newPrice = secondMax.add(addPrice);
+        if (newPrice.compareTo(winnerMax) > 0) {
+            newPrice = winnerMax;
+        }
+
+        // 价格未超过当前最高价，无需操作
+        if (newPrice.compareTo(currentHighest) <= 0) {
+            return;
+        }
+
+        // 胜者就是当前出价人且价格不变
+        AuctionRecord currentHighestRecord = recordMapper.selectHighestRecord(goodsId);
+        if (currentHighestRecord != null
+                && currentHighestRecord.getBuyerId().equals(winnerId)
+                && currentHighestRecord.getBidPrice().compareTo(newPrice) == 0) {
+            return;
+        }
+
+        // 创建代理自动出价记录
+        recordMapper.clearHighestFlag(goodsId);
+
+        AuctionRecord autoRecord = new AuctionRecord();
+        autoRecord.setGoodsId(goodsId);
+        autoRecord.setBuyerId(winnerId);
+        autoRecord.setBidPrice(newPrice);
+        autoRecord.setIsAgent(1);
+        autoRecord.setAgentMaxPrice(winnerMax);
+        autoRecord.setBidTime(LocalDateTime.now());
+        autoRecord.setIsHighest(1);
+        autoRecord.setBidIp(ipMap.getOrDefault(winnerId, triggerBidIp));
+        autoRecord.setBidStatus(1);
+        autoRecord.setDelFlag(0);
+        save(autoRecord);
+
+        recordMapper.updateGoodsHighestPrice(goodsId, newPrice);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public AuctionRecord submitProxyBid(Long goodsId, Long buyerId, BigDecimal agentMaxPrice, String bidIp) {
+        AuctionGoods goods = recordMapper.selectGoodsForUpdate(goodsId);
+        if (goods == null) {
+            throw new RuntimeException("商品不存在");
+        }
+        if (goods.getDelFlag() == 1) {
+            throw new RuntimeException("商品已删除");
+        }
+        if (goods.getAuditStatus() != 1) {
+            throw new RuntimeException("商品未审核通过");
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        if (now.isBefore(goods.getStartTime())) {
+            throw new RuntimeException("竞拍尚未开始");
+        }
+        if (now.isAfter(goods.getEndTime())) {
+            goodsService.updateGoodsStatusByTime(goods);
+            throw new RuntimeException("竞拍已结束");
+        }
+        if (goods.getGoodsStatus() != 1) {
+            goodsService.updateGoodsStatusByTime(goods);
+            goods = recordMapper.selectGoodsForUpdate(goodsId);
+            if (goods.getGoodsStatus() != 1) {
+                throw new RuntimeException("商品不在竞拍中");
+            }
+        }
+        if (goods.getSellerId().equals(buyerId)) {
+            throw new RuntimeException("不能竞拍自己发布的商品");
+        }
+
+        BigDecimal minBidPrice = goods.getCurrentHighestPrice() != null
+                ? goods.getCurrentHighestPrice().add(goods.getAddPrice())
+                : goods.getBasePrice();
+
+        if (agentMaxPrice.compareTo(minBidPrice) < 0) {
+            throw new RuntimeException("代理最高价不能低于" + minBidPrice + "元");
+        }
+
+        // 检查是否已有有效代理出价
+        int activeCount = recordMapper.countActiveProxyByGoodsAndBuyer(goodsId, buyerId);
+        if (activeCount > 0) {
+            throw new RuntimeException("您已设置代理出价，请等待当前代理出价被超过后再重新设置");
+        }
+
+        // 冻结保证金（首次出价时）
+        BigDecimal depositRequired = goods.getDepositRequired() != null ? goods.getDepositRequired() : BigDecimal.ZERO;
+        if (depositRequired.compareTo(BigDecimal.ZERO) > 0) {
+            long existBidCount = count(new QueryWrapper<AuctionRecord>()
+                    .eq("goods_id", goodsId)
+                    .eq("buyer_id", buyerId)
+                    .eq("del_flag", 0)
+                    .eq("bid_status", 1));
+            if (existBidCount == 0) {
+                depositService.freezeForBid(buyerId, depositRequired, goodsId);
+            }
+        }
+
+        recordMapper.clearHighestFlag(goodsId);
+
+        AuctionRecord record = new AuctionRecord();
+        record.setGoodsId(goodsId);
+        record.setBuyerId(buyerId);
+        record.setBidPrice(minBidPrice);
+        record.setIsAgent(1);
+        record.setAgentMaxPrice(agentMaxPrice);
+        record.setBidTime(now);
+        record.setIsHighest(1);
+        record.setBidIp(bidIp);
+        record.setBidStatus(1);
+        record.setDelFlag(0);
+        save(record);
+
+        recordMapper.updateGoodsHighestPrice(goodsId, minBidPrice);
+
+        // 代理出价后也可能触发其他代理出价的跟价
+        processProxyAutoBidding(goodsId, buyerId, minBidPrice, goods.getAddPrice(), bidIp);
+
         return record;
     }
 
