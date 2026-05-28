@@ -56,9 +56,3 @@ mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true
     log-impl: org.apache.ibatis.logging.nologging.NoLoggingImpl
-
-# 微信小程序配置
-wechat:
-  miniapp:
-    appid: wxe89c225c45df0a96
-    secret: 0ca4bb5e77c5e5ecc61e857c3947fd3e
