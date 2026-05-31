@@ -130,6 +130,17 @@ export function updateShelfStatus(id, shelfStatus) {
 }
 
 /**
+ * 卖家批量逻辑删除自己的商品
+ */
+export function batchDeleteMyGoods(ids) {
+  return request({
+    url: "/OnlineAuction/auctionGoods/my/batch",
+    method: "delete",
+    data: ids,
+  });
+}
+
+/**
  * 卖家对自己商品的上下架（我的商品页使用）
  */
 export function updateMyGoodsShelf(id, shelfStatus) {

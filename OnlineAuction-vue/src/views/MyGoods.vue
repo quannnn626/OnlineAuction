@@ -4,6 +4,13 @@
     <div class="page-header">
       <h2>我的商品</h2>
       <div class="header-actions">
+        <el-button
+          type="danger"
+          icon="el-icon-delete"
+          :disabled="selectedRows.length === 0"
+          @click="handleBatchDelete">
+          批量删除{{ selectedRows.length > 0 ? ` (${selectedRows.length})` : '' }}
+        </el-button>
         <el-button type="primary" icon="el-icon-plus" @click="handleAdd">
           商品申请
         </el-button>
@@ -33,7 +40,8 @@
         v-loading="loading"
         :data="goodsList"
         stripe
-        style="width: 100%">
+        style="width: 100%"
+        @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="55"></el-table-column>
         <el-table-column label="商品图片" width="120">
           <template slot-scope="scope">
@@ -153,13 +161,14 @@
 </template>
 
 <script>
-import { getMyGoodsList, reapplyGoods, updateMyGoodsShelf } from '@/api/goods'
+import { getMyGoodsList, reapplyGoods, updateMyGoodsShelf, batchDeleteMyGoods } from '@/api/goods'
 
 export default {
   name: 'MyGoods',
   data() {
     return {
       goodsList: [],
+      selectedRows: [],
       loading: false,
       pagination: {
         current: 1,
@@ -193,9 +202,37 @@ export default {
     handleAdd() {
       this.$router.push('/seller/goods/add')
     },
+    handleSelectionChange(selection) {
+      this.selectedRows = selection
+    },
+    async handleBatchDelete() {
+      if (this.selectedRows.length === 0) {
+        this.$message.warning('请先选择要删除的商品')
+        return
+      }
+      try {
+        await this.$confirm(
+          `确定要删除选中的 ${this.selectedRows.length} 个商品吗？删除后可在后台回收站恢复。`,
+          '批量删除确认',
+          {
+            confirmButtonText: '确定删除',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }
+        )
+        const ids = this.selectedRows.map(row => row.id)
+        await batchDeleteMyGoods(ids)
+        this.$message.success(`成功删除 ${ids.length} 个商品`)
+        this.selectedRows = []
+        this.loadData()
+      } catch (error) {
+        if (error !== 'cancel') {
+          this.$message.error(error.message || '批量删除失败，请重试')
+        }
+      }
+    },
     handleEdit(goods) {
-      this.$message.info(`编辑商品: ${goods.goodsName}`)
-      // TODO: 跳转到编辑商品页面
+      this.$router.push({ path: "/seller/goods/edit", query: { id: goods.id } });
     },
     canShelfOff(row) {
       return row.auditStatus === 1 && row.shelfStatus === 1

@@ -82,6 +82,11 @@ const routes = [
         component: () => import("@/views/seller/SellerGoodsAdd.vue"),
       },
       {
+        path: "seller/goods/edit",
+        name: "SellerGoodsEdit",
+        component: () => import("@/views/seller/SellerGoodsAdd.vue"),
+      },
+      {
         path: "bid-history",
         name: "BidHistory",
         component: () => import("@/views/BidHistory.vue"),

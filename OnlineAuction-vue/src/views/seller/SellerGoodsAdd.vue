@@ -4,8 +4,8 @@
       <el-button icon="el-icon-arrow-left" @click="handleBack">返回到我的商品</el-button>
     </div>
     <div class="page-header">
-      <h2>申请上架商品</h2>
-      <p class="page-desc">填写商品信息并提交，管理员审核通过后将展示在拍卖商品列表</p>
+      <h2>{{ isEditMode ? '编辑商品' : '申请上架商品' }}</h2>
+      <p class="page-desc">{{ isEditMode ? '修改商品信息后重新提交，管理员审核通过后将更新商品信息' : '填写商品信息并提交，管理员审核通过后将展示在拍卖商品列表' }}</p>
     </div>
     <div class="form-section">
       <el-form
@@ -140,7 +140,7 @@
           />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleSubmit" :loading="submitLoading">提交申请</el-button>
+          <el-button type="primary" @click="handleSubmit" :loading="submitLoading">{{ isEditMode ? '保存修改' : '提交申请' }}</el-button>
           <el-button @click="handleBack">取消</el-button>
         </el-form-item>
       </el-form>
@@ -149,13 +149,15 @@
 </template>
 
 <script>
-import { addGoods } from "@/api/goods";
+import { addGoods, updateGoods, getGoodsDetailAdmin } from "@/api/goods";
 import { getCategoryTreeForHome } from "@/api/category";
 
 export default {
   name: "SellerGoodsAdd",
   data() {
     return {
+      isEditMode: false,
+      editGoodsId: null,
       categoryTreeData: [],
       categoryTreeVisible: false,
       categoryTreeProps: {
@@ -203,6 +205,12 @@ export default {
   },
   mounted() {
     this.loadCategories();
+    const editId = this.$route.query.id;
+    if (editId) {
+      this.isEditMode = true;
+      this.editGoodsId = Number(editId);
+      this.loadEditData(this.editGoodsId);
+    }
   },
   methods: {
     async loadCategories() {
@@ -301,8 +309,14 @@ export default {
             categoryId: (this.formData.categoryIds || []).join(","),
             fileIds: this.formData.fileIds || [],
           };
-          await addGoods(data);
-          this.$message.success("提交成功，请等待管理员审核");
+          if (this.isEditMode) {
+            data.id = this.editGoodsId;
+            await updateGoods(data);
+            this.$message.success("修改成功，请等待管理员审核");
+          } else {
+            await addGoods(data);
+            this.$message.success("提交成功，请等待管理员审核");
+          }
           this.$router.push("/my-goods");
         } catch (e) {
           this.$message.error(e.message || "提交失败");
@@ -310,6 +324,75 @@ export default {
           this.submitLoading = false;
         }
       });
+    },
+    async loadEditData(id) {
+      try {
+        const result = await getGoodsDetailAdmin(id);
+        if (!result) {
+          this.$message.error("商品不存在");
+          this.$router.push("/my-goods");
+          return;
+        }
+        const goods = result;
+        // 回填分类数据
+        const categoryIds = goods.categoryId
+          ? goods.categoryId
+              .split(",")
+              .map((cId) => parseInt(cId))
+              .filter((cId) => !isNaN(cId))
+          : [];
+        // 回填表单数据
+        this.formData = {
+          goodsName: goods.goodsName || "",
+          categoryIds: categoryIds,
+          goodsDesc: goods.goodsDesc || "",
+          fileIds: goods.files ? goods.files.map((f) => f.id) : [],
+          basePrice: goods.basePrice != null ? goods.basePrice : 0,
+          addPrice: goods.addPrice != null ? goods.addPrice : 0,
+          reservePrice: goods.reservePrice != null ? goods.reservePrice : 0,
+          startTime: this.toPickerTime(goods.startTime),
+          endTime: this.toPickerTime(goods.endTime),
+        };
+        // 回填文件列表（用于el-upload展示已有文件）
+        this.fileList = this.buildFileListFromGoods(goods.files);
+        // 回填分类名称显示
+        this.updateSelectedCategoryNames();
+        // 回填分类树选中状态
+        this.$nextTick(() => {
+          if (this.$refs.categoryTree) {
+            this.$refs.categoryTree.setCheckedKeys(categoryIds);
+          }
+        });
+      } catch (e) {
+        this.$message.error("加载商品信息失败");
+        this.$router.push("/my-goods");
+      }
+    },
+    /**
+     * 将后端返回的时间值转为 date-picker 期望的 "yyyy-MM-dd HH:mm:ss" 格式
+     * 兼容三种后端格式：
+     * 1. 数组 [2025,12,31,10,0,0] — Jackson WRITE_DATES_AS_TIMESTAMPS
+     * 2. ISO 字符串 "2025-12-31T10:00:00"
+     * 3. 已是正确格式 "2025-12-31 10:00:00"
+     */
+    toPickerTime(value) {
+      if (!value) return null;
+      if (Array.isArray(value)) {
+        const [y, M, d, h = 0, m = 0, s = 0] = value;
+        const pad = (n) => String(n).padStart(2, "0");
+        return `${y}-${pad(M)}-${pad(d)} ${pad(h)}:${pad(m)}:${pad(s)}`;
+      }
+      const str = String(value);
+      return str.replace("T", " ");
+    },
+    buildFileListFromGoods(files) {
+      if (!files || !Array.isArray(files)) return [];
+      return files.map((file) => ({
+        id: file.id,
+        name: file.fileName,
+        url: file.filePath,
+        response: { data: file },
+      }));
     },
     handleBack() {
       this.$router.push("/my-goods");

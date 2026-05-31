@@ -236,6 +236,30 @@ public class AuctionGoodsServiceImpl extends ServiceImpl<AuctionGoodsMapper, Auc
     }
 
     @Override
+    public void deleteMyGoodsBatch(List<Long> ids, Long userId) {
+        if (ids == null || ids.isEmpty()) {
+            throw new RuntimeException("请选择要删除的商品");
+        }
+        int deleted = 0;
+        for (Long id : ids) {
+            AuctionGoods goods = getById(id);
+            if (goods == null || goods.getDelFlag() == 1) {
+                continue;
+            }
+            if (!goods.getSellerId().equals(userId)) {
+                continue; // 跳过不属于当前卖家的商品
+            }
+            goods.setDelFlag(1);
+            goods.setUpdateTime(LocalDateTime.now());
+            updateById(goods);
+            deleted++;
+        }
+        if (deleted == 0) {
+            throw new RuntimeException("未找到可删除的商品");
+        }
+    }
+
+    @Override
     public void hardDeleteGoods(Long id) {
         if (id == null) {
             throw new RuntimeException("商品ID不能为空");

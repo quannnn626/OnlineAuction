@@ -95,16 +95,54 @@ public class AuctionGoodsController {
     }
 
     /**
-     * 根据ID获取商品详情（后台）
+     * 卖家批量逻辑删除自己的商品
+     */
+    @DeleteMapping("/my/batch")
+    public Result<Void> batchDeleteMyGoods(@RequestBody List<Long> ids, HttpServletRequest request) {
+        try {
+            HttpSession session = request.getSession(false);
+            if (session == null) {
+                return Result.error("未登录");
+            }
+            Long userId = (Long) session.getAttribute("userId");
+            if (userId == null) {
+                return Result.error("未登录");
+            }
+            if (!RoleCheckHelper.hasAnyRole(session, 2, 3, 4, 8)) {
+                return Result.error("无权限删除商品");
+            }
+            goodsService.deleteMyGoodsBatch(ids, userId);
+            return Result.success("批量删除成功", null);
+        } catch (Exception e) {
+            return Result.error("批量删除失败：" + e.getMessage());
+        }
+    }
+
+    /**
+     * 根据ID获取商品详情（后台管理员可查任意商品，卖家仅可查自己的商品）
      */
     @GetMapping("/{id}")
     public Result<AuctionGoods> getGoodsById(@PathVariable Long id, HttpServletRequest request) {
         try {
-            if (!RoleCheckHelper.canAccessAdmin(request.getSession(false))) {
-                return Result.error("无权限访问");
+            HttpSession session = request.getSession(false);
+            if (session == null) {
+                return Result.error("未登录");
             }
-            AuctionGoods goods = goodsService.getGoodsById(id);
-            return Result.success("查询成功", goods);
+            Long userId = (Long) session.getAttribute("userId");
+            // 管理员/运营/拍卖师/客服/财务等后台角色可查任意商品
+            if (RoleCheckHelper.canAccessAdmin(session)) {
+                AuctionGoods goods = goodsService.getGoodsById(id);
+                return Result.success("查询成功", goods);
+            }
+            // 卖家仅可查看自己的商品
+            if (RoleCheckHelper.hasAnyRole(session, 2)) {
+                AuctionGoods goods = goodsService.getGoodsById(id);
+                if (goods == null || !goods.getSellerId().equals(userId)) {
+                    return Result.error("无权限访问");
+                }
+                return Result.success("查询成功", goods);
+            }
+            return Result.error("无权限访问");
         } catch (Exception e) {
             return Result.error("查询失败：" + e.getMessage());
         }
